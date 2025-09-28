@@ -1,4 +1,4 @@
-import { GameState, Player, GameAction, CharacterOption, Depth } from '@/types/game';
+import { GameState, Player, GameAction, CharacterOption, Depth, FishCard } from '@/types/game';
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
@@ -367,8 +367,12 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         const fishIndex = player.handFish.findIndex(f => f.id === fishId);
         if (fishIndex >= 0) {
           const fish = player.handFish[fishIndex];
-          player.fishbucks += fish.value;
+          const { adjustedValue } = calculateFishSaleValue(fish, player.madnessLevel);
+          player.fishbucks += adjustedValue;
           player.handFish.splice(fishIndex, 1);
+          if (fish.quality === 'foul') {
+            drawRegret(player, newState);
+          }
         }
       }
       break;
@@ -504,6 +508,22 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 };
 
 // Helper functions
+const getFishBaseValue = (fish: FishCard) => fish.baseValue ?? fish.value;
+
+export const calculateFishSaleValue = (fish: FishCard, madnessLevel: number) => {
+  const baseValue = getFishBaseValue(fish);
+  const currentValue = fish.value ?? baseValue;
+  const madnessPenalty = Math.min(Math.max(madnessLevel, 0), baseValue);
+  const adjustedValue = Math.max(0, currentValue - madnessPenalty);
+
+  return {
+    adjustedValue,
+    baseValue,
+    madnessPenalty,
+    modifier: currentValue - baseValue,
+  };
+};
+
 const drawRegret = (player: Player, gameState: GameState) => {
   if (player.regretShields > 0) {
     player.regretShields -= 1;
