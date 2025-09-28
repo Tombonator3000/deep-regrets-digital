@@ -24,17 +24,23 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-primary-glow">The Deep Sea</h2>
-        <p className="text-muted-foreground">
-          Current Depth: <span className="text-primary font-bold">{currentPlayer.currentDepth}</span>
-        </p>
-        <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
-          Choose dice for catches in the Sea Actions panel. Failing or passing a catch will burn one die and add a Dink card.
-        </p>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-slate-200 shadow-inner">
+        <h2 className="text-lg font-bold text-primary-glow sm:text-xl">The Deep Sea</h2>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+          <span className="flex items-center gap-1">
+            <span>Current Depth:</span>
+            <span className="text-primary font-semibold">{currentPlayer.currentDepth}</span>
+          </span>
+          <span className="hidden lg:inline">•</span>
+          <span className="max-w-xs text-muted-foreground lg:max-w-none">
+            Choose dice for catches in the Sea Actions panel. Failing or passing a catch will burn one die and add a Dink card.
+          </span>
+        </div>
         {gameState.sea.plugActive && (
-          <p className="text-destructive font-bold animate-regret-pulse">⚠️ The Plug is active - Erosion in progress!</p>
+          <span className="ml-auto flex items-center gap-1 rounded-full bg-destructive/20 px-3 py-1 text-xs font-semibold text-destructive shadow-sm">
+            ⚠️ The Plug is active - Erosion in progress!
+          </span>
         )}
       </div>
 
@@ -63,13 +69,18 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
         </div>
       )}
 
-      <div className="relative mx-auto max-w-4xl">
-        <img
-          src={boardImage}
-          alt="The Briny Deep board"
-          className="w-full select-none pointer-events-none drop-shadow-2xl"
-        />
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-3 p-4 md:p-8">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="relative mx-auto flex h-full max-h-full w-full items-center justify-center px-2">
+          <div
+            className="relative h-full max-h-full w-full max-w-4xl"
+            style={{ aspectRatio: '3 / 4' }}
+          >
+            <img
+              src={boardImage}
+              alt="The Briny Deep board"
+              className="h-full w-full select-none rounded-xl object-contain drop-shadow-2xl"
+            />
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-3 p-4 md:p-8">
           {[1, 2, 3].flatMap((depth) =>
             gameState.sea.shoals[depth]?.map((shoal, shoalIndex) => {
               const isSelected = selectedShoal?.depth === depth && selectedShoal?.shoal === shoalIndex;
@@ -156,18 +167,22 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
               );
             })
           )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 text-center sm:grid-cols-3">
-        {[1, 2, 3].map((depth) => (
-          <div key={`graveyard-${depth}`} className="card-game bg-black/40 p-3 text-slate-200 shadow-inner">
-            <div className="text-xs uppercase tracking-wide text-slate-300">Depth {depth} Graveyard</div>
-            <div className="text-lg font-semibold text-white">
-              {gameState.sea.graveyards[depth]?.length || 0} fish
+      <div className="shrink-0 rounded-xl border border-white/10 bg-black/20 p-3 shadow-inner">
+        <div className="flex flex-wrap items-stretch justify-between gap-3 text-center">
+          {[1, 2, 3].map((depth) => (
+            <div key={`graveyard-${depth}`} className="card-game flex-1 min-w-[120px] bg-black/40 p-3 text-slate-200 shadow-inner">
+              <div className="text-xs uppercase tracking-wide text-slate-300">Depth {depth} Graveyard</div>
+              <div className="text-lg font-semibold text-white">
+                {gameState.sea.graveyards[depth]?.length || 0} fish
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
