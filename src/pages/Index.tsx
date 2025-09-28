@@ -1,4 +1,5 @@
 import { useState, useReducer, Reducer, useEffect } from 'react';
+import { IntroScreen } from '@/components/IntroScreen';
 import { StartScreen } from '@/components/StartScreen';
 import { CharacterSelection } from '@/components/CharacterSelection';
 import { GameBoard } from '@/components/GameBoard';
@@ -7,14 +8,15 @@ import { initializeGame, gameReducer } from '@/utils/gameEngine';
 import { useToast } from '@/hooks/use-toast';
 import { useAudio } from '@/context/AudioContext';
 
-type GameScreen = 'start' | 'character-selection' | 'game';
+type GameScreen = 'intro' | 'start' | 'character-selection' | 'game';
 
 const Index = () => {
-  const [currentScreen, setCurrentScreen] = useState<GameScreen>('start');
+  const [currentScreen, setCurrentScreen] = useState<GameScreen>('intro');
   const [playerCount, setPlayerCount] = useState(2);
   const [gameState, dispatch] = useReducer<Reducer<GameState | null, GameAction>>(gameReducer, null);
   const { toast } = useToast();
   const { play, pause, isMusicEnabled, playBubbleSfx } = useAudio();
+  const [hasStartedMusic, setHasStartedMusic] = useState(false);
 
   useEffect(() => {
     if (!isMusicEnabled) {
@@ -22,8 +24,19 @@ const Index = () => {
       return;
     }
 
-    void play();
-  }, [isMusicEnabled, pause, play]);
+    if (hasStartedMusic) {
+      void play();
+    }
+  }, [hasStartedMusic, isMusicEnabled, pause, play]);
+
+  const handleIntroContinue = () => {
+    if (isMusicEnabled) {
+      void play();
+    }
+
+    setHasStartedMusic(true);
+    setCurrentScreen('start');
+  };
 
   const handleStartGame = (players: number) => {
     setPlayerCount(players);
@@ -63,6 +76,9 @@ const Index = () => {
 
   // Render current screen
   switch (currentScreen) {
+    case 'intro':
+      return <IntroScreen onContinue={handleIntroContinue} />;
+
     case 'start':
       return <StartScreen onStartGame={handleStartGame} />;
     
