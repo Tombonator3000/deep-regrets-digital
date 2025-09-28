@@ -176,6 +176,60 @@ export const rollDice = (count: number): number[] => {
 };
 
 // Game action reducer
+const hasEffect = (effects: string[] | undefined, effect: string) => {
+  return Array.isArray(effects) && effects.includes(effect);
+};
+
+const getDescendRequirement = (player: Player): number => {
+  const baseRequirement = 3;
+  let reduction = 0;
+
+  if (hasEffect(player.equippedReel?.effects, 'descend_cost_-1')) {
+    reduction += 1;
+  }
+
+  reduction += player.dinks.filter(dink => hasEffect(dink.effects, 'descend_cost_-1')).length;
+  reduction += player.supplies.filter(supply => hasEffect(supply.effects, 'descend_cost_-1')).length;
+
+  return Math.max(1, baseRequirement - reduction);
+};
+
+const spendDiceForDescent = (player: Player, steps: number): number[] | null => {
+  if (steps <= 0) {
+    return [];
+  }
+
+  const requirement = getDescendRequirement(player);
+  const indicesToSpend: number[] = [];
+
+  player.freshDice.forEach((die, index) => {
+    if (die >= requirement && indicesToSpend.length < steps) {
+      indicesToSpend.push(index);
+    }
+  });
+
+  if (indicesToSpend.length !== steps) {
+    return null;
+  }
+
+  const indexSet = new Set(indicesToSpend);
+  const spentDice: number[] = [];
+  const remainingDice: number[] = [];
+
+  player.freshDice.forEach((die, index) => {
+    if (indexSet.has(index)) {
+      spentDice.push(die);
+    } else {
+      remainingDice.push(die);
+    }
+  });
+
+  player.freshDice = remainingDice;
+  player.spentDice = [...player.spentDice, ...spentDice];
+
+  return spentDice;
+};
+
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
   const newState = { ...state };
   const player = newState.players.find(p => p.id === action.playerId);
@@ -217,11 +271,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         const { targetDepth } = action.payload;
         if (typeof targetDepth === 'number' && targetDepth > player.currentDepth && targetDepth <= 3) {
           const steps = targetDepth - player.currentDepth;
-          const cost = steps * 3;
-          if (player.freshDice.length >= cost) {
-            const spentDice = player.freshDice.slice(0, cost);
-            player.freshDice = player.freshDice.slice(cost);
-            player.spentDice = [...player.spentDice, ...spentDice];
+          const spentDice = spendDiceForDescent(player, steps);
+          if (spentDice) {
             player.currentDepth = targetDepth as Depth;
           }
         }
@@ -232,11 +283,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (player && player.location === 'sea') {
         const { newDepth } = action.payload;
         if (typeof newDepth === 'number' && newDepth === player.currentDepth + 1 && newDepth <= 3) {
-          const cost = 3;
-          if (player.freshDice.length >= cost) {
-            const spentDice = player.freshDice.slice(0, cost);
-            player.freshDice = player.freshDice.slice(cost);
-            player.spentDice = [...player.spentDice, ...spentDice];
+          const spentDice = spendDiceForDescent(player, 1);
+          if (spentDice) {
             player.currentDepth = newDepth as Depth;
           }
         }

@@ -71,8 +71,8 @@ describe('gameReducer new actions', () => {
     expect(player.hasPassed).toBe(false);
   });
 
-  it('descends to a target depth when enough dice are available', () => {
-    state.players[0].freshDice = [1, 1, 1, 1, 1, 1];
+  it('descends to a target depth using one qualifying die per level', () => {
+    state.players[0].freshDice = [3, 1, 5];
 
     const action = {
       type: 'DESCEND',
@@ -84,12 +84,48 @@ describe('gameReducer new actions', () => {
     const player = result.players[0];
 
     expect(player.currentDepth).toBe(3);
-    expect(player.freshDice.length).toBe(0);
-    expect(player.spentDice.length).toBe(6);
+    expect(player.freshDice).toEqual([1]);
+    expect(player.spentDice).toEqual(expect.arrayContaining([3, 5]));
+    expect(player.spentDice).toHaveLength(2);
+  });
+
+  it('requires one die per depth when descending multiple levels in one action', () => {
+    state.players[0].freshDice = [6, 4, 2, 5];
+
+    const action = {
+      type: 'DESCEND',
+      playerId: state.players[0].id,
+      payload: { targetDepth: 3 }
+    };
+
+    const result = gameReducer(state, action);
+    const player = result.players[0];
+
+    expect(player.currentDepth).toBe(3);
+    expect(player.spentDice).toEqual(expect.arrayContaining([6, 4]));
+    expect(player.spentDice).not.toContain(2);
+    expect(player.freshDice).toEqual([2, 5]);
+  });
+
+  it('does not descend if there are not enough qualifying dice', () => {
+    state.players[0].freshDice = [2, 2, 6];
+
+    const action = {
+      type: 'DESCEND',
+      playerId: state.players[0].id,
+      payload: { targetDepth: 3 }
+    };
+
+    const result = gameReducer(state, action);
+    const player = result.players[0];
+
+    expect(player.currentDepth).toBe(1);
+    expect(player.freshDice).toEqual([2, 2, 6]);
+    expect(player.spentDice).toHaveLength(0);
   });
 
   it('moves exactly one depth deeper via MOVE_DEEPER', () => {
-    state.players[0].freshDice = [2, 2, 2];
+    state.players[0].freshDice = [5, 2, 1];
 
     const action = {
       type: 'MOVE_DEEPER',
@@ -101,8 +137,8 @@ describe('gameReducer new actions', () => {
     const player = result.players[0];
 
     expect(player.currentDepth).toBe(2);
-    expect(player.freshDice.length).toBe(0);
-    expect(player.spentDice.length).toBe(3);
+    expect(player.freshDice).toEqual([2, 1]);
+    expect(player.spentDice).toEqual([5]);
   });
 
   it('purchases upgrades and moves them to the correct inventory', () => {
