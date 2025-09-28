@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FishCard, GameState, Player } from '@/types/game';
+import { GameState, Player } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 
 interface FishingActionsProps {
@@ -53,7 +53,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   };
 
   const handleCatchFish = () => {
-    if (!revealedFish || selectedDice.length === 0) return;
+    if (!revealedFish || !selectedShoal || selectedDice.length === 0) return;
 
     const totalDiceValue = selectedDice.reduce((sum, val) => sum + val, 0);
     
@@ -61,11 +61,11 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
       onAction({
         type: 'CATCH_FISH',
         playerId: currentPlayer.id,
-        payload: { 
-          fishId: revealedFish.id,
+        payload: {
+          fish: revealedFish,
           diceUsed: selectedDice,
-          depth: selectedShoal?.depth,
-          shoal: selectedShoal?.shoal
+          depth: selectedShoal.depth,
+          shoal: selectedShoal.shoal
         }
       });
       toast({
