@@ -1,6 +1,8 @@
-import { GameState, Player, GameAction, CharacterOption } from '@/types/game';
+import { GameState, Player, GameAction, CharacterOption, Depth } from '@/types/game';
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
+import { DINK_CARDS } from '@/data/dinks';
+import { ALL_UPGRADES } from '@/data/upgrades';
 
 // Shuffle utility
 const shuffle = <T>(array: T[]): T[] => {
@@ -80,7 +82,7 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
         reels: [],
         supplies: []
       },
-      dinksDeck: [],
+      dinksDeck: shuffle(DINK_CARDS),
       regretsDeck: shuffle(REGRET_CARDS),
       regretsDiscard: []
     },
@@ -151,8 +153,49 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
       break;
 
+    case 'DECLARE_LOCATION':
+      if (player) {
+        player.location = action.payload.location;
+        player.hasPassed = false;
+        if (player.location === 'port') {
+          player.currentDepth = 1;
+        }
+      }
+      break;
+
     case 'REVEAL_FISH':
       // Simple reveal logic - fish is already visible in this implementation
+      break;
+
+    case 'DESCEND':
+      if (player && player.location === 'sea') {
+        const { targetDepth } = action.payload;
+        if (typeof targetDepth === 'number' && targetDepth > player.currentDepth && targetDepth <= 3) {
+          const steps = targetDepth - player.currentDepth;
+          const cost = steps * 3;
+          if (player.freshDice.length >= cost) {
+            const spentDice = player.freshDice.slice(0, cost);
+            player.freshDice = player.freshDice.slice(cost);
+            player.spentDice = [...player.spentDice, ...spentDice];
+            player.currentDepth = targetDepth as Depth;
+          }
+        }
+      }
+      break;
+
+    case 'MOVE_DEEPER':
+      if (player && player.location === 'sea') {
+        const { newDepth } = action.payload;
+        if (typeof newDepth === 'number' && newDepth === player.currentDepth + 1 && newDepth <= 3) {
+          const cost = 3;
+          if (player.freshDice.length >= cost) {
+            const spentDice = player.freshDice.slice(0, cost);
+            player.freshDice = player.freshDice.slice(cost);
+            player.spentDice = [...player.spentDice, ...spentDice];
+            player.currentDepth = newDepth as Depth;
+          }
+        }
+      }
       break;
 
     case 'CATCH_FISH':
@@ -197,6 +240,62 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           const fish = player.handFish[fishIndex];
           player.fishbucks += fish.value;
           player.handFish.splice(fishIndex, 1);
+        }
+      }
+      break;
+
+    case 'BUY_UPGRADE':
+      if (player && player.location === 'port') {
+        const { upgradeId } = action.payload;
+        const upgrade = ALL_UPGRADES.find(item => item.id === upgradeId);
+        if (upgrade && player.fishbucks >= upgrade.cost) {
+          player.fishbucks -= upgrade.cost;
+          if (upgrade.type === 'rod') {
+            player.equippedRod = upgrade;
+          } else if (upgrade.type === 'reel') {
+            player.equippedReel = upgrade;
+          } else if (upgrade.type === 'supply') {
+            player.supplies = [...player.supplies, upgrade];
+          }
+
+          (['rods', 'reels', 'supplies'] as const).forEach(category => {
+            newState.port.shops[category] = newState.port.shops[category].filter(item => item.id !== upgrade.id);
+          });
+        }
+      }
+      break;
+
+    case 'BUY_TACKLE_DICE':
+      if (player && player.location === 'port') {
+        const { count, cost } = action.payload;
+        if (typeof count === 'number' && count > 0 && player.fishbucks >= cost) {
+          player.fishbucks -= cost;
+          const newDice = Array.from({ length: count }, () => 'standard');
+          player.tackleDice = [...player.tackleDice, ...newDice];
+        }
+      }
+      break;
+
+    case 'USE_LIFE_PRESERVER':
+      if (player && player.location === 'port') {
+        newState.lifePreserverOwner = player.id;
+        player.lifeboatFlipped = true;
+
+        if (player.regrets.length > 0) {
+          const removed = player.regrets[player.regrets.length - 1];
+          player.regrets = player.regrets.slice(0, -1);
+          newState.port.regretsDiscard = [...newState.port.regretsDiscard, removed];
+          recalculateMadness(player);
+        }
+      }
+      break;
+
+    case 'DRAW_DINK':
+      if (player && player.location === 'port') {
+        const { card, remainingDeck } = drawFromDeck(newState.port.dinksDeck);
+        if (card) {
+          player.dinks = [...player.dinks, card];
+          newState.port.dinksDeck = remainingDeck;
         }
       }
       break;
@@ -264,12 +363,26 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
 // Helper functions
 const drawRegret = (player: Player, gameState: GameState) => {
-  if (gameState.port.regretsDeck.length > 0) {
-    const regret = gameState.port.regretsDeck.pop()!;
-    player.regrets.push(regret);
-    player.madnessLevel = Math.min(player.regrets.length, 5);
-    player.maxDice = Math.max(3 - Math.floor(player.madnessLevel / 2), 1);
+  const { card, remainingDeck } = drawFromDeck(gameState.port.regretsDeck);
+  if (card) {
+    gameState.port.regretsDeck = remainingDeck;
+    player.regrets = [...player.regrets, card];
+    recalculateMadness(player);
   }
+};
+
+const drawFromDeck = <T>(deck: T[]): { card?: T; remainingDeck: T[] } => {
+  if (deck.length === 0) {
+    return { remainingDeck: deck };
+  }
+  const remainingDeck = deck.slice(0, -1);
+  const card = deck[deck.length - 1];
+  return { card, remainingDeck };
+};
+
+const recalculateMadness = (player: Player) => {
+  player.madnessLevel = Math.min(player.regrets.length, 5);
+  player.maxDice = Math.max(3 - Math.floor(player.madnessLevel / 2), 1);
 };
 
 const advancePhase = (gameState: GameState) => {
