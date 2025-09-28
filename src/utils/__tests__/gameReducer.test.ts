@@ -5,6 +5,7 @@ import { REGRET_CARDS } from '@/data/regrets';
 import { RODS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
 import { CHARACTERS } from '@/data/characters';
+import { TACKLE_DICE } from '@/data/tackleDice';
 
 const mockCharacters: CharacterOption[] = [
   {
@@ -125,20 +126,22 @@ describe('gameReducer new actions', () => {
   });
 
   it('buys tackle dice and adds them to the pool', () => {
-    state.players[0].fishbucks = 6;
+    const tackleOption = TACKLE_DICE[0];
+    state.players[0].fishbucks = 10;
     state.players[0].location = 'port';
 
     const action = {
       type: 'BUY_TACKLE_DICE',
       playerId: state.players[0].id,
-      payload: { count: 2, cost: 4 }
+      payload: { dieId: tackleOption.id, count: 2 }
     };
 
     const result = gameReducer(state, action);
     const player = result.players[0];
 
-    expect(player.fishbucks).toBe(2);
+    expect(player.fishbucks).toBe(10 - tackleOption.cost * 2);
     expect(player.tackleDice).toHaveLength(2);
+    expect(player.tackleDice.every(id => id === tackleOption.id)).toBe(true);
   });
 
   it('uses the life preserver to discard a regret and flip the lifeboat', () => {

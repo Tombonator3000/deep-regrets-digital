@@ -41,8 +41,12 @@ export interface DinkCard {
 }
 
 export interface TackleDie {
+  id: string;
+  name: string;
   color: string;
+  cost: number;
   faces: number[];
+  description: string;
 }
 
 export interface Player {

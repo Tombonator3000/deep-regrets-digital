@@ -2,7 +2,8 @@ import { GameState, Player, GameAction, CharacterOption, Depth } from '@/types/g
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
-import { ALL_UPGRADES, RODS, REELS } from '@/data/upgrades';
+import { ALL_UPGRADES, RODS, REELS, SUPPLIES } from '@/data/upgrades';
+import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 
 // Shuffle utility
 const shuffle = <T>(array: T[]): T[] => {
@@ -18,9 +19,9 @@ const shuffle = <T>(array: T[]): T[] => {
 export const initializeGame = (selectedCharacters: CharacterOption[]): GameState => {
   const port: GameState['port'] = {
     shops: {
-      rods: [],
-      reels: [],
-      supplies: []
+      rods: shuffle([...RODS]).slice(0, 3),
+      reels: shuffle([...REELS]).slice(0, 3),
+      supplies: shuffle([...SUPPLIES]).slice(0, 3)
     },
     dinksDeck: shuffle(DINK_CARDS),
     regretsDeck: shuffle(REGRET_CARDS),
@@ -138,9 +139,10 @@ export const applyCharacterBonuses = (
     case 'marina': {
       updated.currentDepth = 2;
       if (context.port) {
-        const bonusDink = context.port.dinksDeck.pop();
-        if (bonusDink) {
-          updated.dinks = [...updated.dinks, bonusDink];
+        const { card, deck } = drawCard(context.port.dinksDeck);
+        context.port.dinksDeck = deck;
+        if (card) {
+          updated.dinks = [...updated.dinks, card];
         }
       }
       break;
@@ -310,10 +312,16 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'BUY_TACKLE_DICE':
       if (player && player.location === 'port') {
-        const { count, cost } = action.payload;
-        if (typeof count === 'number' && count > 0 && player.fishbucks >= cost) {
-          player.fishbucks -= cost;
-          const newDice = Array.from({ length: count }, () => 'standard');
+        const { dieId, count } = action.payload;
+        const tackleDie = typeof dieId === 'string' ? TACKLE_DICE_LOOKUP[dieId] : undefined;
+        if (!tackleDie || typeof count !== 'number' || count <= 0) {
+          break;
+        }
+
+        const totalCost = tackleDie.cost * count;
+        if (player.fishbucks >= totalCost) {
+          player.fishbucks -= totalCost;
+          const newDice = Array.from({ length: count }, () => tackleDie.id);
           player.tackleDice = [...player.tackleDice, ...newDice];
         }
       }
@@ -335,11 +343,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'DRAW_DINK':
       if (player && player.location === 'port') {
-        const { card, remainingDeck } = drawFromDeck(newState.port.dinksDeck);
+        const { card, deck } = drawCard(newState.port.dinksDeck);
         if (card) {
           player.dinks = [...player.dinks, card];
-          newState.port.dinksDeck = remainingDeck;
         }
+        newState.port.dinksDeck = deck;
       }
       break;
 
@@ -417,22 +425,39 @@ const drawRegret = (player: Player, gameState: GameState) => {
     player.regretShields -= 1;
     return;
   }
-  const { card, remainingDeck } = drawFromDeck(gameState.port.regretsDeck);
+  const { card, deck, discard } = drawCard(
+    gameState.port.regretsDeck,
+    gameState.port.regretsDiscard
+  );
   if (card) {
-    gameState.port.regretsDeck = remainingDeck;
+    gameState.port.regretsDeck = deck;
+    gameState.port.regretsDiscard = discard;
     player.regrets = [...player.regrets, card];
     recalculateMadness(player);
   }
 };
 
-const drawFromDeck = <T>(deck: T[]): { card?: T; remainingDeck: T[] } => {
-  if (deck.length === 0) {
-    return { remainingDeck: deck };
+function drawCard<T>(
+  deck: T[],
+  discard: T[] = []
+): { card?: T; deck: T[]; discard: T[] } {
+  let workingDeck = [...deck];
+  let workingDiscard = [...discard];
+
+  if (workingDeck.length === 0 && workingDiscard.length > 0) {
+    workingDeck = shuffle(workingDiscard);
+    workingDiscard = [];
   }
-  const remainingDeck = deck.slice(0, -1);
-  const card = deck[deck.length - 1];
-  return { card, remainingDeck };
-};
+
+  if (workingDeck.length === 0) {
+    return { deck: workingDeck, discard: workingDiscard };
+  }
+
+  const card = workingDeck[workingDeck.length - 1];
+  workingDeck = workingDeck.slice(0, -1);
+
+  return { card, deck: workingDeck, discard: workingDiscard };
+}
 
 const recalculateMadness = (player: Player) => {
   player.madnessLevel = Math.min(player.regrets.length, 5);
