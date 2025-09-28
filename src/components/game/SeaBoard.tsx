@@ -21,10 +21,11 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onAction }: 
   };
 
   const handleCatchFish = (fish: FishCard, depth: number, shoal: number) => {
+    const diceIndices = currentPlayer.freshDice.map((_, index) => index);
     onAction({
       type: 'CATCH_FISH',
       playerId: currentPlayer.id,
-      payload: { fish, depth, shoal }
+      payload: { fish, depth, shoal, diceIndices }
     });
   };
 
@@ -41,6 +42,9 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onAction }: 
       <div className="text-center">
         <h2 className="text-2xl font-bold text-primary-glow mb-2">The Deep Sea</h2>
         <p className="text-muted-foreground">Current Depth: <span className="text-primary font-bold">{currentPlayer.currentDepth}</span></p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Choose dice for catches in the Sea Actions panel. Failing or passing a catch will burn one die and add a Dink card.
+        </p>
         {gameState.sea.plugActive && (
           <p className="text-destructive font-bold animate-regret-pulse">⚠️ The Plug is active - Erosion in progress!</p>
         )}
@@ -147,9 +151,12 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onAction }: 
                             disabled={!canInteract}
                             className="flex-1 text-xs btn-ocean"
                           >
-                            Catch
+                            Catch (uses all ready dice)
                           </Button>
                         </div>
+                        <p className="text-[0.65rem] text-muted-foreground">
+                          Need finer control? Select dice from the Sea Actions panel before attempting the catch.
+                        </p>
                       </div>
                     ) : (
                       <div className="text-sm text-muted-foreground">

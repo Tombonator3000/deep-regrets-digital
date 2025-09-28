@@ -293,23 +293,41 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'CATCH_FISH':
       if (player && player.location === 'sea') {
-        const { fish, depth, shoal } = action.payload;
+        const { fish, depth, shoal, diceIndices } = action.payload;
         const fishDifficulty = fish.difficulty;
-        const availableDice = player.freshDice.reduce((sum, die) => sum + die, 0);
-        
-        if (availableDice >= fishDifficulty) {
-          // Successful catch
+        const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
+
+        const requestedIndices = Array.isArray(diceIndices) ? diceIndices : [];
+        const uniqueValidIndices = Array.from(
+          new Set(
+            requestedIndices.filter(
+              (index: number) =>
+                typeof index === 'number' && index >= 0 && index < player.freshDice.length
+            )
+          )
+        );
+
+        const selectedDiceValues = uniqueValidIndices.map(index => player.freshDice[index]);
+        const hasUsableSelection =
+          uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length;
+        const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0);
+        const meetsDifficulty = hasUsableSelection && selectedTotal >= fishDifficulty;
+
+        if (meetsDifficulty) {
+          const removalOrder = [...uniqueValidIndices].sort((a, b) => b - a);
+          removalOrder.forEach(index => {
+            player.freshDice.splice(index, 1);
+          });
+          player.spentDice = [...player.spentDice, ...selectedDiceValues];
+
           player.handFish.push(fish);
-          player.freshDice = []; // Simplified - all dice used
-          
-          // Remove fish from shoal
+
           const shoalArray = newState.sea.shoals[depth][shoal];
           const fishIndex = shoalArray.findIndex((f: any) => f.id === fish.id);
           if (fishIndex >= 0) {
             shoalArray.splice(fishIndex, 1);
           }
-          
-          // Handle special abilities
+
           if (fish.abilities.includes('regret_draw')) {
             drawRegret(player, newState);
           }
@@ -319,7 +337,25 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           }
           if (fish.id === 'FISH-D3-PLUG-003') {
             newState.sea.plugActive = true;
-            player.hasPassed = true; // End turn immediately
+            player.hasPassed = true;
+          }
+        } else {
+          const shouldTakeDink =
+            availableDiceTotal < fishDifficulty || !hasUsableSelection || selectedTotal < fishDifficulty;
+
+          if (shouldTakeDink) {
+            if (player.freshDice.length > 0) {
+              const penaltyDie = player.freshDice.shift();
+              if (typeof penaltyDie === 'number') {
+                player.spentDice = [...player.spentDice, penaltyDie];
+              }
+            }
+
+            const { card, deck } = drawCard(newState.port.dinksDeck);
+            if (card) {
+              player.dinks = [...player.dinks, card];
+            }
+            newState.port.dinksDeck = deck;
           }
         }
       }
