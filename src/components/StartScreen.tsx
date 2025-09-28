@@ -30,7 +30,21 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="start-screen-scene" aria-hidden>
+        <div className="start-screen-sky">
+          <div className="start-screen-ship">
+            <span className="start-screen-ship-mast" />
+            <span className="start-screen-ship-sail" />
+            <span className="start-screen-ship-sail start-screen-ship-sail--aft" />
+          </div>
+        </div>
+        <div className="start-screen-waves">
+          <div className="start-screen-wave start-screen-wave--front" />
+          <div className="start-screen-wave start-screen-wave--mid" />
+          <div className="start-screen-wave start-screen-wave--back" />
+        </div>
+      </div>
       {/* Animated background particles */}
       <div className="ocean-particles">
         {particles.map((particle) => (
