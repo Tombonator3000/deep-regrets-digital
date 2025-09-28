@@ -339,7 +339,15 @@ const spendDiceForDescent = (player: Player, steps: number): number[] | null => 
   return spentDice;
 };
 
-export const gameReducer = (state: GameState, action: GameAction): GameState => {
+export const gameReducer = (state: GameState | null, action: GameAction): GameState => {
+  if (!state) {
+    if (action.type === 'INIT_GAME') {
+      return action.payload;
+    }
+
+    throw new Error('Game state has not been initialized.');
+  }
+
   const newState = { ...state };
   const player = newState.players.find(p => p.id === action.playerId);
   

@@ -1,8 +1,8 @@
-import { useState, useReducer } from 'react';
+import { useState, useReducer, Reducer } from 'react';
 import { StartScreen } from '@/components/StartScreen';
 import { CharacterSelection } from '@/components/CharacterSelection';
 import { GameBoard } from '@/components/GameBoard';
-import { CharacterOption, GameState } from '@/types/game';
+import { CharacterOption, GameState, GameAction } from '@/types/game';
 import { initializeGame, gameReducer } from '@/utils/gameEngine';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,7 +11,7 @@ type GameScreen = 'start' | 'character-selection' | 'game';
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<GameScreen>('start');
   const [playerCount, setPlayerCount] = useState(2);
-  const [gameState, dispatch] = useReducer(gameReducer, null as GameState | null);
+  const [gameState, dispatch] = useReducer<Reducer<GameState | null, GameAction>>(gameReducer, null);
   const { toast } = useToast();
 
   const handleStartGame = (players: number) => {
