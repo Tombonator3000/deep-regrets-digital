@@ -4,6 +4,7 @@ import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
 import { ALL_UPGRADES, RODS, REELS, SUPPLIES } from '@/data/upgrades';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
+import { getSlotMultiplier } from './mounting';
 
 // Shuffle utility
 const shuffle = <T>(array: T[]): T[] => {
@@ -571,7 +572,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const fish = player.handFish[fishIndex];
           player.mountedFish.push({
             slot,
-            multiplier: slot <= 2 ? 2 : 1, // Simplified multiplier system
+            multiplier: getSlotMultiplier(slot),
             fish
           });
           player.handFish.splice(fishIndex, 1);

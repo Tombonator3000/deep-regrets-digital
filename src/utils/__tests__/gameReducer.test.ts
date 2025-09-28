@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { gameReducer, initializeGame } from '../gameEngine';
+import { calculatePlayerScoreBreakdown, gameReducer, initializeGame } from '../gameEngine';
 import { CharacterOption, FishCard, GameState } from '@/types/game';
 import { REGRET_CARDS } from '@/data/regrets';
 import { RODS, REELS } from '@/data/upgrades';
@@ -7,6 +7,7 @@ import { DINK_CARDS } from '@/data/dinks';
 import { CHARACTERS } from '@/data/characters';
 import { TACKLE_DICE } from '@/data/tackleDice';
 import { DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
+import { getSlotMultiplier } from '@/utils/mounting';
 
 const mockCharacters: CharacterOption[] = [
   {
@@ -179,6 +180,49 @@ describe('gameReducer new actions', () => {
     expect(player.fishbucks).toBe(10 - tackleOption.cost * 2);
     expect(player.tackleDice).toHaveLength(2);
     expect(player.tackleDice.every(id => id === tackleOption.id)).toBe(true);
+  });
+
+  it('mounts fish into trophy slots using the shared slot multipliers', () => {
+    const playerId = state.players[0].id;
+    state.players[0].location = 'port';
+
+    const fishOne = { ...DEPTH_1_FISH[0], id: 'TEST-MOUNT-001', value: 2, baseValue: 2 };
+    const fishTwo = { ...DEPTH_2_FISH[0], id: 'TEST-MOUNT-002', value: 4, baseValue: 4 };
+    const fishThree = { ...DEPTH_3_FISH[0], id: 'TEST-MOUNT-003', value: 6, baseValue: 6 };
+
+    state.players[0].handFish = [fishOne, fishTwo, fishThree];
+
+    const mountPlan = [
+      { fish: fishOne, slot: 0 },
+      { fish: fishTwo, slot: 1 },
+      { fish: fishThree, slot: 2 }
+    ];
+
+    let workingState = state;
+    mountPlan.forEach(({ fish, slot }) => {
+      workingState = gameReducer(workingState, {
+        type: 'MOUNT_FISH',
+        playerId,
+        payload: { fishId: fish.id, slot }
+      });
+    });
+
+    const mountedFish = workingState.players[0].mountedFish;
+    expect(mountedFish).toHaveLength(3);
+    mountPlan.forEach(({ fish, slot }) => {
+      const mount = mountedFish.find(entry => entry.slot === slot);
+      expect(mount?.fish.id).toBe(fish.id);
+      expect(mount?.multiplier).toBe(getSlotMultiplier(slot));
+    });
+
+    expect(workingState.players[0].handFish).toHaveLength(0);
+
+    const breakdown = calculatePlayerScoreBreakdown(workingState.players[0]);
+    const expectedMountedScore = mountPlan.reduce((total, { fish, slot }) => {
+      const value = fish.value ?? fish.baseValue ?? 0;
+      return total + value * getSlotMultiplier(slot);
+    }, 0);
+    expect(breakdown.mountedScore).toBe(expectedMountedScore);
   });
 
   it('uses the life preserver to discard a regret and flip the lifeboat', () => {
