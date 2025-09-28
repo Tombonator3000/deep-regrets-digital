@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Anchor, Fish as FishIcon, Wrench } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,8 @@ const UpgradeOption = ({ item, canInteract, funds, onConfirm }: UpgradeOptionPro
 export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const canInteract = currentPlayer.location === 'port' && !currentPlayer.hasPassed;
+  const [activeMountFishId, setActiveMountFishId] = useState<string | null>(null);
+  const [selectedMountSlot, setSelectedMountSlot] = useState<number | null>(null);
 
   const handleBuyUpgrade = (upgradeId: string, cost: number) => {
     if (currentPlayer.fishbucks >= cost) {
@@ -119,6 +122,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
   };
 
   const standardTackleDie = TACKLE_DICE[0];
+  const mountingSlots = Array.from({ length: currentPlayer.maxMountSlots }, (_, i) => i);
 
   const handleBuyTackleDice = (dieId: string, count: number) => {
     const selectedDie = TACKLE_DICE.find(die => die.id === dieId);
@@ -268,7 +272,17 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                           </DialogContent>
                         </Dialog>
 
-                        <Dialog>
+                        <Dialog
+                          onOpenChange={(open) => {
+                            setSelectedMountSlot(null);
+                            setActiveMountFishId((current) => {
+                              if (open) {
+                                return fish.id;
+                              }
+                              return current === fish.id ? null : current;
+                            });
+                          }}
+                        >
                           <DialogTrigger asChild>
                             <Button
                               size="sm"
@@ -289,15 +303,63 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                               Madness remains at{' '}
                               <span className="text-destructive font-semibold">{currentPlayer.madnessLevel}</span>.
                             </p>
+                            <div className="flex flex-col gap-2 pt-2">
+                              <p className="text-xs text-muted-foreground">Choose a mounting slot:</p>
+                              <div className="flex flex-col gap-2 sm:flex-row">
+                                {mountingSlots.map((slotIndex) => {
+                                  const isOccupied = currentPlayer.mountedFish.some((mount) => mount.slot === slotIndex);
+                                  const multiplier = slotIndex === 0 ? 1 : slotIndex === 1 ? 2 : 3;
+                                  const isSelected =
+                                    activeMountFishId === fish.id && selectedMountSlot === slotIndex && !isOccupied;
+
+                                  return (
+                                    <Button
+                                      key={slotIndex}
+                                      disabled={isOccupied}
+                                      variant={isOccupied ? 'secondary' : 'outline'}
+                                      size="sm"
+                                      className={cn('flex-1 text-xs', isSelected && 'btn-ocean')}
+                                      onClick={() => {
+                                        if (!isOccupied) {
+                                          setActiveMountFishId(fish.id);
+                                          setSelectedMountSlot(slotIndex);
+                                        }
+                                      }}
+                                    >
+                                      Slot {slotIndex + 1} (×{multiplier})
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
                             <DialogFooter className="pt-4">
                               <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setActiveMountFishId(null);
+                                    setSelectedMountSlot(null);
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
                               </DialogClose>
                               <DialogClose asChild>
                                 <Button
                                   className="btn-ocean"
-                                  disabled={!canInteract}
-                                  onClick={() => handleMountFish(fish.id, 1)}
+                                  disabled={
+                                    !canInteract ||
+                                    activeMountFishId !== fish.id ||
+                                    selectedMountSlot === null ||
+                                    currentPlayer.mountedFish.some((mount) => mount.slot === selectedMountSlot)
+                                  }
+                                  onClick={() => {
+                                    if (selectedMountSlot !== null) {
+                                      handleMountFish(fish.id, selectedMountSlot);
+                                      setActiveMountFishId(null);
+                                      setSelectedMountSlot(null);
+                                    }
+                                  }}
                                 >
                                   Confirm Mount
                                 </Button>
