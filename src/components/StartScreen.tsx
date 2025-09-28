@@ -32,11 +32,20 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       <div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto px-6">
         {/* Logo */}
         <div className="mb-8">
-          <img 
-            src={logoImage} 
-            alt="Deep Regrets - An Unfortunate Fishing Game"
-            className="w-full max-w-md mx-auto rounded-xl shadow-2xl animate-tentacle-sway"
-          />
+          <button
+            type="button"
+            onClick={() => onStartGame(playerCount)}
+            aria-label="Start character selection"
+            title="Start character selection"
+            className="group w-full max-w-md mx-auto block rounded-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform hover:scale-[1.02] focus-visible:scale-[1.02]"
+          >
+            <img
+              src={logoImage}
+              alt="Deep Regrets - An Unfortunate Fishing Game"
+              className="w-full rounded-xl shadow-2xl animate-tentacle-sway group-hover:shadow-primary/50 group-focus-visible:shadow-primary/60"
+            />
+            <span className="sr-only">Click the Deep Regrets logo to start selecting your crew.</span>
+          </button>
         </div>
         
         {/* Title and subtitle */}
