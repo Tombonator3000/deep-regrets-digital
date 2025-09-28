@@ -17,13 +17,13 @@ const Index = () => {
   const { play, pause, isMusicEnabled, playBubbleSfx } = useAudio();
 
   useEffect(() => {
-    if (currentScreen === 'game' && isMusicEnabled) {
-      void play();
+    if (!isMusicEnabled) {
+      pause();
       return;
     }
 
-    pause();
-  }, [currentScreen, isMusicEnabled, pause, play]);
+    void play();
+  }, [isMusicEnabled, pause, play]);
 
   const handleStartGame = (players: number) => {
     setPlayerCount(players);
