@@ -421,10 +421,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         player.lifeboatFlipped = true;
 
         if (player.regrets.length > 0) {
+          const previousRegretCount = player.regrets.length;
           const removed = player.regrets[player.regrets.length - 1];
           player.regrets = player.regrets.slice(0, -1);
           newState.port.regretsDiscard = [...newState.port.regretsDiscard, removed];
-          recalculateMadness(player);
+          recalculateMadness(player, { previousRegretCount, gameState: newState });
         }
       }
       break;
@@ -579,8 +580,9 @@ const drawRegret = (player: Player, gameState: GameState) => {
   if (card) {
     gameState.port.regretsDeck = deck;
     gameState.port.regretsDiscard = discard;
+    const previousRegretCount = player.regrets.length;
     player.regrets = [...player.regrets, card];
-    recalculateMadness(player);
+    recalculateMadness(player, { previousRegretCount, gameState });
   }
 };
 
@@ -606,10 +608,84 @@ function drawCard<T>(
   return { card, deck: workingDeck, discard: workingDiscard };
 }
 
-const recalculateMadness = (player: Player) => {
-  player.madnessLevel = Math.min(player.regrets.length, 5);
+interface MadnessContext {
+  previousRegretCount?: number;
+  gameState?: GameState;
+}
+
+const MADNESS_THRESHOLDS = [3, 5, 7];
+
+const calculateMadnessLevelFromRegrets = (regretCount: number) => {
+  return MADNESS_THRESHOLDS.reduce((level, threshold) => (
+    regretCount >= threshold ? level + 2 : level
+  ), 0);
+};
+
+const removeHighestFreshDie = (player: Player) => {
+  if (player.freshDice.length === 0) {
+    return;
+  }
+  let highestIndex = 0;
+  for (let i = 1; i < player.freshDice.length; i++) {
+    if (player.freshDice[i] > player.freshDice[highestIndex]) {
+      highestIndex = i;
+    }
+  }
+  player.freshDice.splice(highestIndex, 1);
+};
+
+const discardHighestValueMount = (player: Player) => {
+  if (player.mountedFish.length === 0) {
+    return;
+  }
+  let highestIndex = 0;
+  let highestValue = getFishCurrentValue(player.mountedFish[0].fish) * player.mountedFish[0].multiplier;
+  for (let i = 1; i < player.mountedFish.length; i++) {
+    const value = getFishCurrentValue(player.mountedFish[i].fish) * player.mountedFish[i].multiplier;
+    if (value > highestValue) {
+      highestIndex = i;
+      highestValue = value;
+    }
+  }
+  player.mountedFish.splice(highestIndex, 1);
+};
+
+const enforceFreshDiceLimit = (player: Player) => {
+  while (player.freshDice.length > player.maxDice) {
+    removeHighestFreshDie(player);
+  }
+};
+
+const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
+  const { previousRegretCount = player.regrets.length, gameState } = context;
+  const previousLevel = player.madnessLevel ?? 0;
+  const currentRegrets = player.regrets.length;
+  const gainedRegret = currentRegrets > previousRegretCount;
+
+  const newMadnessLevel = calculateMadnessLevelFromRegrets(currentRegrets);
+  player.madnessLevel = newMadnessLevel;
+
   const baseMaxDice = player.baseMaxDice ?? 3;
   player.maxDice = Math.max(baseMaxDice - Math.floor(player.madnessLevel / 2), 1);
+
+  if (previousLevel < 4 && player.madnessLevel >= 4) {
+    removeHighestFreshDie(player);
+  }
+
+  if (previousLevel < 6 && player.madnessLevel >= 6) {
+    discardHighestValueMount(player);
+  }
+
+  enforceFreshDiceLimit(player);
+
+  if (gameState && gainedRegret && previousLevel >= 6) {
+    if (player.mountedFish.length >= 2) {
+      discardHighestValueMount(player);
+      discardHighestValueMount(player);
+    } else {
+      endGame(gameState);
+    }
+  }
 };
 
 const advancePhase = (gameState: GameState) => {

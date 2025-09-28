@@ -6,7 +6,7 @@ import { RODS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
 import { CHARACTERS } from '@/data/characters';
 import { TACKLE_DICE } from '@/data/tackleDice';
-import { DEPTH_1_FISH } from '@/data/fish';
+import { DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 
 const mockCharacters: CharacterOption[] = [
   {
@@ -199,7 +199,7 @@ describe('gameReducer new actions', () => {
     expect(player.lifeboatFlipped).toBe(true);
     expect(player.regrets).toHaveLength(1);
     expect(result.port.regretsDiscard).toHaveLength(1);
-    expect(player.madnessLevel).toBe(1);
+    expect(player.madnessLevel).toBe(0);
     expect(player.maxDice).toBe(3);
   });
 
@@ -302,5 +302,161 @@ describe('gameReducer new actions', () => {
     expect(player.dinks).toHaveLength(1);
     expect(result.port.dinksDeck.length).toBe(initialDeckLength - 1);
     expect(result.sea.shoals[1][0][0]).toEqual(fish);
+  });
+});
+
+const gatherFoulFish = () => [
+  ...DEPTH_1_FISH,
+  ...DEPTH_2_FISH,
+  ...DEPTH_3_FISH
+].filter(fish => fish.quality === 'foul');
+
+describe('madness recalculation', () => {
+  it('applies madness thresholds and trims dice as regrets accumulate', () => {
+    const playerId = state.players[0].id;
+    const foulFish = gatherFoulFish();
+
+    state.players[0].location = 'port';
+    state.players[0].freshDice = [2, 4, 6];
+    state.players[0].baseMaxDice = 3;
+    state.players[0].maxDice = 3;
+    state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 7)];
+
+    const sellNextFish = () => {
+      const player = state.players[0];
+      const fishToSell = player.handFish[0];
+      state = gameReducer(state, {
+        type: 'SELL_FISH',
+        playerId,
+        payload: { fishId: fishToSell.id }
+      });
+    };
+
+    sellNextFish();
+    sellNextFish();
+    expect(state.players[0].madnessLevel).toBe(0);
+    expect(state.players[0].freshDice).toEqual([2, 4, 6]);
+
+    sellNextFish();
+    expect(state.players[0].madnessLevel).toBe(2);
+    expect(state.players[0].maxDice).toBe(2);
+    expect(state.players[0].freshDice).toEqual([2, 4]);
+
+    sellNextFish();
+    sellNextFish();
+    expect(state.players[0].madnessLevel).toBe(4);
+    expect(state.players[0].maxDice).toBe(1);
+    expect(state.players[0].freshDice).toEqual([2]);
+
+    sellNextFish();
+    sellNextFish();
+    expect(state.players[0].madnessLevel).toBe(6);
+    expect(state.players[0].maxDice).toBe(1);
+    expect(state.players[0].freshDice).toEqual([2]);
+  });
+
+  it('discards the highest-value mounted fish on reaching madness level 6', () => {
+    const playerId = state.players[0].id;
+    const foulFish = gatherFoulFish();
+
+    state.players[0].location = 'port';
+    state.players[0].freshDice = [2, 4, 6];
+    state.players[0].baseMaxDice = 3;
+    state.players[0].maxDice = 3;
+    state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
+    state.players[0].mountedFish = [
+      { slot: 0, multiplier: 1, fish: DEPTH_1_FISH[0] },
+      { slot: 1, multiplier: 2, fish: DEPTH_2_FISH[0] },
+      { slot: 2, multiplier: 2, fish: DEPTH_3_FISH[1] }
+    ];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 7)];
+
+    const sellNextFish = () => {
+      const player = state.players[0];
+      const fishToSell = player.handFish[0];
+      state = gameReducer(state, {
+        type: 'SELL_FISH',
+        playerId,
+        payload: { fishId: fishToSell.id }
+      });
+    };
+
+    for (let i = 0; i < 7; i++) {
+      sellNextFish();
+    }
+
+    const remainingMounts = state.players[0].mountedFish;
+    expect(state.players[0].madnessLevel).toBe(6);
+    expect(remainingMounts).toHaveLength(2);
+    expect(remainingMounts.find(mount => mount.fish.id === DEPTH_3_FISH[1].id)).toBeUndefined();
+  });
+
+  it('forces mounted fish sacrifices instead of collapse when possible', () => {
+    const playerId = state.players[0].id;
+    const foulFish = gatherFoulFish();
+
+    state.players[0].location = 'port';
+    state.players[0].freshDice = [2, 4, 6];
+    state.players[0].baseMaxDice = 3;
+    state.players[0].maxDice = 3;
+    state.players[0].handFish = foulFish.slice(0, 8).map(fish => ({ ...fish }));
+    state.players[0].mountedFish = [
+      { slot: 0, multiplier: 1, fish: DEPTH_1_FISH[0] },
+      { slot: 1, multiplier: 1, fish: DEPTH_2_FISH[1] },
+      { slot: 2, multiplier: 2, fish: DEPTH_3_FISH[0] }
+    ];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 8)];
+
+    const sellNextFish = () => {
+      const player = state.players[0];
+      const fishToSell = player.handFish[0];
+      state = gameReducer(state, {
+        type: 'SELL_FISH',
+        playerId,
+        payload: { fishId: fishToSell.id }
+      });
+    };
+
+    for (let i = 0; i < 8; i++) {
+      sellNextFish();
+    }
+
+    expect(state.players[0].madnessLevel).toBe(6);
+    expect(state.players[0].mountedFish).toHaveLength(0);
+    expect(state.isGameOver).toBe(false);
+  });
+
+  it('triggers immediate endgame when collapse cannot discard enough trophies', () => {
+    const playerId = state.players[0].id;
+    const foulFish = gatherFoulFish();
+
+    state.players[0].location = 'port';
+    state.players[0].freshDice = [2, 4, 6];
+    state.players[0].baseMaxDice = 3;
+    state.players[0].maxDice = 3;
+    state.players[0].handFish = foulFish.slice(0, 8).map(fish => ({ ...fish }));
+    state.players[0].mountedFish = [
+      { slot: 0, multiplier: 1, fish: DEPTH_2_FISH[0] }
+    ];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 8)];
+
+    const sellNextFish = () => {
+      const player = state.players[0];
+      const fishToSell = player.handFish[0];
+      state = gameReducer(state, {
+        type: 'SELL_FISH',
+        playerId,
+        payload: { fishId: fishToSell.id }
+      });
+    };
+
+    for (let i = 0; i < 8; i++) {
+      sellNextFish();
+    }
+
+    expect(state.players[0].madnessLevel).toBe(6);
+    expect(state.isGameOver).toBe(true);
+    expect(state.phase).toBe('endgame');
   });
 });
