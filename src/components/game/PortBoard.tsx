@@ -16,10 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RODS, REELS, SUPPLIES } from '@/data/upgrades';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
 import { GameState } from '@/types/game';
+import { cn } from '@/lib/utils';
 
 interface PortBoardProps {
   gameState: GameState;
   onAction: (action: any) => void;
+  className?: string;
 }
 
 interface UpgradeOptionProps {
@@ -85,7 +87,7 @@ const UpgradeOption = ({ item, canInteract, funds, onConfirm }: UpgradeOptionPro
   </Card>
 );
 
-export const PortBoard = ({ gameState, onAction }: PortBoardProps) => {
+export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const canInteract = currentPlayer.location === 'port' && !currentPlayer.hasPassed;
 
@@ -143,7 +145,7 @@ export const PortBoard = ({ gameState, onAction }: PortBoardProps) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={cn('flex h-full flex-col space-y-6', className)}>
       <div className="text-center">
         <h2 className="text-2xl font-bold text-primary-glow mb-2">Harbor Port</h2>
         <p className="text-muted-foreground">Safe waters for commerce and rest</p>
