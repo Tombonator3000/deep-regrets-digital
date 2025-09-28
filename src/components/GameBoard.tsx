@@ -70,23 +70,25 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   );
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
-      <div className="ocean-particles">
-        {Array.from({ length: 25 }).map((_, i) => (
-          <div
-            key={i}
-            className="particle animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 8}s`,
-              animationDuration: `${6 + Math.random() * 4}s`
-            }}
-          />
-        ))}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="ocean-particles">
+          {Array.from({ length: 25 }).map((_, i) => (
+            <div
+              key={i}
+              className="particle animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 8}s`,
+                animationDuration: `${6 + Math.random() * 4}s`
+              }}
+            />
+          ))}
+        </div>
+        <BubbleField bubbleCount={72} className="opacity-70" />
+        <div className="tentacle-shadow" />
       </div>
-      <BubbleField bubbleCount={72} className="opacity-70" />
-      <div className="tentacle-shadow" />
       
       {/* Game Over Overlay */}
       {gameState.isGameOver && (
@@ -146,9 +148,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       )}
       
       {/* Main Game Layout */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 grid grid-cols-[1.6fr,minmax(320px,0.9fr)] grid-rows-[auto,minmax(0,1fr),auto] gap-6">
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-7xl grid-rows-[auto,1fr] gap-6 px-6 py-8 min-h-0">
         {/* Header */}
-        <div className="col-span-2 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold leading-tight text-primary-glow">DEEP REGRETS</h1>
             <p className="text-sm text-muted-foreground">Digital Edition</p>
@@ -174,68 +176,69 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
         </div>
 
-        {/* Sea Board Column */}
-        <div className="row-span-1 overflow-hidden rounded-3xl border border-white/10 bg-background/60 backdrop-blur">
-          <div className="h-full overflow-auto p-6">
-            <SeaBoard
-              gameState={gameState}
-              selectedShoal={selectedShoal}
-              onShoalSelect={(selection) => {
-                setSelectedShoal(selection);
-                setShoalDialogOpen(true);
-              }}
-              onInspectShoal={(selection) => {
-                setSelectedShoal(selection);
-                setShoalDialogOpen(true);
-              }}
-              onAction={onAction}
-            />
+        {/* Columns */}
+        <div className="grid h-full min-h-0 grid-cols-[1.6fr,minmax(320px,0.9fr)] gap-6">
+          {/* Sea Board Column */}
+          <div className="min-h-0 overflow-hidden rounded-3xl border border-white/10 bg-background/60 backdrop-blur">
+            <div className="h-full min-h-0 overflow-auto p-6">
+              <SeaBoard
+                gameState={gameState}
+                selectedShoal={selectedShoal}
+                onShoalSelect={(selection) => {
+                  setSelectedShoal(selection);
+                  setShoalDialogOpen(true);
+                }}
+                onInspectShoal={(selection) => {
+                  setSelectedShoal(selection);
+                  setShoalDialogOpen(true);
+                }}
+                onAction={onAction}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Status Column */}
-        <div className="row-span-1 space-y-6 rounded-3xl border border-white/10 bg-background/50 p-6 backdrop-blur">
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-primary">Captain's Log</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage port business and your crew sheet through the modals. Keep your attention on the sea board to steer the day.
-            </p>
+          {/* Status & Actions Column */}
+          <div className="flex min-h-0 flex-col gap-6 rounded-3xl border border-white/10 bg-background/50 p-6 backdrop-blur">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-primary">Captain's Log</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage port business and your crew sheet through the modals. Keep your attention on the sea board to steer the day.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Location</span>
+                <span className="font-semibold text-foreground">
+                  {currentPlayer.location === 'sea' ? `🌊 At Sea (Depth ${currentPlayer.currentDepth})` : '⚓ In Port'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Fishbucks</span>
+                <span className="font-semibold text-fishbuck">${currentPlayer.fishbucks}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Regrets</span>
+                <span className="font-semibold text-destructive">{currentPlayer.regrets.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Dice Ready</span>
+                <span className="font-semibold text-foreground">
+                  {currentPlayer.freshDice.length}/{currentPlayer.maxDice}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Madness Level</span>
+                <span className="font-semibold text-primary">{currentPlayer.madnessLevel}</span>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-background/70 p-6 backdrop-blur overflow-y-auto">
+              <ActionPanel
+                gameState={gameState}
+                selectedShoal={selectedShoal}
+                onAction={onAction}
+              />
+            </div>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Location</span>
-              <span className="font-semibold text-foreground">
-                {currentPlayer.location === 'sea' ? `🌊 At Sea (Depth ${currentPlayer.currentDepth})` : '⚓ In Port'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Fishbucks</span>
-              <span className="font-semibold text-fishbuck">${currentPlayer.fishbucks}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Regrets</span>
-              <span className="font-semibold text-destructive">{currentPlayer.regrets.length}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Dice Ready</span>
-              <span className="font-semibold text-foreground">
-                {currentPlayer.freshDice.length}/{currentPlayer.maxDice}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Madness Level</span>
-              <span className="font-semibold text-primary">{currentPlayer.madnessLevel}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Action Panel */}
-        <div className="col-span-2 rounded-2xl border border-white/10 bg-background/70 p-6 backdrop-blur">
-          <ActionPanel
-            gameState={gameState}
-            selectedShoal={selectedShoal}
-            onAction={onAction}
-          />
         </div>
       </div>
 
