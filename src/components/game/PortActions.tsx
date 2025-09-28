@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FishCard, GameState, Player, UpgradeCard } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
+import { getSlotMultiplier } from '@/utils/mounting';
 
 interface PortActionsProps {
   gameState: GameState;
@@ -127,7 +128,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                   <div className="flex gap-1">
                     {mountingSlots.map((slotIndex) => {
                       const isOccupied = currentPlayer.mountedFish.some(mount => mount.slot === slotIndex);
-                      const multiplier = slotIndex === 0 ? 1 : slotIndex === 1 ? 2 : 3;
+                      const multiplier = getSlotMultiplier(slotIndex);
                       
                       return (
                         <Button

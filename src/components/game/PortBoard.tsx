@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RODS, REELS, SUPPLIES } from '@/data/upgrades';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
+import { getSlotMultiplier } from '@/utils/mounting';
 import { TACKLE_DICE } from '@/data/tackleDice';
 import { GameState } from '@/types/game';
 import { cn } from '@/lib/utils';
@@ -308,7 +309,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                               <div className="flex flex-col gap-2 sm:flex-row">
                                 {mountingSlots.map((slotIndex) => {
                                   const isOccupied = currentPlayer.mountedFish.some((mount) => mount.slot === slotIndex);
-                                  const multiplier = slotIndex === 0 ? 1 : slotIndex === 1 ? 2 : 3;
+                                  const multiplier = getSlotMultiplier(slotIndex);
                                   const isSelected =
                                     activeMountFishId === fish.id && selectedMountSlot === slotIndex && !isOccupied;
 
