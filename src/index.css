@@ -90,19 +90,17 @@ All colors MUST be HSL for consistency.
   }
 
   body {
-    @apply bg-background text-foreground overflow-hidden;
+    @apply bg-background text-foreground;
     background: var(--gradient-ocean);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
-  
+
   /* Floating particles animation */
   .ocean-particles {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: absolute;
+    inset: 0;
     pointer-events: none;
+    overflow: hidden;
     z-index: 0;
   }
   
@@ -124,11 +122,8 @@ All colors MUST be HSL for consistency.
   
   /* Tentacle shadows */
   .tentacle-shadow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: absolute;
+    inset: 0;
     pointer-events: none;
     background: radial-gradient(circle at 20% 80%, hsl(var(--tentacle) / 0.1) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, hsl(var(--tentacle) / 0.08) 0%, transparent 40%);

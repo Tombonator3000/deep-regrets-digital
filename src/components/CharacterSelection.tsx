@@ -30,7 +30,7 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
       {/* Background effects */}
       <div className="ocean-particles">
         {Array.from({ length: 15 }).map((_, i) => (
