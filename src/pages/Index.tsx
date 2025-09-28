@@ -5,6 +5,7 @@ import { GameBoard } from '@/components/GameBoard';
 import { CharacterOption, GameState, GameAction } from '@/types/game';
 import { initializeGame, gameReducer } from '@/utils/gameEngine';
 import { useToast } from '@/hooks/use-toast';
+import { useAudio } from '@/context/AudioContext';
 
 type GameScreen = 'start' | 'character-selection' | 'game';
 
@@ -13,6 +14,7 @@ const Index = () => {
   const [playerCount, setPlayerCount] = useState(2);
   const [gameState, dispatch] = useReducer<Reducer<GameState | null, GameAction>>(gameReducer, null);
   const { toast } = useToast();
+  const { play, isMusicEnabled, playBubbleSfx } = useAudio();
 
   const handleStartGame = (players: number) => {
     setPlayerCount(players);
@@ -31,6 +33,12 @@ const Index = () => {
       title: "Game Started!",
       description: "Your voyage into the deep begins. May fortune favor the bold.",
     });
+
+    if (isMusicEnabled) {
+      void play();
+    }
+
+    playBubbleSfx();
   };
 
   const handleBackToStart = () => {

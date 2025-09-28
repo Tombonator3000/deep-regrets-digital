@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CHARACTERS } from '@/data/characters';
 import { CharacterOption } from '@/types/game';
+import { BubbleField } from '@/components/effects/BubbleField';
 
 interface CharacterSelectionProps {
   playerCount: number;
@@ -34,7 +35,7 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }
       {/* Background effects */}
       <div className="ocean-particles">
         {Array.from({ length: 15 }).map((_, i) => (
-          <div 
+          <div
             key={i}
             className="particle animate-float"
             style={{
@@ -44,6 +45,7 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }
           />
         ))}
       </div>
+      <BubbleField bubbleCount={56} className="opacity-70" />
       <div className="tentacle-shadow" />
       
       <div className="relative z-10 w-full max-w-6xl">

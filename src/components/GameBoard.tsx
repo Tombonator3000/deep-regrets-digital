@@ -7,6 +7,7 @@ import { DayTracker } from './game/DayTracker';
 import { ActionPanel } from './game/ActionPanel';
 import { Button } from '@/components/ui/button';
 import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
+import { BubbleField } from '@/components/effects/BubbleField';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -33,7 +34,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       {/* Background effects */}
       <div className="ocean-particles">
         {Array.from({ length: 25 }).map((_, i) => (
-          <div 
+          <div
             key={i}
             className="particle animate-float"
             style={{
@@ -44,6 +45,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           />
         ))}
       </div>
+      <BubbleField bubbleCount={72} className="opacity-70" />
       <div className="tentacle-shadow" />
       
       {/* Game Over Overlay */}

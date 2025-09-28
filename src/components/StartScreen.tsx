@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import logoImage from '@/assets/deep-regrets-logo.jpg';
+import { BubbleField } from '@/components/effects/BubbleField';
+import { AudioSettingsPanel } from '@/components/AudioSettingsPanel';
 
 interface StartScreenProps {
   onStartGame: (playerCount: number) => void;
@@ -42,7 +44,8 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
           />
         ))}
       </div>
-      
+      <BubbleField bubbleCount={64} className="opacity-80" />
+
       {/* Tentacle shadows */}
       <div className="tentacle-shadow" />
       
@@ -142,14 +145,19 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         </div>
 
         <Dialog open={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Options</DialogTitle>
               <DialogDescription>
-                Additional configuration for Deep Regrets will live here. Adjust audio, accessibility, and gameplay tweaks once
-                they become available.
+                Fine tune your voyage before you descend. Configure music sourced from the muzak archives and test ambient effects.
               </DialogDescription>
             </DialogHeader>
+            <div className="mt-6 space-y-6">
+              <AudioSettingsPanel />
+              <p className="text-xs text-muted-foreground italic">
+                Tip: Place MP3 files inside <code>src/assets/muzak</code> to make them available as selectable soundtracks.
+              </p>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
