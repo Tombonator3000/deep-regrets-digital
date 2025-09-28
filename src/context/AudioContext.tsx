@@ -42,9 +42,13 @@ interface AudioContextValue {
 
 const AudioManagerContext = createContext<AudioContextValue | undefined>(undefined);
 
-const musicModules = import.meta.glob<{ default: string }>('../assets/muzak/*.mp3', {
-  eager: true,
-});
+const musicModules = import.meta.glob<string | { default: string }>(
+  '../assets/muzak/*.mp3',
+  {
+    eager: true,
+    import: 'default',
+  },
+);
 
 const normaliseTrackName = (path: string, index: number) => {
   const fileName = path.split('/').pop() ?? `track-${index + 1}`;
@@ -64,11 +68,21 @@ const normaliseTrackName = (path: string, index: number) => {
 export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const tracks = useMemo<AudioTrack[]>(() => {
     return Object.entries(musicModules)
-      .map(([path, module], index) => ({
-        id: `track-${index}`,
-        name: normaliseTrackName(path, index),
-        url: module.default,
-      }))
+      .map(([path, module], index) => {
+        const url = typeof module === 'string' ? module : module?.default;
+
+        if (!url) {
+          console.warn(`[audio] Unable to resolve track URL for "${path}"`);
+          return null;
+        }
+
+        return {
+          id: `track-${index}`,
+          name: normaliseTrackName(path, index),
+          url,
+        } satisfies AudioTrack;
+      })
+      .filter((track): track is AudioTrack => track !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 
