@@ -112,14 +112,66 @@ All colors MUST be HSL for consistency.
     border-radius: 50%;
     animation: float 8s infinite ease-in-out;
   }
-  
+
   @keyframes float {
     0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { transform: translateY(-10vh) scale(1); opacity: 0; }
   }
-  
+
+  /* Rising bubble field */
+  .bubble-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .bubble {
+    position: absolute;
+    bottom: -15vh;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, hsl(var(--primary-glow) / 0.45) 0%, hsl(var(--primary-glow) / 0.08) 60%, transparent 100%);
+    box-shadow: 0 0 20px hsl(var(--primary-glow) / 0.25);
+    opacity: 0;
+    animation-name: bubble-rise;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    --bubble-drift: 0px;
+  }
+
+  .bubble::after {
+    content: "";
+    position: absolute;
+    inset: 15% 25% auto;
+    width: 40%;
+    height: 40%;
+    background: hsl(var(--primary-glow) / 0.35);
+    border-radius: 50%;
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+
+  @keyframes bubble-rise {
+    0% {
+      transform: translate3d(0, 0, 0) scale(0.6);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.75;
+    }
+    50% {
+      transform: translate3d(calc(var(--bubble-drift) * 0.5), -45vh, 0) scale(1);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate3d(var(--bubble-drift), -115vh, 0) scale(1.15);
+      opacity: 0;
+    }
+  }
+
   /* Tentacle shadows */
   .tentacle-shadow {
     position: absolute;
