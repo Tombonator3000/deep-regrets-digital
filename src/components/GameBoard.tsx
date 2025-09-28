@@ -19,6 +19,7 @@ import {
   MoreHorizontal,
   Settings2,
   UserRound,
+  X,
 } from 'lucide-react';
 import {
   Dialog,
@@ -28,6 +29,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
@@ -47,6 +57,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+  const portButtonRef = useRef<HTMLButtonElement>(null);
+  const sheetCloseRef = useRef<HTMLButtonElement>(null);
+  const wasPortOpenRef = useRef(false);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
@@ -98,6 +111,15 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (isPortOpen) {
+      sheetCloseRef.current?.focus();
+    } else if (wasPortOpenRef.current) {
+      portButtonRef.current?.focus();
+    }
+    wasPortOpenRef.current = isPortOpen;
+  }, [isPortOpen]);
 
   const toggleFullscreen = async () => {
     try {
@@ -212,14 +234,52 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:justify-end lg:w-auto lg:gap-3">
             <div className="flex flex-1 flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1 backdrop-blur-sm sm:flex-none">
-              <Button
-                size="sm"
-                className="btn-ocean flex items-center gap-2"
-                onClick={() => setIsPortOpen(true)}
-              >
-                <Anchor className="h-4 w-4" />
-                <span>Harbor Port</span>
-              </Button>
+              <Sheet open={isPortOpen} onOpenChange={setIsPortOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    ref={portButtonRef}
+                    size="sm"
+                    className="btn-ocean flex items-center gap-2"
+                  >
+                    <Anchor className="h-4 w-4" />
+                    <span>Harbor Port</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="flex h-full w-full max-w-5xl flex-col overflow-hidden border border-white/20 bg-background/80 p-0 backdrop-blur-xl [&>button[data-radix-dialog-close]]:hidden"
+                >
+                  <SheetHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-6 py-4 text-left">
+                    <div className="space-y-1 text-left">
+                      <SheetTitle className="text-2xl font-bold text-primary-glow">Harbor Port</SheetTitle>
+                      <SheetDescription className="text-sm text-muted-foreground">
+                        Safe waters for commerce and rest.
+                      </SheetDescription>
+                    </div>
+                    <SheetClose asChild>
+                      <Button
+                        ref={sheetCloseRef}
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close Harbor Port</span>
+                      </Button>
+                    </SheetClose>
+                  </SheetHeader>
+                  <div className="flex flex-1 flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto px-6 py-6">
+                      <PortBoard
+                        className="h-full"
+                        gameState={gameState}
+                        onAction={onAction}
+                      />
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
               <Button
                 size="sm"
                 type="button"
@@ -487,17 +547,6 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               Pass on Catch
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isPortOpen} onOpenChange={setIsPortOpen}>
-        <DialogContent className="max-w-5xl bg-background/80 backdrop-blur-xl border border-white/20">
-          <div className="max-h-[75vh] overflow-y-auto pr-2">
-            <PortBoard
-              gameState={gameState}
-              onAction={onAction}
-            />
-          </div>
         </DialogContent>
       </Dialog>
 
