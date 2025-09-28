@@ -1,4 +1,4 @@
-import { useState, useReducer, Reducer } from 'react';
+import { useState, useReducer, Reducer, useEffect } from 'react';
 import { StartScreen } from '@/components/StartScreen';
 import { CharacterSelection } from '@/components/CharacterSelection';
 import { GameBoard } from '@/components/GameBoard';
@@ -14,7 +14,16 @@ const Index = () => {
   const [playerCount, setPlayerCount] = useState(2);
   const [gameState, dispatch] = useReducer<Reducer<GameState | null, GameAction>>(gameReducer, null);
   const { toast } = useToast();
-  const { play, isMusicEnabled, playBubbleSfx } = useAudio();
+  const { play, pause, isMusicEnabled, playBubbleSfx } = useAudio();
+
+  useEffect(() => {
+    if (currentScreen === 'game' && isMusicEnabled) {
+      void play();
+      return;
+    }
+
+    pause();
+  }, [currentScreen, isMusicEnabled, pause, play]);
 
   const handleStartGame = (players: number) => {
     setPlayerCount(players);
@@ -33,10 +42,6 @@ const Index = () => {
       title: "Game Started!",
       description: "Your voyage into the deep begins. May fortune favor the bold.",
     });
-
-    if (isMusicEnabled) {
-      void play();
-    }
 
     playBubbleSfx();
   };
