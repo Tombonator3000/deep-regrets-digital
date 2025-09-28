@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GameState, FishCard } from '@/types/game';
 import { SeaBoard } from './game/SeaBoard';
 import { PortBoard } from './game/PortBoard';
@@ -17,6 +17,7 @@ import {
 import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
+import { AudioSettingsPanel } from '@/components/AudioSettingsPanel';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -29,6 +30,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   const [shoalDialogOpen, setShoalDialogOpen] = useState(false);
   const [isPortOpen, setIsPortOpen] = useState(false);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
@@ -69,8 +73,32 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
     b.breakdown.totalScore - a.breakdown.totalScore
   );
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await boardRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Failed to toggle fullscreen mode', error);
+    }
+  };
+
   return (
-    <div className="relative h-dvh min-h-0 overflow-hidden bg-background">
+    <div ref={boardRef} className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
         <div className="ocean-particles">
@@ -172,6 +200,22 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
             </Button>
             <Button variant="outline" className="border-white/30 bg-white/5 backdrop-blur" onClick={() => setIsPlayerOpen(true)}>
               View Captain Sheet
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/30 bg-white/5 backdrop-blur"
+              onClick={() => setIsOptionsOpen(true)}
+            >
+              Options
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-white/80 hover:text-white"
+              onClick={toggleFullscreen}
+            >
+              {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
             </Button>
           </div>
         </div>
@@ -418,6 +462,20 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               isCurrentPlayer={isPlayerTurn}
               onAction={onAction}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Options</DialogTitle>
+            <DialogDescription>
+              Adjust audio preferences while you remain on the bridge.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6">
+            <AudioSettingsPanel />
           </div>
         </DialogContent>
       </Dialog>
