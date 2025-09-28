@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FishCard, GameState, Player, UpgradeCard } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
+import { calculateFishSaleValue } from '@/utils/gameEngine';
 
 interface PortActionsProps {
   gameState: GameState;
@@ -21,6 +22,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
   }
 
   const handleSellFish = (fish: FishCard) => {
+    const saleDetails = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
     onAction({
       type: 'SELL_FISH',
       playerId: currentPlayer.id,
@@ -28,7 +30,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
     });
     toast({
       title: "Fish Sold",
-      description: `Sold ${fish.name} for ${fish.value} Fishbucks`,
+      description: `Sold ${fish.name} for ${saleDetails.adjustedValue} Fishbucks`,
     });
   };
 
@@ -92,6 +94,9 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                   <div>
                     <h5 className="font-medium text-primary-glow">{fish.name}</h5>
                     <p className="text-sm text-muted-foreground">Value: {fish.value} Fishbucks</p>
+                    {fish.quality === 'foul' && (
+                      <p className="text-xs text-destructive font-semibold">Selling draws 1 Regret.</p>
+                    )}
                   </div>
                   <Button
                     onClick={() => handleSellFish(fish)}

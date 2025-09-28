@@ -2,6 +2,7 @@ import { GameState } from '@/types/game';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RODS, REELS, SUPPLIES } from '@/data/upgrades';
+import { calculateFishSaleValue } from '@/utils/gameEngine';
 
 interface PortBoardProps {
   gameState: GameState;
@@ -62,32 +63,57 @@ export const PortBoard = ({ gameState, onAction }: PortBoardProps) => {
             <CardTitle className="text-lg">Your Catch</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {currentPlayer.handFish.map((fish) => (
-              <div key={fish.id} className="flex items-center justify-between p-2 border border-border rounded">
-                <div>
-                  <div className="font-medium">{fish.name}</div>
-                  <div className="text-sm text-muted-foreground">Value: {fish.value}</div>
+            {currentPlayer.handFish.map((fish) => {
+              const saleDetails = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+              const modifierText = saleDetails.modifier !== 0
+                ? ` • Modifiers ${saleDetails.modifier > 0 ? '+' : ''}${saleDetails.modifier}`
+                : '';
+              const madnessText = saleDetails.madnessPenalty > 0
+                ? ` • Madness -${saleDetails.madnessPenalty}`
+                : '';
+
+              return (
+                <div key={fish.id} className="flex items-center justify-between p-2 border border-border rounded">
+                  <div>
+                    <div className="font-medium flex items-center gap-2">
+                      {fish.name}
+                      <span className={`text-xs uppercase tracking-wide font-semibold ${fish.quality === 'foul' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {fish.quality === 'foul' ? 'Foul' : 'Fair'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Base {saleDetails.baseValue}{modifierText}{madnessText}
+                    </div>
+                    <div className="text-sm">
+                      Sale Value: <span className="text-primary-glow font-medium">${saleDetails.adjustedValue}</span>
+                    </div>
+                    {fish.quality === 'foul' && (
+                      <div className="text-xs text-destructive font-semibold mt-1">
+                        Selling draws 1 Regret.
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSellFish(fish.id)}
+                      disabled={!canInteract}
+                    >
+                      Sell (${saleDetails.adjustedValue})
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleMountFish(fish.id, 1)} // Simplified slot selection
+                      disabled={!canInteract}
+                      className="btn-ocean"
+                    >
+                      Mount
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleSellFish(fish.id)}
-                    disabled={!canInteract}
-                  >
-                    Sell (${fish.value})
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleMountFish(fish.id, 1)} // Simplified slot selection
-                    disabled={!canInteract}
-                    className="btn-ocean"
-                  >
-                    Mount
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}

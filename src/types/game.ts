@@ -8,11 +8,13 @@ export interface FishCard {
   name: string;
   depth: Depth;
   value: number;
+  baseValue: number;
   difficulty: number;
   abilities: string[];
   tags: string[];
   description: string;
   image?: string;
+  quality: 'fair' | 'foul';
 }
 
 export interface RegretCard {
