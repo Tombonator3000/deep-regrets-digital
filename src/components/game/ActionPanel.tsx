@@ -1,5 +1,7 @@
 import { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
+import { FishingActions } from './FishingActions';
+import { PortActions } from './PortActions';
 import { Card } from '@/components/ui/card';
 
 interface ActionPanelProps {
@@ -29,87 +31,91 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
     });
   };
 
-  const getAvailableActions = () => {
-    const actions = [];
-    
-    if (!isPlayerTurn) {
-      return ['Waiting for other players...'];
-    }
-
-    if (currentPlayer.location === 'sea') {
-      actions.push('Reveal Fish', 'Catch Fish', 'Move/Descend', 'Draw Dink');
-    } else {
-      actions.push('Sell Fish', 'Mount Fish', 'Buy Equipment', 'Use Port Services');
-    }
-
-    return actions;
+  const handleDeclareLocation = (location: 'sea' | 'port') => {
+    onAction({
+      type: 'DECLARE_LOCATION',
+      playerId: currentPlayer.id,
+      payload: { location }
+    });
   };
 
   return (
-    <Card className="card-game p-4">
-      <div className="flex items-center justify-between">
-        {/* Action Summary */}
-        <div className="space-y-1">
-          <div className="text-sm font-medium">
-            {isPlayerTurn ? `${currentPlayer.name}'s Turn` : 'Waiting...'}
+    <div className="space-y-4">
+      {/* Phase Header */}
+      <Card className="card-game p-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="text-lg font-semibold text-primary-glow">
+              {currentPlayer.name}'s Turn
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Day: {gameState.day} | Phase: {gameState.phase}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Location: {currentPlayer.location === 'sea' ? `Sea (Depth ${currentPlayer.currentDepth})` : 'Port'}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Fishbucks: {currentPlayer.fishbucks} | Fresh Dice: {currentPlayer.freshDice.length}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Available actions: {getAvailableActions().join(', ')}
-          </div>
-        </div>
 
-        {/* Phase Controls */}
-        <div className="flex items-center space-x-3">
-          <div className="text-sm text-muted-foreground">
-            {gameState.phase} phase
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="space-x-2">
+          <div className="flex gap-2">
             {gameState.phase === 'declaration' && (
-              <Button
-                onClick={() => onAction({
-                  type: 'DECLARE_LOCATION',
-                  playerId: currentPlayer.id,
-                  payload: { location: currentPlayer.location === 'sea' ? 'port' : 'sea' }
-                })}
-                disabled={!isPlayerTurn}
-                className="btn-ocean"
-                size="sm"
-              >
-                Declare {currentPlayer.location === 'sea' ? 'Port' : 'Sea'}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => handleDeclareLocation('sea')} 
+                  variant={currentPlayer.location === 'sea' ? "default" : "outline"}
+                  className={currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}
+                >
+                  Go to Sea
+                </Button>
+                <Button 
+                  onClick={() => handleDeclareLocation('port')} 
+                  variant={currentPlayer.location === 'port' ? "default" : "outline"}
+                  className={currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}
+                >
+                  Go to Port
+                </Button>
+              </div>
+            )}
+            
+            {gameState.phase === 'action' && isPlayerTurn && (
+              <Button onClick={handleEndTurn} variant="outline" className="border-primary/30">
+                Pass Turn
               </Button>
             )}
             
-            {isPlayerTurn && (
-              <Button
-                onClick={handleEndTurn}
-                variant="outline"
-                size="sm"
-              >
-                End Turn
-              </Button>
-            )}
-            
-            {gameState.phase !== 'action' && (
-              <Button
-                onClick={handleNextPhase}
-                variant="outline"
-                size="sm"
-              >
-                Next Phase
-              </Button>
-            )}
+            <Button onClick={handleNextPhase} className="btn-ocean">
+              Next Phase
+            </Button>
           </div>
         </div>
+      </Card>
 
-        {/* Selected Info */}
-        {selectedShoal && (
-          <div className="text-sm text-primary">
-            Selected: Depth {selectedShoal.depth}, Shoal {selectedShoal.shoal + 1}
-          </div>
-        )}
-      </div>
-    </Card>
+      {/* Location-specific actions */}
+      {gameState.phase === 'action' && isPlayerTurn && (
+        <>
+          <FishingActions 
+            gameState={gameState}
+            currentPlayer={currentPlayer}
+            selectedShoal={selectedShoal}
+            onAction={onAction}
+          />
+          <PortActions 
+            gameState={gameState}
+            currentPlayer={currentPlayer}
+            onAction={onAction}
+          />
+        </>
+      )}
+      
+      {selectedShoal && (
+        <Card className="card-game p-3">
+          <p className="text-sm">
+            <strong>Selected:</strong> Depth {selectedShoal.depth}, Shoal {selectedShoal.shoal + 1}
+          </p>
+        </Card>
+      )}
+    </div>
   );
 };

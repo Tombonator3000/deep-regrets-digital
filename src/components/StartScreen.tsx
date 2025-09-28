@@ -30,21 +30,13 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       
       {/* Main content */}
       <div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto px-6">
-        {/* Logo - Clickable */}
-        <div className="mb-8 relative group">
+        {/* Logo */}
+        <div className="mb-8">
           <img 
             src={logoImage} 
             alt="Deep Regrets - An Unfortunate Fishing Game"
-            className="w-full max-w-md mx-auto rounded-xl shadow-2xl animate-tentacle-sway cursor-pointer hover:scale-105 transition-transform duration-300"
-            onClick={() => onStartGame(2)} // Default to 2 players when clicking logo
-            title="Click to start with 2 players"
+            className="w-full max-w-md mx-auto rounded-xl shadow-2xl animate-tentacle-sway"
           />
-          <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 rounded-xl transition-colors duration-300 pointer-events-none" />
-          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-lg text-xs font-medium shadow-lg">
-              Click to Quick Start! ⚡
-            </div>
-          </div>
         </div>
         
         {/* Title and subtitle */}
@@ -58,9 +50,6 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
           <p className="text-lg text-foreground/80 max-w-lg mx-auto">
             Venture into the dark depths of the ocean, catch eldritch fish, and manage your growing regrets 
             in this push-your-luck fishing adventure.
-          </p>
-          <p className="text-sm text-primary-glow italic">
-            💡 Tip: Click the logo above to quick-start with 2 players!
           </p>
         </div>
         
