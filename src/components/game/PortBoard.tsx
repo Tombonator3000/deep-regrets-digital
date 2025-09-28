@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RODS, REELS, SUPPLIES } from '@/data/upgrades';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
+import { TACKLE_DICE } from '@/data/tackleDice';
 import { GameState } from '@/types/game';
 import { cn } from '@/lib/utils';
 
@@ -117,12 +118,20 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
     });
   };
 
-  const handleBuyTackleDice = (count: number, cost: number) => {
-    if (currentPlayer.fishbucks >= cost) {
+  const standardTackleDie = TACKLE_DICE[0];
+
+  const handleBuyTackleDice = (dieId: string, count: number) => {
+    const selectedDie = TACKLE_DICE.find(die => die.id === dieId);
+    if (!selectedDie) {
+      return;
+    }
+
+    const totalCost = selectedDie.cost * count;
+    if (currentPlayer.fishbucks >= totalCost) {
       onAction({
         type: 'BUY_TACKLE_DICE',
         playerId: currentPlayer.id,
-        payload: { count, cost }
+        payload: { dieId, count }
       });
     }
   };
@@ -317,7 +326,10 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[1, 2, 3].map((count) => {
-                  const cost = count * 2;
+                  if (!standardTackleDie) {
+                    return null;
+                  }
+                  const cost = count * standardTackleDie.cost;
                   return (
                     <Dialog key={count}>
                       <DialogTrigger asChild>
@@ -350,7 +362,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                             <Button
                               className="btn-ocean"
                               disabled={!canInteract || currentPlayer.fishbucks < cost}
-                              onClick={() => handleBuyTackleDice(count, cost)}
+                              onClick={() => handleBuyTackleDice(standardTackleDie.id, count)}
                             >
                               Confirm Purchase
                             </Button>
