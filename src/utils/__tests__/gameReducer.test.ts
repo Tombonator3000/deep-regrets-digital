@@ -4,6 +4,7 @@ import { CharacterOption, GameState } from '@/types/game';
 import { REGRET_CARDS } from '@/data/regrets';
 import { RODS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
+import { CHARACTERS } from '@/data/characters';
 
 const mockCharacters: CharacterOption[] = [
   {
@@ -20,6 +21,37 @@ let state: GameState;
 
 beforeEach(() => {
   state = initializeGame(mockCharacters);
+});
+
+describe('character starting bonuses', () => {
+  it('grants unique advantages to each captain', () => {
+    const characterState = initializeGame(CHARACTERS);
+    const playerByCharacter = Object.fromEntries(
+      characterState.players.map(player => [player.character, player])
+    );
+
+    const ahab = playerByCharacter['ahab'];
+    expect(ahab.fishbucks).toBe(5);
+    expect(ahab.equippedRod?.type).toBe('rod');
+
+    const nemo = playerByCharacter['nemo'];
+    expect(nemo.equippedReel?.type).toBe('reel');
+    expect(nemo.regretShields).toBeGreaterThanOrEqual(1);
+
+    const marina = playerByCharacter['marina'];
+    expect(marina.currentDepth).toBe(2);
+    expect(marina.dinks.length).toBe(1);
+
+    const finn = playerByCharacter['finn'];
+    expect(finn.fishbucks).toBe(6);
+    expect(finn.rerollOnes).toBe(true);
+
+    const storm = playerByCharacter['storm'];
+    expect(storm.maxDice).toBe(4);
+    expect(storm.maxMountSlots).toBe(4);
+
+    expect(characterState.port.dinksDeck.length).toBe(DINK_CARDS.length - marina.dinks.length);
+  });
 });
 
 describe('gameReducer new actions', () => {
