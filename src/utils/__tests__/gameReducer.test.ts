@@ -6,6 +6,7 @@ import { RODS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
 import { CHARACTERS } from '@/data/characters';
 import { TACKLE_DICE } from '@/data/tackleDice';
+import { DEPTH_1_FISH } from '@/data/fish';
 
 const mockCharacters: CharacterOption[] = [
   {
@@ -218,5 +219,88 @@ describe('gameReducer new actions', () => {
 
     expect(player.dinks).toHaveLength(1);
     expect(result.port.dinksDeck.length).toBe(initialDeckLength - 1);
+  });
+
+  it('spends only the selected dice to catch a fish and leaves the rest fresh', () => {
+    const fish = DEPTH_1_FISH[1];
+    state.players[0].freshDice = [1, 2, 5];
+    state.sea.shoals[1][0] = [fish];
+
+    const action = {
+      type: 'CATCH_FISH',
+      playerId: state.players[0].id,
+      payload: {
+        fish,
+        depth: 1,
+        shoal: 0,
+        diceIndices: [1, 2]
+      }
+    };
+
+    const result = gameReducer(state, action);
+    const player = result.players[0];
+
+    expect(player.handFish).toContainEqual(fish);
+    expect(player.freshDice).toEqual([1]);
+    expect(player.spentDice.slice(-2)).toEqual([2, 5]);
+    expect(result.sea.shoals[1][0]).toHaveLength(0);
+  });
+
+  it('enforces the dink penalty when there are not enough dice to catch a fish', () => {
+    const fish = DEPTH_1_FISH[4];
+    state.players[0].freshDice = [2];
+    state.sea.shoals[1][0] = [fish];
+    state.port.dinksDeck = [...DINK_CARDS.slice(0, 3)];
+    const initialDeckLength = state.port.dinksDeck.length;
+
+    const action = {
+      type: 'CATCH_FISH',
+      playerId: state.players[0].id,
+      payload: {
+        fish,
+        depth: 1,
+        shoal: 0,
+        diceIndices: [0]
+      }
+    };
+
+    const result = gameReducer(state, action);
+    const player = result.players[0];
+
+    expect(player.handFish).not.toContainEqual(fish);
+    expect(player.freshDice).toHaveLength(0);
+    expect(player.spentDice.slice(-1)[0]).toBe(2);
+    expect(player.dinks).toHaveLength(1);
+    expect(result.port.dinksDeck.length).toBe(initialDeckLength - 1);
+    expect(result.sea.shoals[1][0][0]).toEqual(fish);
+  });
+
+  it('applies the dink penalty when a player passes on a fish', () => {
+    const fish = DEPTH_1_FISH[0];
+    state.players[0].freshDice = [3, 4];
+    state.sea.shoals[1][0] = [fish];
+    state.port.dinksDeck = [...DINK_CARDS.slice(0, 2)];
+    const initialDeckLength = state.port.dinksDeck.length;
+
+    const action = {
+      type: 'CATCH_FISH',
+      playerId: state.players[0].id,
+      payload: {
+        fish,
+        depth: 1,
+        shoal: 0,
+        diceIndices: []
+      }
+    };
+
+    const result = gameReducer(state, action);
+    const player = result.players[0];
+
+    expect(player.handFish).toHaveLength(0);
+    expect(player.spentDice.slice(-1)[0]).toBe(3);
+    expect(player.freshDice).toEqual([4]);
+    expect(player.dinks).toHaveLength(1);
+    expect(result.port.dinksDeck.length).toBe(initialDeckLength - 1);
+    expect(result.sea.shoals[1][0][0]).toEqual(fish);
   });
 });

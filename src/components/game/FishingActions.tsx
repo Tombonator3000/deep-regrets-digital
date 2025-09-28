@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ interface FishingActionsProps {
 }
 
 export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onAction }: FishingActionsProps) => {
-  const [selectedDice, setSelectedDice] = useState<number[]>([]);
+  const [selectedDiceIndices, setSelectedDiceIndices] = useState<number[]>([]);
   const { toast } = useToast();
 
   if (currentPlayer.location !== 'sea') {
@@ -23,6 +23,12 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   const canMoveDeeper = currentPlayer.currentDepth < 3;
   const canRevealFish = selectedShoal && gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length > 0;
   const revealedFish = selectedShoal ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal][0] : null;
+  const availableDiceTotal = currentPlayer.freshDice.reduce((sum, val) => sum + val, 0);
+  const selectedDiceTotal = selectedDiceIndices.reduce((sum, idx) => sum + (currentPlayer.freshDice[idx] ?? 0), 0);
+
+  useEffect(() => {
+    setSelectedDiceIndices(prev => prev.filter(index => index < currentPlayer.freshDice.length));
+  }, [currentPlayer.freshDice.length]);
 
   const handleMoveDeeper = () => {
     if (canMoveDeeper) {
@@ -53,42 +59,61 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   };
 
   const handleCatchFish = () => {
-    if (!revealedFish || !selectedShoal || selectedDice.length === 0) return;
+    if (!revealedFish || !selectedShoal || selectedDiceIndices.length === 0) return;
 
-    const totalDiceValue = selectedDice.reduce((sum, val) => sum + val, 0);
-    
-    if (totalDiceValue >= revealedFish.difficulty) {
-      onAction({
-        type: 'CATCH_FISH',
-        playerId: currentPlayer.id,
-        payload: {
-          fish: revealedFish,
-          diceUsed: selectedDice,
-          depth: selectedShoal.depth,
-          shoal: selectedShoal.shoal
-        }
-      });
+    onAction({
+      type: 'CATCH_FISH',
+      playerId: currentPlayer.id,
+      payload: {
+        fish: revealedFish,
+        depth: selectedShoal.depth,
+        shoal: selectedShoal.shoal,
+        diceIndices: selectedDiceIndices
+      }
+    });
+
+    if (selectedDiceTotal >= revealedFish.difficulty) {
       toast({
         title: "Fish Caught!",
-        description: `${currentPlayer.name} caught ${revealedFish.name}!`,
+        description: `${currentPlayer.name} spent ${selectedDiceIndices.length} die${selectedDiceIndices.length === 1 ? '' : 's'} (total ${selectedDiceTotal}) to land ${revealedFish.name}.`
       });
-      setSelectedDice([]);
     } else {
       toast({
-        title: "Failed to Catch",
-        description: `Need ${revealedFish.difficulty} but only have ${totalDiceValue}`,
+        title: "Catch Failed",
+        description: `${currentPlayer.name} fell short (${selectedDiceTotal}/${revealedFish.difficulty}). A die is spent and a Dink joins the crew.`,
         variant: "destructive"
       });
     }
+
+    setSelectedDiceIndices([]);
   };
 
-  const toggleDiceSelection = (dieValue: number, index: number) => {
-    const dieId = `${dieValue}-${index}`;
-    if (selectedDice.includes(dieValue)) {
-      setSelectedDice(selectedDice.filter(val => val !== dieValue));
-    } else {
-      setSelectedDice([...selectedDice, dieValue]);
-    }
+  const handlePassOnFish = () => {
+    if (!revealedFish || !selectedShoal) return;
+
+    onAction({
+      type: 'CATCH_FISH',
+      playerId: currentPlayer.id,
+      payload: {
+        fish: revealedFish,
+        depth: selectedShoal.depth,
+        shoal: selectedShoal.shoal,
+        diceIndices: []
+      }
+    });
+
+    toast({
+      title: "Passed on the Catch",
+      description: `${currentPlayer.name} takes the mandatory Dink penalty for skipping ${revealedFish.name}.`
+    });
+
+    setSelectedDiceIndices([]);
+  };
+
+  const toggleDiceSelection = (index: number) => {
+    setSelectedDiceIndices(prev =>
+      prev.includes(index) ? prev.filter(idx => idx !== index) : [...prev, index]
+    );
   };
 
   return (
@@ -152,23 +177,27 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
       {revealedFish && currentPlayer.freshDice.length > 0 && (
         <div className="space-y-3">
           <h4 className="font-medium">Select Dice to Catch Fish</h4>
+          <p className="text-xs text-muted-foreground">
+            You have {currentPlayer.freshDice.length} ready die{currentPlayer.freshDice.length === 1 ? '' : 's'} (total {availableDiceTotal}).
+            Spend only what you need—any unused dice stay fresh. Failing or passing costs one die and draws a Dink.
+          </p>
           <div className="grid grid-cols-3 gap-2">
             {currentPlayer.freshDice.map((dieValue, index) => (
               <Button
                 key={`${dieValue}-${index}`}
-                variant={selectedDice.includes(dieValue) ? "default" : "outline"}
+                variant={selectedDiceIndices.includes(index) ? "default" : "outline"}
                 size="sm"
-                onClick={() => toggleDiceSelection(dieValue, index)}
-                className={selectedDice.includes(dieValue) ? "btn-ocean" : "border-primary/30"}
+                onClick={() => toggleDiceSelection(index)}
+                className={selectedDiceIndices.includes(index) ? "btn-ocean" : "border-primary/30"}
               >
                 {dieValue}
               </Button>
             ))}
           </div>
-          
+
           <div className="text-sm">
             Total: <span className="text-primary-glow font-bold">
-              {selectedDice.reduce((sum, val) => sum + val, 0)}
+              {selectedDiceTotal}
             </span>
             {revealedFish && (
               <span className="text-muted-foreground">
@@ -176,13 +205,21 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
               </span>
             )}
           </div>
-          
+
           <Button
             onClick={handleCatchFish}
-            disabled={selectedDice.length === 0 || selectedDice.reduce((sum, val) => sum + val, 0) < revealedFish.difficulty}
+            disabled={selectedDiceIndices.length === 0}
             className="w-full btn-ocean"
           >
-            Catch Fish
+            Catch Fish with Selected Dice
+          </Button>
+
+          <Button
+            onClick={handlePassOnFish}
+            variant="outline"
+            className="w-full border-dashed border-primary/40 text-xs"
+          >
+            Pass on Fish (Lose 1 die & draw a Dink)
           </Button>
         </div>
       )}
