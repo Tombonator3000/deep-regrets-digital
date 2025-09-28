@@ -51,7 +51,9 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
       equippedReel: undefined,
       supplies: [],
       dinks: [],
+      activeEffects: [],
       madnessLevel: 0,
+      madnessOffset: 0,
       lifeboatFlipped: false,
       canOfWormsFaceUp: false,
       hasPassed: false
@@ -178,6 +180,113 @@ export const rollDice = (count: number): number[] => {
 // Game action reducer
 const hasEffect = (effects: string[] | undefined, effect: string) => {
   return Array.isArray(effects) && effects.includes(effect);
+};
+
+const playerHasEquippedEffect = (player: Player | undefined, effect: string) => {
+  if (!player) {
+    return false;
+  }
+
+  if (hasEffect(player.equippedRod?.effects, effect)) {
+    return true;
+  }
+
+  if (hasEffect(player.equippedReel?.effects, effect)) {
+    return true;
+  }
+
+  if (player.supplies.some(supply => hasEffect(supply.effects, effect))) {
+    return true;
+  }
+
+  return false;
+};
+
+const hasActiveEffect = (player: Player, effect: string) => {
+  return Array.isArray(player.activeEffects) && player.activeEffects.includes(effect);
+};
+
+const removeActiveEffect = (player: Player, effect: string) => {
+  if (!Array.isArray(player.activeEffects)) {
+    player.activeEffects = [];
+    return;
+  }
+
+  player.activeEffects = player.activeEffects.filter(activeEffect => activeEffect !== effect);
+};
+
+const MADNESS_REGEX = /^madness_([+-]\d+)$/;
+
+const parseMadnessAbility = (ability: string): number | null => {
+  const match = ability.match(MADNESS_REGEX);
+  if (!match) {
+    return null;
+  }
+
+  const value = Number.parseInt(match[1], 10);
+  return Number.isNaN(value) ? null : value;
+};
+
+const hasPersistentMadnessImmunity = (player: Player) => {
+  return playerHasEquippedEffect(player, 'madness_immune') || hasActiveEffect(player, 'madness_immune');
+};
+
+const consumeMadnessPrevention = (player: Player) => {
+  if (hasActiveEffect(player, 'ignore_madness_increase')) {
+    removeActiveEffect(player, 'ignore_madness_increase');
+    return true;
+  }
+
+  const preventionIndex = player.dinks.findIndex(dink => hasEffect(dink.effects, 'ignore_madness_increase'));
+  if (preventionIndex >= 0) {
+    player.dinks = [
+      ...player.dinks.slice(0, preventionIndex),
+      ...player.dinks.slice(preventionIndex + 1)
+    ];
+    return true;
+  }
+
+  return false;
+};
+
+const applyMadnessAdjustment = (player: Player, delta: number, gameState: GameState) => {
+  if (delta === 0) {
+    return;
+  }
+
+  if (delta > 0) {
+    if (hasPersistentMadnessImmunity(player)) {
+      return;
+    }
+
+    if (consumeMadnessPrevention(player)) {
+      return;
+    }
+  }
+
+  const baseMadness = calculateMadnessLevelFromRegrets(player.regrets.length);
+  const currentOffset = player.madnessOffset ?? 0;
+  let newOffset = currentOffset + delta;
+
+  if (baseMadness + newOffset < 0) {
+    newOffset = -baseMadness;
+  }
+
+  player.madnessOffset = newOffset;
+  recalculateMadness(player, { gameState });
+};
+
+const applyMadnessAbilities = (player: Player, fish: FishCard, gameState: GameState) => {
+  if (!fish.abilities || fish.abilities.length === 0) {
+    return;
+  }
+
+  fish.abilities.forEach(ability => {
+    const delta = parseMadnessAbility(ability);
+    if (delta !== null) {
+      applyMadnessAdjustment(player, delta, gameState);
+    }
+  });
 };
 
 const getDescendRequirement = (player: Player): number => {
@@ -339,6 +448,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             newState.sea.plugActive = true;
             player.hasPassed = true;
           }
+
+          applyMadnessAbilities(player, fish, newState);
         } else {
           const shouldTakeDink =
             availableDiceTotal < fishDifficulty || !hasUsableSelection || selectedTotal < fishDifficulty;
@@ -662,7 +773,9 @@ const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
   const currentRegrets = player.regrets.length;
   const gainedRegret = currentRegrets > previousRegretCount;
 
-  const newMadnessLevel = calculateMadnessLevelFromRegrets(currentRegrets);
+  const baseMadnessLevel = calculateMadnessLevelFromRegrets(currentRegrets);
+  const modifier = player.madnessOffset ?? 0;
+  const newMadnessLevel = Math.max(0, baseMadnessLevel + modifier);
   player.madnessLevel = newMadnessLevel;
 
   const baseMaxDice = player.baseMaxDice ?? 3;

@@ -77,7 +77,9 @@ export interface Player {
   equippedReel?: UpgradeCard;
   supplies: UpgradeCard[];
   dinks: DinkCard[];
+  activeEffects: string[];
   madnessLevel: number;
+  madnessOffset: number;
   lifeboatFlipped: boolean;
   canOfWormsFaceUp: boolean;
   hasPassed: boolean;

@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { gameReducer, initializeGame } from '../gameEngine';
-import { CharacterOption, GameState } from '@/types/game';
+import { CharacterOption, FishCard, GameState } from '@/types/game';
 import { REGRET_CARDS } from '@/data/regrets';
-import { RODS } from '@/data/upgrades';
+import { RODS, REELS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
 import { CHARACTERS } from '@/data/characters';
 import { TACKLE_DICE } from '@/data/tackleDice';
@@ -302,6 +302,128 @@ describe('gameReducer new actions', () => {
     expect(player.dinks).toHaveLength(1);
     expect(result.port.dinksDeck.length).toBe(initialDeckLength - 1);
     expect(result.sea.shoals[1][0][0]).toEqual(fish);
+  });
+});
+
+describe('madness interactions', () => {
+  const createMadnessFish = (overrides: Partial<FishCard> = {}): FishCard => ({
+    id: 'TEST-MADNESS-001',
+    name: 'Test Madness Fish',
+    depth: 1,
+    value: 1,
+    baseValue: 1,
+    difficulty: 1,
+    abilities: ['madness_+1'],
+    tags: [],
+    description: 'Test fish that increases madness.',
+    quality: 'foul',
+    ...overrides
+  });
+
+  it('raises madness when catching a madness fish', () => {
+    const player = state.players[0];
+    player.location = 'sea';
+    player.currentDepth = 1;
+    player.freshDice = [2, 3];
+
+    const madnessFish = createMadnessFish();
+    state.sea.shoals[1] = [[madnessFish]];
+
+    const action = {
+      type: 'CATCH_FISH',
+      playerId: player.id,
+      payload: { fish: madnessFish, depth: 1, shoal: 0, diceIndices: [0] }
+    };
+
+    const result = gameReducer(state, action);
+    const updated = result.players[0];
+
+    expect(updated.madnessLevel).toBe(1);
+    expect(updated.madnessOffset).toBe(1);
+    expect(updated.handFish.some(f => f.id === madnessFish.id)).toBe(true);
+  });
+
+  it('prevents madness gains while the Void Reel is equipped without consuming immunity', () => {
+    const player = state.players[0];
+    player.location = 'sea';
+    player.currentDepth = 1;
+    player.freshDice = [6, 6];
+    const voidReel = REELS.find(reel => reel.effects.includes('madness_immune'));
+    if (!voidReel) {
+      throw new Error('Void Reel not found in test data');
+    }
+    player.equippedReel = voidReel;
+
+    const madnessFishOne = createMadnessFish({ id: 'TEST-MADNESS-002' });
+    const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-003' });
+    state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
+
+    const firstAction = {
+      type: 'CATCH_FISH',
+      playerId: player.id,
+      payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
+    };
+
+    const firstResult = gameReducer(state, firstAction);
+    const afterFirstCatch = firstResult.players[0];
+
+    expect(afterFirstCatch.madnessLevel).toBe(0);
+    expect(afterFirstCatch.madnessOffset).toBe(0);
+
+    const secondAction = {
+      type: 'CATCH_FISH',
+      playerId: afterFirstCatch.id,
+      payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
+    };
+
+    const secondResult = gameReducer(firstResult, secondAction);
+    const afterSecondCatch = secondResult.players[0];
+
+    expect(afterSecondCatch.madnessLevel).toBe(0);
+    expect(afterSecondCatch.madnessOffset).toBe(0);
+    expect(afterSecondCatch.handFish.filter(f => f.id.startsWith('TEST-MADNESS-'))).toHaveLength(2);
+  });
+
+  it('consumes Scrimshaw Token to prevent a madness gain once', () => {
+    const scrimshaw = DINK_CARDS.find(dink => dink.effects.includes('ignore_madness_increase'));
+    if (!scrimshaw) {
+      throw new Error('Scrimshaw Token not found in test data');
+    }
+
+    const player = state.players[0];
+    player.location = 'sea';
+    player.currentDepth = 1;
+    player.freshDice = [6, 6];
+    player.dinks = [scrimshaw];
+
+    const madnessFishOne = createMadnessFish({ id: 'TEST-MADNESS-004' });
+    const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-005' });
+    state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
+
+    const firstAction = {
+      type: 'CATCH_FISH',
+      playerId: player.id,
+      payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
+    };
+
+    const firstResult = gameReducer(state, firstAction);
+    const afterFirstCatch = firstResult.players[0];
+
+    expect(afterFirstCatch.madnessLevel).toBe(0);
+    expect(afterFirstCatch.madnessOffset).toBe(0);
+    expect(afterFirstCatch.dinks.some(dink => dink.id === scrimshaw.id)).toBe(false);
+
+    const secondAction = {
+      type: 'CATCH_FISH',
+      playerId: afterFirstCatch.id,
+      payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
+    };
+
+    const secondResult = gameReducer(firstResult, secondAction);
+    const afterSecondCatch = secondResult.players[0];
+
+    expect(afterSecondCatch.madnessLevel).toBe(1);
+    expect(afterSecondCatch.madnessOffset).toBe(1);
   });
 });
 
