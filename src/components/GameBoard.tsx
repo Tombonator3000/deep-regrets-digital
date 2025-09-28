@@ -7,6 +7,20 @@ import { ActionPanel } from './game/ActionPanel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Anchor,
+  Maximize2,
+  Minimize2,
+  MoreHorizontal,
+  Settings2,
+  UserRound,
+} from 'lucide-react';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -178,45 +192,78 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       {/* Main Game Layout */}
       <div className="relative z-10 mx-auto grid h-full w-full max-w-7xl grid-rows-[auto,1fr] gap-6 px-6 py-8 min-h-0">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold leading-tight text-primary-glow">DEEP REGRETS</h1>
-            <p className="text-sm text-muted-foreground">Digital Edition</p>
+        <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          <div className="flex flex-col gap-3 lg:flex-1">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold leading-tight text-primary-glow">DEEP REGRETS</h1>
+              <p className="text-sm text-muted-foreground">Digital Edition</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Badge className="rounded-full border-primary/40 bg-primary/10 px-4 py-1 text-sm text-primary">
+                Current: <span className="ml-1 font-semibold text-primary">{currentPlayer.name}</span>
+              </Badge>
+              <Badge variant="outline" className="rounded-full border-white/30 px-4 py-1 text-white">
+                {phaseDisplay[gameState.phase]} Phase
+              </Badge>
+              <Badge variant="secondary" className="rounded-full bg-muted/30 px-4 py-1 text-sm">
+                {dayLabel}
+              </Badge>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
-            <Badge className="rounded-full border-primary/40 bg-primary/10 px-4 py-1 text-sm text-primary">
-              Current: <span className="ml-1 font-semibold text-primary">{currentPlayer.name}</span>
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-white/30 px-4 py-1 text-white">
-              {phaseDisplay[gameState.phase]} Phase
-            </Badge>
-            <Badge variant="secondary" className="rounded-full bg-muted/30 px-4 py-1 text-sm">
-              {dayLabel}
-            </Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button className="btn-ocean" onClick={() => setIsPortOpen(true)}>
-              Open Harbor Port
-            </Button>
-            <Button variant="outline" className="border-white/30 bg-white/5 backdrop-blur" onClick={() => setIsPlayerOpen(true)}>
-              View Captain Sheet
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/30 bg-white/5 backdrop-blur"
-              onClick={() => setIsOptionsOpen(true)}
-            >
-              Options
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-white/80 hover:text-white"
-              onClick={toggleFullscreen}
-            >
-              {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            </Button>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:justify-end lg:w-auto lg:gap-3">
+            <div className="flex flex-1 flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1 backdrop-blur-sm sm:flex-none">
+              <Button
+                size="sm"
+                className="btn-ocean flex items-center gap-2"
+                onClick={() => setIsPortOpen(true)}
+              >
+                <Anchor className="h-4 w-4" />
+                <span>Harbor Port</span>
+              </Button>
+              <Button
+                size="sm"
+                type="button"
+                variant="ghost"
+                className="flex items-center gap-2 text-white/80 hover:text-white"
+                onClick={toggleFullscreen}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+                <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+              </Button>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  className="flex items-center gap-2 border-white/30 bg-white/5 text-white hover:bg-white/10"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span>More</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onSelect={() => setIsPlayerOpen(true)}
+                >
+                  <UserRound className="h-4 w-4" />
+                  View Captain Sheet
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onSelect={() => setIsOptionsOpen(true)}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  Options
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
