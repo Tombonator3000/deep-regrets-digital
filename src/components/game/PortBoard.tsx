@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Anchor, Fish as FishIcon, Wrench } from 'lucide-react';
 
+import harborPortBoard from '@/assets/harbor-port-board.jpg';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -160,9 +162,17 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
 
   return (
     <div className={cn('flex h-full flex-col space-y-6', className)}>
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-primary-glow mb-2">Harbor Port</h2>
-        <p className="text-muted-foreground">Safe waters for commerce and rest</p>
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-slate-950/60">
+        <img
+          src={harborPortBoard}
+          alt="Harbor Port board"
+          className="h-48 w-full object-cover object-center sm:h-56"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 px-6 pb-6 text-center text-slate-100">
+          <h2 className="text-2xl font-bold text-primary-glow drop-shadow-sm">Harbor Port</h2>
+          <p className="text-sm text-slate-200/90">Safe waters for commerce and rest</p>
+        </div>
       </div>
 
       <Tabs defaultValue="catch" className="space-y-4">
