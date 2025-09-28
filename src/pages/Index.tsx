@@ -33,6 +33,10 @@ const Index = () => {
     });
   };
 
+  const handleBackToStart = () => {
+    setCurrentScreen('start');
+  };
+
   const handleGameAction = (action: any) => {
     if (gameState) {
       dispatch(action);
@@ -54,6 +58,7 @@ const Index = () => {
         <CharacterSelection 
           playerCount={playerCount}
           onCharactersSelected={handleCharactersSelected}
+          onBack={handleBackToStart}
         />
       );
     

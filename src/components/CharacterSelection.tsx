@@ -7,9 +7,10 @@ import { CharacterOption } from '@/types/game';
 interface CharacterSelectionProps {
   playerCount: number;
   onCharactersSelected: (selectedCharacters: CharacterOption[]) => void;
+  onBack: () => void;
 }
 
-export const CharacterSelection = ({ playerCount, onCharactersSelected }: CharacterSelectionProps) => {
+export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }: CharacterSelectionProps) => {
   const [selectedCharacters, setSelectedCharacters] = useState<CharacterOption[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
@@ -113,9 +114,17 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected }: Charac
           ))}
         </div>
         
-        {/* Back button */}
-        {currentPlayerIndex > 0 && (
-          <div className="text-center mt-8">
+        {/* Navigation buttons */}
+        <div className="text-center mt-8 space-x-4">
+          <Button 
+            variant="outline"
+            onClick={onBack}
+            className="border-primary/30 hover:border-primary"
+          >
+            ← Back to Start
+          </Button>
+          
+          {currentPlayerIndex > 0 && (
             <Button 
               variant="outline"
               onClick={() => {
@@ -124,10 +133,10 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected }: Charac
               }}
               className="border-primary/30 hover:border-primary"
             >
-              Back to Previous Player
+              ← Previous Player
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

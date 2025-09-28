@@ -66,6 +66,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
             <Button onClick={onNewGame} className="btn-ocean">
               New Game
             </Button>
+            <Button onClick={onNewGame} variant="outline" className="border-primary/30 hover:border-primary">
+              Back to Start
+            </Button>
           </div>
         </div>
       )}
