@@ -509,6 +509,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
 // Helper functions
 const getFishBaseValue = (fish: FishCard) => fish.baseValue ?? fish.value;
+const getFishCurrentValue = (fish: FishCard) => fish.value ?? getFishBaseValue(fish);
 
 export const calculateFishSaleValue = (fish: FishCard, madnessLevel: number) => {
   const baseValue = getFishBaseValue(fish);
@@ -521,6 +522,48 @@ export const calculateFishSaleValue = (fish: FishCard, madnessLevel: number) => 
     baseValue,
     madnessPenalty,
     modifier: currentValue - baseValue,
+  };
+};
+
+export interface PlayerScoreBreakdown {
+  handScore: number;
+  mountedScore: number;
+  fishbuckScore: number;
+  totalScore: number;
+  regretValue: number;
+}
+
+export const calculatePlayerRegretValue = (player: Player) => {
+  const regretValue = player.regrets.reduce((sum, regret) => sum + regret.value, 0);
+  return regretValue + (player.lifeboatFlipped ? 10 : 0);
+};
+
+export const calculateHandFishScore = (player: Player) => {
+  return player.handFish.reduce((sum, fish) => {
+    const { adjustedValue } = calculateFishSaleValue(fish, player.madnessLevel);
+    return sum + adjustedValue;
+  }, 0);
+};
+
+export const calculateMountedFishScore = (player: Player) => {
+  return player.mountedFish.reduce((sum, mount) => {
+    const modifiedValue = getFishCurrentValue(mount.fish) * mount.multiplier;
+    return sum + Math.max(0, modifiedValue);
+  }, 0);
+};
+
+export const calculateFishbuckScore = (player: Player) => player.fishbucks;
+
+export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakdown => {
+  const handScore = calculateHandFishScore(player);
+  const mountedScore = calculateMountedFishScore(player);
+  const fishbuckScore = calculateFishbuckScore(player);
+  return {
+    handScore,
+    mountedScore,
+    fishbuckScore,
+    totalScore: handScore + mountedScore + fishbuckScore,
+    regretValue: calculatePlayerRegretValue(player)
   };
 };
 
@@ -607,38 +650,43 @@ const advanceDay = (gameState: GameState) => {
 const endGame = (gameState: GameState) => {
   gameState.isGameOver = true;
   gameState.phase = 'endgame';
-  
+
   // Calculate scores and determine winner
-  const scores = gameState.players.map(player => {
-    const regretValue = player.regrets.reduce((sum, regret) => sum + regret.value, 0) +
-                       (player.lifeboatFlipped ? 10 : 0);
-    const mountedScore = player.mountedFish.reduce((sum, mount) => 
-      sum + (mount.fish.value * mount.multiplier), 0);
-    
-    return {
-      player,
-      regretValue,
-      mountedScore,
-      finalScore: mountedScore
-    };
-  });
-  
+  const scores = gameState.players.map(player => ({
+    player,
+    ...calculatePlayerScoreBreakdown(player)
+  }));
+
+  if (scores.length === 0) {
+    gameState.winner = undefined;
+    return;
+  }
+
   // Apply regret penalty to highest regret value player
-  const highestRegretPlayer = scores.reduce((max, current) => 
-    current.regretValue > max.regretValue ? current : max);
-  
+  const highestRegretPlayer = scores.reduce((max, current) =>
+    current.regretValue > max.regretValue ? current : max
+  , scores[0]);
+
   if (highestRegretPlayer.player.mountedFish.length > 0) {
     // Remove highest value mounted fish
-    const highestMount = highestRegretPlayer.player.mountedFish.reduce((max, current) => 
-      (current.fish.value * current.multiplier) > (max.fish.value * max.multiplier) ? current : max);
+    const highestMount = highestRegretPlayer.player.mountedFish.reduce((max, current) => {
+      const maxValue = getFishCurrentValue(max.fish) * max.multiplier;
+      const currentValue = getFishCurrentValue(current.fish) * current.multiplier;
+      return currentValue > maxValue ? current : max;
+    });
+    const penaltyValue = getFishCurrentValue(highestMount.fish) * highestMount.multiplier;
     const mountIndex = highestRegretPlayer.player.mountedFish.indexOf(highestMount);
-    highestRegretPlayer.player.mountedFish.splice(mountIndex, 1);
-    highestRegretPlayer.finalScore -= (highestMount.fish.value * highestMount.multiplier);
+    if (mountIndex >= 0) {
+      highestRegretPlayer.player.mountedFish.splice(mountIndex, 1);
+    }
+    highestRegretPlayer.mountedScore = Math.max(0, highestRegretPlayer.mountedScore - penaltyValue);
+    highestRegretPlayer.totalScore = Math.max(0, highestRegretPlayer.totalScore - penaltyValue);
   }
-  
+
   // Determine winner
-  const winner = scores.reduce((max, current) => 
-    current.finalScore > max.finalScore ? current : max);
-  
+  const winner = scores.reduce((max, current) =>
+    current.totalScore > max.totalScore ? current : max
+  , scores[0]);
+
   gameState.winner = winner.player.name;
 };

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { GameState, Player, FishCard } from '@/types/game';
+import { GameState, FishCard } from '@/types/game';
 import { SeaBoard } from './game/SeaBoard';
 import { PortBoard } from './game/PortBoard';
 import { PlayerPanel } from './game/PlayerPanel';
 import { DayTracker } from './game/DayTracker';
 import { ActionPanel } from './game/ActionPanel';
 import { Button } from '@/components/ui/button';
+import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -19,6 +20,13 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
+  const finalScores = gameState.players.map(player => ({
+    player,
+    breakdown: calculatePlayerScoreBreakdown(player)
+  }));
+  const sortedFinalScores = [...finalScores].sort((a, b) =>
+    b.breakdown.totalScore - a.breakdown.totalScore
+  );
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -48,20 +56,42 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                 🏆 <span className="text-primary-glow font-bold">{gameState.winner}</span> wins!
               </p>
             )}
-            <div className="space-y-2">
-              <h3 className="font-semibold">Final Scores:</h3>
-              {gameState.players
-                .sort((a, b) => calculateScore(b) - calculateScore(a))
-                .map((player, index) => (
-                  <div key={player.id} className="flex justify-between">
-                    <span className={index === 0 ? 'text-primary-glow font-bold' : ''}>
-                      {player.name}
-                    </span>
-                    <span className={index === 0 ? 'text-primary-glow font-bold' : ''}>
-                      {calculateScore(player)} pts
-                    </span>
+            <div className="space-y-3 text-left">
+              <h3 className="font-semibold text-center">Final Scores:</h3>
+              {sortedFinalScores.map(({ player, breakdown }) => {
+                const isWinner = gameState.winner === player.name;
+                return (
+                  <div
+                    key={player.id}
+                    className={`rounded-md border border-border/40 p-3 transition ${
+                      isWinner ? 'border-primary text-primary-glow' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
+                        {player.name}
+                      </span>
+                      <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
+                        {breakdown.totalScore} pts
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                      <div>
+                        <span className="block font-semibold text-foreground/80">Hand (Madness)</span>
+                        <span>{breakdown.handScore}</span>
+                      </div>
+                      <div>
+                        <span className="block font-semibold text-foreground/80">Mounted</span>
+                        <span>{breakdown.mountedScore}</span>
+                      </div>
+                      <div>
+                        <span className="block font-semibold text-foreground/80">Fishbucks</span>
+                        <span>{breakdown.fishbuckScore}</span>
+                      </div>
+                    </div>
                   </div>
-                ))}
+                );
+              })}
             </div>
             <Button onClick={onNewGame} className="btn-ocean">
               New Game
@@ -133,11 +163,4 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       </div>
     </div>
   );
-};
-
-// Helper function to calculate player score
-const calculateScore = (player: Player): number => {
-  return player.mountedFish.reduce((total, mount) => {
-    return total + (mount.fish.value * mount.multiplier);
-  }, 0);
 };
