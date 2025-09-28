@@ -33,7 +33,8 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
   };
 
   const handleMountFish = (fish: FishCard, slotIndex: number) => {
-    if (currentPlayer.mountedFish[slotIndex]) {
+    const slotOccupied = currentPlayer.mountedFish.some(mount => mount.slot === slotIndex);
+    if (slotOccupied) {
       toast({
         title: "Slot Occupied",
         description: "This mounting slot is already occupied",
@@ -45,7 +46,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
     onAction({
       type: 'MOUNT_FISH',
       playerId: currentPlayer.id,
-      payload: { fishId: fish.id, slotIndex }
+      payload: { fishId: fish.id, slot: slotIndex }
     });
     toast({
       title: "Fish Mounted",
@@ -74,7 +75,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
     });
   };
 
-  const mountingSlots = Array.from({ length: 3 }, (_, i) => i);
+  const mountingSlots = Array.from({ length: currentPlayer.maxMountSlots }, (_, i) => i);
 
   return (
     <div className="space-y-4">
@@ -120,7 +121,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                   </div>
                   <div className="flex gap-1">
                     {mountingSlots.map((slotIndex) => {
-                      const isOccupied = !!currentPlayer.mountedFish[slotIndex];
+                      const isOccupied = currentPlayer.mountedFish.some(mount => mount.slot === slotIndex);
                       const multiplier = slotIndex === 0 ? 1 : slotIndex === 1 ? 2 : 3;
                       
                       return (

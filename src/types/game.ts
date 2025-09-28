@@ -55,6 +55,10 @@ export interface Player {
   spentDice: number[];
   tackleDice: string[];
   maxDice: number;
+  baseMaxDice: number;
+  maxMountSlots: number;
+  regretShields: number;
+  rerollOnes: boolean;
   fishbucks: number;
   handFish: FishCard[];
   mountedFish: Array<{

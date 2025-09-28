@@ -2,7 +2,7 @@ import { GameState, Player, GameAction, CharacterOption, Depth } from '@/types/g
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
-import { ALL_UPGRADES } from '@/data/upgrades';
+import { ALL_UPGRADES, RODS, REELS } from '@/data/upgrades';
 
 // Shuffle utility
 const shuffle = <T>(array: T[]): T[] => {
@@ -16,29 +16,48 @@ const shuffle = <T>(array: T[]): T[] => {
 
 // Initialize new game
 export const initializeGame = (selectedCharacters: CharacterOption[]): GameState => {
-  const players: Player[] = selectedCharacters.map((character, index) => ({
-    id: `player-${index + 1}`,
-    name: character.name,
-    character: character.id,
-    location: 'sea',
-    currentDepth: 1,
-    freshDice: [1, 2, 3], // Starting dice
-    spentDice: [],
-    tackleDice: [],
-    maxDice: 3,
-    fishbucks: 3, // Starting money
-    handFish: [],
-    mountedFish: [],
-    regrets: [],
-    equippedRod: undefined,
-    equippedReel: undefined,
-    supplies: [],
-    dinks: [],
-    madnessLevel: 0,
-    lifeboatFlipped: false,
-    canOfWormsFaceUp: false,
-    hasPassed: false
-  }));
+  const port: GameState['port'] = {
+    shops: {
+      rods: [],
+      reels: [],
+      supplies: []
+    },
+    dinksDeck: shuffle(DINK_CARDS),
+    regretsDeck: shuffle(REGRET_CARDS),
+    regretsDiscard: []
+  };
+
+  const players: Player[] = selectedCharacters.map((character, index) => {
+    const basePlayer: Player = {
+      id: `player-${index + 1}`,
+      name: character.name,
+      character: character.id,
+      location: 'sea',
+      currentDepth: 1,
+      freshDice: [1, 2, 3], // Starting dice
+      spentDice: [],
+      tackleDice: [],
+      maxDice: 3,
+      baseMaxDice: 3,
+      maxMountSlots: 3,
+      regretShields: 0,
+      rerollOnes: false,
+      fishbucks: 3, // Starting money
+      handFish: [],
+      mountedFish: [],
+      regrets: [],
+      equippedRod: undefined,
+      equippedReel: undefined,
+      supplies: [],
+      dinks: [],
+      madnessLevel: 0,
+      lifeboatFlipped: false,
+      canOfWormsFaceUp: false,
+      hasPassed: false
+    };
+
+    return applyCharacterBonuses(basePlayer, character.id, { port });
+  });
 
   // Create shoals for each depth
   const createShoals = (fishList: typeof ALL_FISH) => {
@@ -76,16 +95,7 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
       plugActive: false,
       plugCursor: { depth: 1, shoal: 0 }
     },
-    port: {
-      shops: {
-        rods: [],
-        reels: [],
-        supplies: []
-      },
-      dinksDeck: shuffle(DINK_CARDS),
-      regretsDeck: shuffle(REGRET_CARDS),
-      regretsDiscard: []
-    },
+    port,
     lifePreserverOwner: undefined,
     fishCoinOwner: undefined,
     omenDieValue: 1,
@@ -96,32 +106,65 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
   return gameState;
 };
 
+interface BonusContext {
+  port?: GameState['port'];
+}
+
 // Apply character starting bonuses
-export const applyCharacterBonuses = (player: Player, characterId: string): Player => {
-  const updated = { ...player };
-  
+export const applyCharacterBonuses = (
+  player: Player,
+  characterId: string,
+  context: BonusContext = {}
+): Player => {
+  const updated: Player = { ...player };
+
   switch (characterId) {
-    case 'ahab':
+    case 'ahab': {
       updated.fishbucks += 2;
-      // Add starting rod (simplified)
+      const startingRod = RODS[0];
+      if (startingRod) {
+        updated.equippedRod = startingRod;
+      }
       break;
-    case 'nemo':
-      // Add starting reel (simplified)
+    }
+    case 'nemo': {
+      const startingReel = REELS[0];
+      if (startingReel) {
+        updated.equippedReel = startingReel;
+      }
+      updated.regretShields += 1;
       break;
-    case 'marina':
+    }
+    case 'marina': {
       updated.currentDepth = 2;
-      // Add extra dink (simplified)
+      if (context.port) {
+        const bonusDink = context.port.dinksDeck.pop();
+        if (bonusDink) {
+          updated.dinks = [...updated.dinks, bonusDink];
+        }
+      }
       break;
-    case 'finn':
+    }
+    case 'finn': {
       updated.fishbucks += 3;
-      // Reroll 1s ability (simplified)
+      updated.rerollOnes = true;
       break;
-    case 'storm':
+    }
+    case 'storm': {
       updated.maxDice += 1;
-      // Extra mount slot (simplified)
+      updated.baseMaxDice += 1;
+      updated.maxMountSlots += 1;
       break;
+    }
   }
-  
+
+  if (updated.freshDice.length > updated.maxDice) {
+    updated.freshDice = updated.freshDice.slice(0, updated.maxDice);
+  }
+  while (updated.freshDice.length < updated.maxDice) {
+    updated.freshDice = [...updated.freshDice, 1];
+  }
+
   return updated;
 };
 
@@ -303,8 +346,12 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'MOUNT_FISH':
       if (player && player.location === 'port') {
         const { fishId, slot } = action.payload;
+        if (typeof slot !== 'number' || slot < 0 || slot >= player.maxMountSlots) {
+          break;
+        }
         const fishIndex = player.handFish.findIndex(f => f.id === fishId);
-        if (fishIndex >= 0) {
+        const slotOccupied = player.mountedFish.some(mount => mount.slot === slot);
+        if (fishIndex >= 0 && !slotOccupied) {
           const fish = player.handFish[fishIndex];
           player.mountedFish.push({
             slot,
@@ -318,8 +365,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'ROLL_DICE':
       if (player) {
-        const newDice = rollDice(3);
-        player.freshDice = newDice;
+        const newDice = rollDice(player.maxDice);
+        const processedDice = player.rerollOnes
+          ? newDice.map(value => (value === 1 ? rollDice(1)[0] : value))
+          : newDice;
+        player.freshDice = processedDice;
         player.spentDice = [];
       }
       break;
@@ -363,6 +413,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
 // Helper functions
 const drawRegret = (player: Player, gameState: GameState) => {
+  if (player.regretShields > 0) {
+    player.regretShields -= 1;
+    return;
+  }
   const { card, remainingDeck } = drawFromDeck(gameState.port.regretsDeck);
   if (card) {
     gameState.port.regretsDeck = remainingDeck;
@@ -382,7 +436,8 @@ const drawFromDeck = <T>(deck: T[]): { card?: T; remainingDeck: T[] } => {
 
 const recalculateMadness = (player: Player) => {
   player.madnessLevel = Math.min(player.regrets.length, 5);
-  player.maxDice = Math.max(3 - Math.floor(player.madnessLevel / 2), 1);
+  const baseMaxDice = player.baseMaxDice ?? 3;
+  player.maxDice = Math.max(baseMaxDice - Math.floor(player.madnessLevel / 2), 1);
 };
 
 const advancePhase = (gameState: GameState) => {
