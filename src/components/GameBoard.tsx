@@ -3,9 +3,10 @@ import { GameState, FishCard } from '@/types/game';
 import { SeaBoard } from './game/SeaBoard';
 import { PortBoard } from './game/PortBoard';
 import { PlayerPanel } from './game/PlayerPanel';
-import { DayTracker } from './game/DayTracker';
 import { ActionPanel } from './game/ActionPanel';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 
@@ -18,9 +19,23 @@ interface GameBoardProps {
 export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) => {
   const [selectedShoal, setSelectedShoal] = useState<{depth: number, shoal: number} | null>(null);
   const [selectedCard, setSelectedCard] = useState<FishCard | null>(null);
+  const [isPortOpen, setIsPortOpen] = useState(false);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
+  const phaseDisplay: Record<GameState['phase'], string> = {
+    start: 'Start',
+    refresh: 'Refresh',
+    declaration: 'Declaration',
+    action: 'Action',
+    endgame: 'Game Over'
+  };
+  const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const currentDayIndex = dayOrder.indexOf(gameState.day);
+  const dayLabel = currentDayIndex >= 0
+    ? `Day ${currentDayIndex + 1}: ${gameState.day}`
+    : gameState.day;
   const finalScores = gameState.players.map(player => ({
     player,
     breakdown: calculatePlayerScoreBreakdown(player)
@@ -106,56 +121,85 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       )}
       
       {/* Main Game Layout */}
-      <div className="relative z-10 h-screen flex flex-col">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 grid grid-cols-[1.6fr,minmax(320px,0.9fr)] grid-rows-[auto,minmax(0,1fr),auto] gap-6">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-border">
-          <DayTracker day={gameState.day} phase={gameState.phase} />
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-primary-glow">DEEP REGRETS</h1>
+        <div className="col-span-2 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold leading-tight text-primary-glow">DEEP REGRETS</h1>
             <p className="text-sm text-muted-foreground">Digital Edition</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Current Player</p>
-            <p className="font-bold text-primary">{currentPlayer.name}</p>
+          <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
+            <Badge className="rounded-full border-primary/40 bg-primary/10 px-4 py-1 text-sm text-primary">
+              Current: <span className="ml-1 font-semibold text-primary">{currentPlayer.name}</span>
+            </Badge>
+            <Badge variant="outline" className="rounded-full border-white/30 px-4 py-1 text-white">
+              {phaseDisplay[gameState.phase]} Phase
+            </Badge>
+            <Badge variant="secondary" className="rounded-full bg-muted/30 px-4 py-1 text-sm">
+              {dayLabel}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button className="btn-ocean" onClick={() => setIsPortOpen(true)}>
+              Open Harbor Port
+            </Button>
+            <Button variant="outline" className="border-white/30 bg-white/5 backdrop-blur" onClick={() => setIsPlayerOpen(true)}>
+              View Captain Sheet
+            </Button>
           </div>
         </div>
-        
-        {/* Game Area */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Side - Sea Board */}
-          <div className="flex-1 p-4 overflow-auto">
-            <SeaBoard 
+
+        {/* Sea Board Column */}
+        <div className="row-span-1 overflow-hidden rounded-3xl border border-white/10 bg-background/60 backdrop-blur">
+          <div className="h-full overflow-auto p-6">
+            <SeaBoard
               gameState={gameState}
               selectedShoal={selectedShoal}
               onShoalSelect={setSelectedShoal}
               onAction={onAction}
             />
           </div>
-          
-          {/* Right Side - Port and Player Info */}
-          <div className="w-96 border-l border-border flex flex-col">
-            {/* Port Board */}
-            <div className="flex-1 p-4 overflow-auto">
-              <PortBoard 
-                gameState={gameState}
-                onAction={onAction}
-              />
+        </div>
+
+        {/* Status Column */}
+        <div className="row-span-1 space-y-6 rounded-3xl border border-white/10 bg-background/50 p-6 backdrop-blur">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-primary">Captain's Log</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage port business and your crew sheet through the modals. Keep your attention on the sea board to steer the day.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Location</span>
+              <span className="font-semibold text-foreground">
+                {currentPlayer.location === 'sea' ? `🌊 At Sea (Depth ${currentPlayer.currentDepth})` : '⚓ In Port'}
+              </span>
             </div>
-            
-            {/* Player Panel */}
-            <div className="border-t border-border">
-              <PlayerPanel 
-                player={currentPlayer}
-                isCurrentPlayer={isPlayerTurn}
-                onAction={onAction}
-              />
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Fishbucks</span>
+              <span className="font-semibold text-fishbuck">${currentPlayer.fishbucks}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Regrets</span>
+              <span className="font-semibold text-destructive">{currentPlayer.regrets.length}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Dice Ready</span>
+              <span className="font-semibold text-foreground">
+                {currentPlayer.freshDice.length}/{currentPlayer.maxDice}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Madness Level</span>
+              <span className="font-semibold text-primary">{currentPlayer.madnessLevel}</span>
             </div>
           </div>
         </div>
-        
+
         {/* Bottom Action Panel */}
-        <div className="border-t border-border">
-          <ActionPanel 
+        <div className="col-span-2 rounded-2xl border border-white/10 bg-background/70 p-6 backdrop-blur">
+          <ActionPanel
             gameState={gameState}
             selectedShoal={selectedShoal}
             selectedCard={selectedCard}
@@ -163,6 +207,29 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           />
         </div>
       </div>
+
+      <Dialog open={isPortOpen} onOpenChange={setIsPortOpen}>
+        <DialogContent className="max-w-5xl bg-background/80 backdrop-blur-xl border border-white/20">
+          <div className="max-h-[75vh] overflow-y-auto pr-2">
+            <PortBoard
+              gameState={gameState}
+              onAction={onAction}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+        <DialogContent className="max-w-4xl bg-background/80 backdrop-blur-xl border border-white/20">
+          <div className="max-h-[75vh] overflow-y-auto pr-2">
+            <PlayerPanel
+              player={currentPlayer}
+              isCurrentPlayer={isPlayerTurn}
+              onAction={onAction}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
