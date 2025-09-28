@@ -22,6 +22,7 @@ export const AudioSettingsPanel = () => {
     isMusicEnabled,
     isSfxEnabled,
     isPlaying,
+    requiresUserActivation,
     masterVolume,
     musicVolume,
     sfxVolume,
@@ -34,6 +35,7 @@ export const AudioSettingsPanel = () => {
     setSfxVolume,
     setCurrentTrackId,
     playBubbleSfx,
+    retryPlayback,
   } = useAudio();
 
   const hasTracks = tracks.length > 0;
@@ -96,6 +98,15 @@ export const AudioSettingsPanel = () => {
             <Switch id="music-enabled" checked={isMusicEnabled} onCheckedChange={setMusicEnabled} />
           </div>
         </div>
+
+        {requiresUserActivation && isMusicEnabled && (
+          <div className="rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <p className="mb-2 font-medium">Sound is paused until you enable it.</p>
+            <Button type="button" size="sm" onClick={() => void retryPlayback()}>
+              <Volume2 className="mr-2 h-4 w-4" aria-hidden /> Enable Sound
+            </Button>
+          </div>
+        )}
 
         {hasTracks ? (
           <div className="space-y-3">

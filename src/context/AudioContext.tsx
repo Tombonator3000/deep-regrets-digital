@@ -22,12 +22,14 @@ interface AudioContextValue {
   isMusicEnabled: boolean;
   isSfxEnabled: boolean;
   isPlaying: boolean;
+  requiresUserActivation: boolean;
   masterVolume: number;
   musicVolume: number;
   sfxVolume: number;
   play: () => Promise<void>;
   pause: () => void;
   toggle: () => Promise<void>;
+  retryPlayback: () => Promise<void>;
   setCurrentTrackId: (trackId: string | null) => void;
   setMusicEnabled: (enabled: boolean) => void;
   setSfxEnabled: (enabled: boolean) => void;
@@ -77,6 +79,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const [musicVolume, setMusicVolume] = useState(0.7);
   const [sfxVolume, setSfxVolume] = useState(0.8);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [requiresUserActivation, setRequiresUserActivation] = useState(false);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const musicSourceRef = useRef<string | null>(null);
@@ -115,6 +118,30 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [tracks]);
 
+  const isNotAllowedError = useCallback((error: unknown) => {
+    if (error instanceof DOMException) {
+      return error.name === 'NotAllowedError';
+    }
+
+    if (typeof error === 'object' && error && 'name' in error) {
+      return (error as { name?: string }).name === 'NotAllowedError';
+    }
+
+    return false;
+  }, []);
+
+  const handlePlaybackRejection = useCallback(
+    (error: unknown) => {
+      console.warn('[audio] Unable to start playback', error);
+      setIsPlaying(false);
+
+      if (isNotAllowedError(error)) {
+        setRequiresUserActivation(true);
+      }
+    },
+    [isNotAllowedError],
+  );
+
   useEffect(() => {
     const element = ensureMusicElement();
     if (!element) {
@@ -122,7 +149,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     }
 
     element.volume = Math.min(1, Math.max(0, masterVolume * musicVolume));
-  }, [masterVolume, musicVolume]);
+  }, [ensureMusicElement, masterVolume, musicVolume]);
 
   useEffect(() => {
     const element = ensureMusicElement();
@@ -139,12 +166,10 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     if (isPlaying && currentTrack) {
       const playPromise = element.play();
       if (playPromise) {
-        playPromise.catch(() => {
-          setIsPlaying(false);
-        });
+        playPromise.catch(handlePlaybackRejection);
       }
     }
-  }, [isMusicEnabled, isPlaying, currentTrack]);
+  }, [currentTrack, ensureMusicElement, handlePlaybackRejection, isMusicEnabled, isPlaying]);
 
   useEffect(() => {
     const element = ensureMusicElement();
@@ -167,12 +192,10 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     if (isPlaying && isMusicEnabled) {
       const playPromise = element.play();
       if (playPromise) {
-        playPromise.catch(() => {
-          setIsPlaying(false);
-        });
+        playPromise.catch(handlePlaybackRejection);
       }
     }
-  }, [currentTrack, isMusicEnabled, isPlaying]);
+  }, [currentTrack, ensureMusicElement, handlePlaybackRejection, isMusicEnabled, isPlaying]);
 
   useEffect(() => {
     return () => {
@@ -219,11 +242,17 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
         await promise;
       }
       setIsPlaying(true);
+      setRequiresUserActivation(false);
     } catch (error) {
-      console.warn('[audio] Unable to start playback', error);
-      setIsPlaying(false);
+      handlePlaybackRejection(error);
     }
-  }, [currentTrack, ensureMusicElement, isMusicEnabled, tracks]);
+  }, [
+    currentTrack,
+    ensureMusicElement,
+    handlePlaybackRejection,
+    isMusicEnabled,
+    tracks,
+  ]);
 
   const pause = useCallback(() => {
     if (!musicRef.current) {
@@ -242,6 +271,11 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
     await play();
   }, [isPlaying, pause, play]);
+
+  const retryPlayback = useCallback(async () => {
+    setRequiresUserActivation(false);
+    await play();
+  }, [play]);
 
   const setMusicEnabled = useCallback((enabled: boolean) => {
     setIsMusicEnabled(enabled);
@@ -333,12 +367,14 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       isMusicEnabled,
       isSfxEnabled,
       isPlaying,
+      requiresUserActivation,
       masterVolume,
       musicVolume,
       sfxVolume,
       play,
       pause,
       toggle,
+      retryPlayback,
       setCurrentTrackId: setTrack,
       setMusicEnabled,
       setSfxEnabled,
@@ -354,12 +390,14 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       isMusicEnabled,
       isSfxEnabled,
       isPlaying,
+      requiresUserActivation,
       masterVolume,
       musicVolume,
       sfxVolume,
       pause,
       play,
       toggle,
+      retryPlayback,
       setMusicEnabled,
       setSfxEnabled,
       setMaster,
