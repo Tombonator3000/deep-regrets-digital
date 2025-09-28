@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card';
 interface ActionPanelProps {
   gameState: GameState;
   selectedShoal: {depth: number, shoal: number} | null;
-  selectedCard: any;
   onAction: (action: any) => void;
 }
 

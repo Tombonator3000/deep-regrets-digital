@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { GameState, Player } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
+import { useDiceSelection } from '@/hooks/useDiceSelection';
 
 interface FishingActionsProps {
   gameState: GameState;
@@ -13,7 +13,13 @@ interface FishingActionsProps {
 }
 
 export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onAction }: FishingActionsProps) => {
-  const [selectedDiceIndices, setSelectedDiceIndices] = useState<number[]>([]);
+  const {
+    availableDiceTotal,
+    resetDiceSelection,
+    selectedDiceIndices,
+    selectedDiceTotal,
+    toggleDiceSelection,
+  } = useDiceSelection(currentPlayer.freshDice);
   const { toast } = useToast();
 
   if (currentPlayer.location !== 'sea') {
@@ -23,13 +29,6 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   const canMoveDeeper = currentPlayer.currentDepth < 3;
   const canRevealFish = selectedShoal && gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length > 0;
   const revealedFish = selectedShoal ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal][0] : null;
-  const availableDiceTotal = currentPlayer.freshDice.reduce((sum, val) => sum + val, 0);
-  const selectedDiceTotal = selectedDiceIndices.reduce((sum, idx) => sum + (currentPlayer.freshDice[idx] ?? 0), 0);
-
-  useEffect(() => {
-    setSelectedDiceIndices(prev => prev.filter(index => index < currentPlayer.freshDice.length));
-  }, [currentPlayer.freshDice.length]);
-
   const handleMoveDeeper = () => {
     if (canMoveDeeper) {
       onAction({
@@ -85,7 +84,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
       });
     }
 
-    setSelectedDiceIndices([]);
+    resetDiceSelection();
   };
 
   const handlePassOnFish = () => {
@@ -107,13 +106,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
       description: `${currentPlayer.name} takes the mandatory Dink penalty for skipping ${revealedFish.name}.`
     });
 
-    setSelectedDiceIndices([]);
-  };
-
-  const toggleDiceSelection = (index: number) => {
-    setSelectedDiceIndices(prev =>
-      prev.includes(index) ? prev.filter(idx => idx !== index) : [...prev, index]
-    );
+    resetDiceSelection();
   };
 
   return (
