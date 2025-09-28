@@ -277,6 +277,49 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     await play();
   }, [play]);
 
+  useEffect(() => {
+    if (!requiresUserActivation || typeof window === 'undefined') {
+      return;
+    }
+
+    let disposed = false;
+
+    const removeListeners = () => {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+    };
+
+    const attemptResume = async () => {
+      if (disposed) {
+        return;
+      }
+
+      try {
+        await retryPlayback();
+      } finally {
+        const element = musicRef.current;
+        if (element && !element.paused) {
+          setRequiresUserActivation(false);
+          removeListeners();
+        }
+      }
+    };
+
+    const handleInteraction = () => {
+      void attemptResume();
+    };
+
+    window.addEventListener('pointerdown', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
+
+    return removeListeners;
+  }, [requiresUserActivation, retryPlayback]);
+
   const setMusicEnabled = useCallback((enabled: boolean) => {
     setIsMusicEnabled(enabled);
   }, []);
