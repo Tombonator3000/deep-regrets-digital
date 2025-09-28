@@ -2,6 +2,7 @@ import { Player } from '@/types/game';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 
 interface PlayerPanelProps {
   player: Player;
@@ -104,11 +105,15 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
             <div>
               <div className="text-xs text-muted-foreground mb-2">Tackle Dice:</div>
               <div className="flex space-x-2">
-                {player.tackleDice.map((color, index) => (
-                  <div key={`tackle-${index}`} className={`dice-face border-${color}-500`}>
-                    T
-                  </div>
-                ))}
+                {player.tackleDice.map((dieId, index) => {
+                  const die = TACKLE_DICE_LOOKUP[dieId];
+                  const borderColor = die?.color ?? 'slate';
+                  return (
+                    <div key={`tackle-${index}`} className={`dice-face border-${borderColor}-500`}>
+                      T
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
