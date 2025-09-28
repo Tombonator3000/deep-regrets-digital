@@ -80,6 +80,7 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
               alt="The Briny Deep board"
               className="h-full w-full select-none rounded-xl object-contain drop-shadow-2xl"
             />
+            <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-slate-950/45 via-transparent to-slate-950/20" />
             <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-3 p-4 md:p-8">
           {[1, 2, 3].flatMap((depth) =>
             gameState.sea.shoals[depth]?.map((shoal, shoalIndex) => {
@@ -107,15 +108,17 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                       onShoalSelect({ depth, shoal: shoalIndex });
                     }
                   }}
-                  className={`relative flex h-full flex-col justify-between rounded-xl border-2 border-transparent bg-black/30 p-3 text-white shadow-lg backdrop-blur-sm transition ${
+                  className={`relative overflow-hidden flex h-full flex-col justify-between rounded-xl border-2 border-transparent bg-slate-950/70 p-3 text-white shadow-lg backdrop-blur transition ${
                     isSelected ? 'border-primary ring-2 ring-primary/70' : ''
                   } ${
                     shoalEmpty ? 'opacity-60' : ''
                   } ${
-                    canInteract ? 'hover:border-primary/70 hover:bg-black/40' : 'cursor-not-allowed'
+                    canInteract ? 'hover:border-primary/70 hover:bg-slate-950/80' : 'cursor-not-allowed'
                   }`}
                 >
-                  <div className="flex h-full flex-col justify-between gap-4 text-sm">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/40 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 backdrop-blur-[1.5px]" />
+                  <div className="relative flex h-full flex-col justify-between gap-4 text-sm">
                     <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-200/80">
                       <span>Shoal {shoalIndex + 1}</span>
                       <span>Depth {depth}</span>
@@ -134,11 +137,11 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                           <p className="sr-only">Difficulty {topFish?.difficulty ?? 'unknown'} at depth {depth}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge className="bg-fishbuck/20 text-fishbuck">Value {topFish?.value ?? '?'}</Badge>
-                          <Badge variant="outline" className="border-destructive/50 text-destructive">
+                          <Badge className="bg-fishbuck text-slate-900 shadow-sm">Value {topFish?.value ?? '?'}</Badge>
+                          <Badge className="bg-destructive text-white shadow-sm">
                             Difficulty {topFish?.difficulty ?? '?'}
                           </Badge>
-                          <Badge variant="secondary" className="bg-slate-900/60 text-slate-100">
+                          <Badge className="bg-slate-800 text-slate-100 shadow-sm">
                             {shoal.length} fish remaining
                           </Badge>
                         </div>
