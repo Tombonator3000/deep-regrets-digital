@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" role="img" aria-labelledby="title desc">
+  <title id="title">The Briny Deep board</title>
+  <desc id="desc">A stylised three by three sea board used for the Deep Regrets digital implementation.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f1f966" />
+      <stop offset="35%" stop-color="#63b321" />
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d8ed6" />
+      <stop offset="45%" stop-color="#1d5aa0" />
+      <stop offset="85%" stop-color="#052d52" />
+    </linearGradient>
+    <linearGradient id="foam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.85)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </linearGradient>
+    <pattern id="waves" patternUnits="userSpaceOnUse" width="80" height="40">
+      <path d="M0 20 Q20 0 40 20 T80 20" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="6" />
+      <path d="M0 40 Q20 20 40 40 T80 40" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="6" />
+    </pattern>
+    <clipPath id="board-clip">
+      <rect x="80" y="220" width="1040" height="1200" rx="42" ry="42" />
+    </clipPath>
+    <style>
+      @font-face {
+        font-family: 'Boardhead';
+        src: local('Cooper Black'), local('Arial Black');
+      }
+    </style>
+  </defs>
+  <rect width="1200" height="320" fill="url(#sky)" />
+  <rect x="0" y="310" width="1200" height="1290" fill="url(#sea)" />
+  <rect x="0" y="300" width="1200" height="120" fill="url(#foam)" opacity="0.4" />
+  <g clip-path="url(#board-clip)">
+    <rect x="80" y="220" width="1040" height="1200" fill="url(#sea)" />
+    <rect x="80" y="220" width="1040" height="1200" fill="url(#waves)" opacity="0.45" />
+    <g fill="none" stroke="rgba(255,255,255,0.55)" stroke-dasharray="14 20" stroke-width="8">
+      <path d="M80 620 H1120" />
+      <path d="M80 1020 H1120" />
+      <path d="M440 220 V1420" />
+      <path d="M800 220 V1420" />
+    </g>
+    <rect x="80" y="220" width="1040" height="1200" fill="none" stroke="rgba(4,25,48,0.55)" stroke-width="18" />
+  </g>
+  <g fill="#011c38" font-family="'Boardhead', 'Cooper Black', 'Arial Black', sans-serif" text-anchor="middle">
+    <text x="600" y="160" font-size="110" letter-spacing="4" fill="#01223f">THE BRINY DEEP</text>
+    <text x="600" y="248" font-size="46" fill="#f7f3d7" letter-spacing="6">CAST · TROLL · PAY · CATCH (OR DINK)</text>
+  </g>
+  <g font-family="'Futura', 'Trebuchet MS', sans-serif" font-weight="600" text-anchor="middle" fill="#f1f7ff">
+    <text x="220" y="480" font-size="44">Ships</text>
+    <text x="600" y="480" font-size="44">Depth I</text>
+    <text x="980" y="480" font-size="44">Depth I</text>
+    <text x="220" y="880" font-size="44">Depth II</text>
+    <text x="600" y="880" font-size="44">Depth II</text>
+    <text x="980" y="880" font-size="44">Depth II</text>
+    <text x="220" y="1280" font-size="44">Depth III</text>
+    <text x="600" y="1280" font-size="44">Depth III</text>
+    <text x="980" y="1280" font-size="44">Depth III</text>
+  </g>
+  <g font-family="'Futura', 'Trebuchet MS', sans-serif" font-size="36" fill="#d0e8ff" text-anchor="middle">
+    <text x="220" y="540">0↑</text>
+    <text x="600" y="540">0↑</text>
+    <text x="980" y="540">0↑</text>
+    <text x="220" y="940">0↑</text>
+    <text x="600" y="940">0↑</text>
+    <text x="980" y="940">0↑</text>
+    <text x="220" y="1340">0↑</text>
+    <text x="600" y="1340">0↑</text>
+    <text x="980" y="1340">0↑</text>
+  </g>
+  <g fill="#fef6d2" font-family="'Futura', 'Trebuchet MS', sans-serif" font-size="34" text-anchor="middle">
+    <text x="200" y="220" transform="rotate(-15 200 220)">DINKS</text>
+  </g>
+</svg>
