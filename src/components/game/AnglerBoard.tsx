@@ -2,6 +2,7 @@ import { Player } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
+import { PlayerHand } from './PlayerHand';
 
 interface AnglerBoardProps {
   player: Player;
@@ -165,6 +166,14 @@ export const AnglerBoard = ({ player, isCurrentPlayer }: AnglerBoardProps) => {
         >
           {player.location === 'sea' ? `🌊 At Sea (Depth ${player.currentDepth})` : '⚓ In Port'}
         </Badge>
+      </div>
+
+      {/* Player Hand - Cards */}
+      <div className="mt-4">
+        <PlayerHand
+          player={player}
+          isCurrentPlayer={isCurrentPlayer}
+        />
       </div>
     </div>
   );
