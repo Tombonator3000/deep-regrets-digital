@@ -2,8 +2,8 @@ import { GameState } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Waves, ArrowDown, Fish, Skull, Eye } from 'lucide-react';
-import boardImage from '@/assets/briny-deep-board.svg';
+import { ArrowDown, Fish, Skull, Eye, Waves } from 'lucide-react';
+import brinyDeepHeader from '@/assets/briny-deep-header.png';
 
 interface SeaBoardProps {
   gameState: GameState;
@@ -32,26 +32,28 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
 
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-4">
-      {/* Board Header - The Briny Deep Title */}
-      <div className="flex shrink-0 items-center justify-between rounded-xl border-2 border-primary/30 bg-gradient-to-r from-slate-900/90 to-slate-950/90 p-4 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
-            <Waves className="h-5 w-5 text-primary" />
+      {/* Board Header - The Briny Deep with artwork and gradient */}
+      <div className="relative shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-slate-950/60">
+        <img
+          src={brinyDeepHeader}
+          alt="The Briny Deep"
+          className="h-48 w-full object-cover object-top sm:h-56"
+        />
+        {/* Dark gradient overlay fading downward for readability */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/20 to-slate-950/90" />
+        {/* Status info overlaid on gradient */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 pb-4">
+          <div className="text-sm text-slate-200/90">
+            Current Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
+            {currentPlayer.location === 'port' && ' (In Port)'}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-primary-glow">The Briny Deep</h2>
-            <p className="text-xs text-muted-foreground">
-              Current Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
-              {currentPlayer.location === 'port' && ' (In Port)'}
-            </p>
-          </div>
+          {gameState.sea.plugActive && (
+            <Badge className="bg-destructive/20 text-destructive animate-pulse">
+              <Skull className="mr-1 h-3 w-3" />
+              The Plug is Active!
+            </Badge>
+          )}
         </div>
-        {gameState.sea.plugActive && (
-          <Badge className="bg-destructive/20 text-destructive animate-pulse">
-            <Skull className="mr-1 h-3 w-3" />
-            The Plug is Active!
-          </Badge>
-        )}
       </div>
 
       {/* Depth Navigation - Like descending into the sea */}
@@ -97,17 +99,8 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
       {/* The Deep Sea Board - Organized by Depth Rows like physical board */}
       <div className="flex-1 min-h-0 overflow-auto">
         <div className="relative mx-auto w-full max-w-4xl rounded-2xl border-2 border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-4 shadow-2xl">
-          {/* Background Image */}
-          <div className="absolute inset-0 overflow-hidden rounded-2xl opacity-20">
-            <img
-              src={boardImage}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
-
           {/* Depth Rows - Like the physical board's 3 depth sections */}
-          <div className="relative space-y-4">
+          <div className="space-y-4">
             {[1, 2, 3].map((depth) => {
               const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
               const shoals = gameState.sea.shoals[depth] ?? [];
