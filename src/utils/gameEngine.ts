@@ -420,9 +420,13 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 
     case 'CATCH_FISH':
       if (player && player.location === 'sea') {
-        const { fish, depth, shoal, diceIndices } = action.payload;
+        const { fish, depth, shoal, diceIndices, tackleDiceIndices } = action.payload;
         const fishDifficulty = fish.difficulty;
         const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
+
+        // Mechanical Reel effect - auto catch fish with difficulty 3 or less
+        const hasAutoCatch = playerHasEquippedEffect(player, 'auto_catch_difficulty_3');
+        const isAutoCatch = hasAutoCatch && fishDifficulty <= 3;
 
         const requestedIndices = Array.isArray(diceIndices) ? diceIndices : [];
         const uniqueValidIndices = Array.from(
@@ -434,27 +438,60 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           )
         );
 
+        // Handle tackle dice selection
+        const requestedTackleIndices = Array.isArray(tackleDiceIndices) ? tackleDiceIndices : [];
+        const uniqueTackleIndices = Array.from(
+          new Set(
+            requestedTackleIndices.filter(
+              (index: number) =>
+                typeof index === 'number' && index >= 0 && index < player.tackleDice.length
+            )
+          )
+        );
+
+        // Roll tackle dice and calculate their values
+        const tackleDiceValues: number[] = uniqueTackleIndices.map(index => {
+          const tackleDieId = player.tackleDice[index];
+          const tackleDie = TACKLE_DICE_LOOKUP[tackleDieId];
+          if (tackleDie) {
+            const faceIndex = Math.floor(Math.random() * tackleDie.faces.length);
+            return tackleDie.faces[faceIndex];
+          }
+          return 0;
+        });
+        const tackleTotal = tackleDiceValues.reduce((sum, val) => sum + val, 0);
+
         const selectedDiceValues = uniqueValidIndices.map(index => player.freshDice[index]);
         const hasUsableSelection =
-          uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length;
-        const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0);
-        const meetsDifficulty = hasUsableSelection && selectedTotal >= fishDifficulty;
+          (uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length) ||
+          uniqueTackleIndices.length > 0 ||
+          isAutoCatch;
+        const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0) + tackleTotal;
+        const meetsDifficulty = isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty);
 
         if (meetsDifficulty) {
+          // Remove fresh dice
           const removalOrder = [...uniqueValidIndices].sort((a, b) => b - a);
           removalOrder.forEach(index => {
             player.freshDice.splice(index, 1);
           });
           player.spentDice = [...player.spentDice, ...selectedDiceValues];
 
+          // Remove used tackle dice (they are consumed on use)
+          const tackleRemovalOrder = [...uniqueTackleIndices].sort((a, b) => b - a);
+          tackleRemovalOrder.forEach(index => {
+            player.tackleDice.splice(index, 1);
+          });
+
           player.handFish.push(fish);
 
           const shoalArray = newState.sea.shoals[depth][shoal];
-          const fishIndex = shoalArray.findIndex((f: any) => f.id === fish.id);
+          const fishIndex = shoalArray.findIndex((f: FishCard) => f.id === fish.id);
           if (fishIndex >= 0) {
             shoalArray.splice(fishIndex, 1);
           }
 
+          // Process fish abilities
           if (fish.abilities.includes('regret_draw')) {
             drawRegret(player, newState);
           }
@@ -462,10 +499,47 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
             drawRegret(player, newState);
             drawRegret(player, newState);
           }
+
+          // dink_on_catch - Draw a dink when catching this fish
+          if (fish.abilities.includes('dink_on_catch')) {
+            const { card: dinkCard, deck: dinkDeck } = drawCard(newState.port.dinksDeck);
+            if (dinkCard) {
+              player.dinks = [...player.dinks, dinkCard];
+            }
+            newState.port.dinksDeck = dinkDeck;
+          }
+
+          // discard_small - Discard a small fish from hand (if player has one)
+          // Check if player has Ancient Harpoon which ignores this penalty
+          if (fish.abilities.includes('discard_small') || fish.abilities.includes('shark')) {
+            const hasHarpoon = playerHasEquippedEffect(player, 'ignore_shark_penalty');
+            if (!hasHarpoon) {
+              const smallFishIndex = player.handFish.findIndex(f =>
+                f.tags.includes('small') && f.id !== fish.id
+              );
+              if (smallFishIndex >= 0) {
+                player.handFish.splice(smallFishIndex, 1);
+              }
+            }
+          }
+
+          // The Plug special handling
           if (fish.id === 'FISH-D3-PLUG-003') {
             newState.sea.plugActive = true;
             player.hasPassed = true;
           }
+
+          // Quick Release Reel effect - draw dink on successful catch
+          if (playerHasEquippedEffect(player, 'draw_dink_on_catch')) {
+            const { card: reelDink, deck: reelDinkDeck } = drawCard(newState.port.dinksDeck);
+            if (reelDink) {
+              player.dinks = [...player.dinks, reelDink];
+            }
+            newState.port.dinksDeck = reelDinkDeck;
+          }
+
+          // Reset regret reduction effect for next catch
+          removeActiveEffect(player, 'regret_reduction_used');
 
           applyMadnessAbilities(player, fish, newState);
         } else {
@@ -612,10 +686,14 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           player.fishbucks += 2;
           newState.fishCoinOwner = player.id;
         } else if (passedCount === 1) {
-          // Second to pass: 1 Supply token (Lucky Lure as default supply)
-          const supplyToGive = SUPPLIES[0];
-          if (supplyToGive) {
-            player.supplies = [...player.supplies, supplyToGive];
+          // Second to pass: 1 Supply from the shop (if available)
+          const availableSupply = newState.port.shops.supplies[0];
+          if (availableSupply) {
+            player.supplies = [...player.supplies, availableSupply];
+            newState.port.shops.supplies = newState.port.shops.supplies.slice(1);
+          } else {
+            // Fallback: 1 Fishbuck if no supplies available
+            player.fishbucks += 1;
           }
         } else {
           // Later players: 1 Fishbuck (or heal madness if they have few regrets - simplified to just fishbuck)
@@ -715,10 +793,24 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
 };
 
 const drawRegret = (player: Player, gameState: GameState) => {
+  // Check for regret shields first
   if (player.regretShields > 0) {
     player.regretShields -= 1;
     return;
   }
+
+  // Check for Blessed Rod effect (reduce_regrets_1) - reduces regret draws by 1
+  if (playerHasEquippedEffect(player, 'reduce_regrets_1')) {
+    // Use the effect once per regret draw trigger
+    if (hasActiveEffect(player, 'regret_reduction_used')) {
+      // Effect already used this turn, proceed with draw
+    } else {
+      // Mark effect as used and skip this draw
+      player.activeEffects = [...(player.activeEffects || []), 'regret_reduction_used'];
+      return;
+    }
+  }
+
   const { card, deck, discard } = drawCard(
     gameState.port.regretsDeck,
     gameState.port.regretsDiscard
@@ -859,15 +951,25 @@ const advanceDay = (gameState: GameState) => {
   } else {
     endGame(gameState);
   }
-  
+
   // Day effects
   if (gameState.day === 'Thursday') {
     // Payday - all players get 3 fishbucks
     gameState.players.forEach(p => p.fishbucks += 3);
   }
-  
-  // Rotate first player
-  gameState.firstPlayerIndex = (gameState.firstPlayerIndex + 1) % gameState.players.length;
+
+  // Fish Coin owner becomes next first player (if set), otherwise rotate
+  if (gameState.fishCoinOwner) {
+    const fishCoinPlayerIndex = gameState.players.findIndex(p => p.id === gameState.fishCoinOwner);
+    if (fishCoinPlayerIndex >= 0) {
+      gameState.firstPlayerIndex = fishCoinPlayerIndex;
+    } else {
+      gameState.firstPlayerIndex = (gameState.firstPlayerIndex + 1) % gameState.players.length;
+    }
+    gameState.fishCoinOwner = undefined;
+  } else {
+    gameState.firstPlayerIndex = (gameState.firstPlayerIndex + 1) % gameState.players.length;
+  }
   gameState.currentPlayerIndex = gameState.firstPlayerIndex;
 };
 

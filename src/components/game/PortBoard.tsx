@@ -16,7 +16,6 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RODS, REELS, SUPPLIES } from '@/data/upgrades';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { TACKLE_DICE } from '@/data/tackleDice';
@@ -153,12 +152,6 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
       </span>
     </div>
   );
-
-  const featuredUpgrades = [
-    ...RODS.slice(0, 2),
-    ...REELS.slice(0, 2),
-    ...SUPPLIES.slice(0, 2)
-  ];
 
   return (
     <div className={cn('flex h-full flex-col space-y-6', className)}>
@@ -507,9 +500,13 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {RODS.map((rod) => (
-                  <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
-                ))}
+                {gameState.port.shops.rods.length > 0 ? (
+                  gameState.port.shops.rods.map((rod) => (
+                    <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                  ))
+                ) : (
+                  <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
+                )}
               </div>
             </div>
 
@@ -525,9 +522,13 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {REELS.map((reel) => (
-                  <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
-                ))}
+                {gameState.port.shops.reels.length > 0 ? (
+                  gameState.port.shops.reels.map((reel) => (
+                    <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                  ))
+                ) : (
+                  <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
+                )}
               </div>
             </div>
 
@@ -543,9 +544,13 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {SUPPLIES.map((supply) => (
-                  <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
-                ))}
+                {gameState.port.shops.supplies.length > 0 ? (
+                  gameState.port.shops.supplies.map((supply) => (
+                    <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                  ))
+                ) : (
+                  <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
+                )}
               </div>
             </div>
           </div>
