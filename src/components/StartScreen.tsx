@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import logoImage from '@/assets/deep-regrets-logo.jpg';
 import { BubbleField } from '@/components/effects/BubbleField';
-import { AudioSettingsPanel } from '@/components/AudioSettingsPanel';
+import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 
 interface StartScreenProps {
   onStartGame: (playerCount: number) => void;
@@ -18,6 +18,7 @@ interface StartScreenProps {
 export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   const [playerCount, setPlayerCount] = useState(2);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const displaySettings = useDisplaySettings();
 
   const particles = useMemo(
     () =>
@@ -46,19 +47,23 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         </div>
       </div>
       {/* Animated background particles */}
-      <div className="ocean-particles">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="particle animate-float"
-            style={{
-              left: particle.left,
-              animationDelay: particle.delay,
-            }}
-          />
-        ))}
-      </div>
-      <BubbleField bubbleCount={64} className="opacity-80" />
+      {displaySettings.particlesEnabled && (
+        <div className="ocean-particles">
+          {particles.map((particle) => (
+            <div
+              key={particle.id}
+              className="particle animate-float"
+              style={{
+                left: particle.left,
+                animationDelay: particle.delay,
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {displaySettings.bubblesEnabled && (
+        <BubbleField bubbleCount={64} className="opacity-80" />
+      )}
 
       {/* Tentacle shadows */}
       <div className="tentacle-shadow" />
@@ -159,18 +164,15 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         </div>
 
         <Dialog open={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Options</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-primary-glow">Options</DialogTitle>
               <DialogDescription>
-                Fine tune your voyage before you descend. Configure music sourced from the muzak archives and test ambient effects.
+                Configure your audio and display preferences before descending into the depths.
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-6 space-y-6">
-              <AudioSettingsPanel />
-              <p className="text-xs text-muted-foreground italic">
-                Tip: Place MP3 files inside <code>src/assets/muzak</code> to make them available as selectable soundtracks.
-              </p>
+            <div className="mt-4">
+              <OptionsMenu />
             </div>
           </DialogContent>
         </Dialog>
