@@ -86,14 +86,60 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 
+  // localStorage keys for persisting audio settings
+  const STORAGE_KEYS = {
+    masterVolume: 'deep-regrets-master-volume',
+    musicVolume: 'deep-regrets-music-volume',
+    sfxVolume: 'deep-regrets-sfx-volume',
+    isMusicEnabled: 'deep-regrets-music-enabled',
+    isSfxEnabled: 'deep-regrets-sfx-enabled',
+  } as const;
+
+  // Helper to safely read from localStorage
+  const getStoredNumber = (key: string, defaultValue: number): number => {
+    if (typeof window === 'undefined') return defaultValue;
+    const stored = localStorage.getItem(key);
+    if (stored === null) return defaultValue;
+    const parsed = parseFloat(stored);
+    return Number.isNaN(parsed) ? defaultValue : Math.min(1, Math.max(0, parsed));
+  };
+
+  const getStoredBoolean = (key: string, defaultValue: boolean): boolean => {
+    if (typeof window === 'undefined') return defaultValue;
+    const stored = localStorage.getItem(key);
+    if (stored === null) return defaultValue;
+    return stored === 'true';
+  };
+
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(() => tracks[0]?.id ?? null);
-  const [isMusicEnabled, setIsMusicEnabled] = useState(true);
-  const [isSfxEnabled, setIsSfxEnabled] = useState(true);
-  const [masterVolume, setMasterVolume] = useState(0.8);
-  const [musicVolume, setMusicVolume] = useState(0.7);
-  const [sfxVolume, setSfxVolume] = useState(0.8);
+  const [isMusicEnabled, setIsMusicEnabled] = useState(() => getStoredBoolean(STORAGE_KEYS.isMusicEnabled, true));
+  const [isSfxEnabled, setIsSfxEnabled] = useState(() => getStoredBoolean(STORAGE_KEYS.isSfxEnabled, true));
+  const [masterVolume, setMasterVolume] = useState(() => getStoredNumber(STORAGE_KEYS.masterVolume, 0.8));
+  const [musicVolume, setMusicVolume] = useState(() => getStoredNumber(STORAGE_KEYS.musicVolume, 0.15));
+  const [sfxVolume, setSfxVolume] = useState(() => getStoredNumber(STORAGE_KEYS.sfxVolume, 0.8));
   const [isPlaying, setIsPlaying] = useState(false);
   const [requiresUserActivation, setRequiresUserActivation] = useState(false);
+
+  // Persist settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.masterVolume, masterVolume.toString());
+  }, [masterVolume]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.musicVolume, musicVolume.toString());
+  }, [musicVolume]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.sfxVolume, sfxVolume.toString());
+  }, [sfxVolume]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.isMusicEnabled, isMusicEnabled.toString());
+  }, [isMusicEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.isSfxEnabled, isSfxEnabled.toString());
+  }, [isSfxEnabled]);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const musicSourceRef = useRef<string | null>(null);

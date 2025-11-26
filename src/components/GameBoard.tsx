@@ -43,7 +43,7 @@ import {
 import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
-import { AudioSettingsPanel } from '@/components/AudioSettingsPanel';
+import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -62,6 +62,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   const portButtonRef = useRef<HTMLButtonElement>(null);
   const sheetCloseRef = useRef<HTMLButtonElement>(null);
   const wasPortOpenRef = useRef(false);
+  const displaySettings = useDisplaySettings();
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
@@ -139,20 +140,24 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
     <div ref={boardRef} className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="ocean-particles">
-          {Array.from({ length: 25 }).map((_, i) => (
-            <div
-              key={i}
-              className="particle animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 8}s`,
-                animationDuration: `${6 + Math.random() * 4}s`
-              }}
-            />
-          ))}
-        </div>
-        <BubbleField bubbleCount={72} className="opacity-70" />
+        {displaySettings.particlesEnabled && (
+          <div className="ocean-particles">
+            {Array.from({ length: 25 }).map((_, i) => (
+              <div
+                key={i}
+                className="particle animate-float"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 8}s`,
+                  animationDuration: `${6 + Math.random() * 4}s`
+                }}
+              />
+            ))}
+          </div>
+        )}
+        {displaySettings.bubblesEnabled && (
+          <BubbleField bubbleCount={72} className="opacity-70" />
+        )}
         <div className="tentacle-shadow" />
       </div>
       
@@ -524,15 +529,15 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       </Dialog>
 
       <Dialog open={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Options</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-primary-glow">Options</DialogTitle>
             <DialogDescription>
-              Adjust audio preferences while you remain on the bridge.
+              Adjust your audio and display preferences mid-voyage.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-6">
-            <AudioSettingsPanel />
+          <div className="mt-4">
+            <OptionsMenu />
           </div>
         </DialogContent>
       </Dialog>
