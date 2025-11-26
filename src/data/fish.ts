@@ -60,6 +60,102 @@ export const DEPTH_1_FISH: FishCard[] = [
     tags: ['medium', 'valuable'],
     description: 'An old fish with wisdom in its eyes.',
     quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-HERRING-006',
+    name: 'Silver Herring',
+    depth: 1,
+    value: 1,
+    baseValue: 1,
+    difficulty: 2,
+    abilities: [],
+    tags: ['small', 'common'],
+    description: 'A quick flash of silver in the shallows.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-PERCH-007',
+    name: 'Spotted Perch',
+    depth: 1,
+    value: 2,
+    baseValue: 2,
+    difficulty: 3,
+    abilities: [],
+    tags: ['small', 'common'],
+    description: 'Colorful spots mark this common catch.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-TROUT-008',
+    name: 'Rainbow Trout',
+    depth: 1,
+    value: 3,
+    baseValue: 3,
+    difficulty: 4,
+    abilities: [],
+    tags: ['medium'],
+    description: 'Iridescent scales shimmer in the light.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-ANCHOVY-009',
+    name: 'Anchovy Swarm',
+    depth: 1,
+    value: 1,
+    baseValue: 1,
+    difficulty: 2,
+    abilities: [],
+    tags: ['small', 'common'],
+    description: 'Tiny but abundant, the foundation of the food chain.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-CRAB-010',
+    name: 'Stone Crab',
+    depth: 1,
+    value: 2,
+    baseValue: 2,
+    difficulty: 4,
+    abilities: [],
+    tags: ['crustacean'],
+    description: 'Armored claws snap at unwary fingers.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-SNAPPER-011',
+    name: 'Red Snapper',
+    depth: 1,
+    value: 3,
+    baseValue: 3,
+    difficulty: 4,
+    abilities: [],
+    tags: ['medium'],
+    description: 'Prized for its firm, flavorful flesh.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-SQUID-012',
+    name: 'Ink Squid',
+    depth: 1,
+    value: 2,
+    baseValue: 2,
+    difficulty: 3,
+    abilities: ['dink_on_catch'],
+    tags: ['cephalopod'],
+    description: 'Releases a cloud of ink when caught.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D1-HALIBUT-013',
+    name: 'Young Halibut',
+    depth: 1,
+    value: 4,
+    baseValue: 4,
+    difficulty: 5,
+    abilities: [],
+    tags: ['medium', 'valuable'],
+    description: 'A juvenile flatfish with great potential.',
+    quality: 'fair'
   }
 ];
 
@@ -123,6 +219,102 @@ export const DEPTH_2_FISH: FishCard[] = [
     tags: ['predator', 'cursed'],
     description: 'Its bite carries an otherworldly corruption. +1 Madness.',
     quality: 'foul'
+  },
+  {
+    id: 'FISH-D2-SWORDFISH-006',
+    name: 'Bronze Swordfish',
+    depth: 2,
+    value: 7,
+    baseValue: 7,
+    difficulty: 8,
+    abilities: ['strong'],
+    tags: ['large', 'valuable'],
+    description: 'Its blade-like bill gleams with ancient power.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D2-MORAY-007',
+    name: 'Phantom Moray',
+    depth: 2,
+    value: 5,
+    baseValue: 5,
+    difficulty: 6,
+    abilities: ['dink_on_catch'],
+    tags: ['serpent', 'mystical'],
+    description: 'Slips through the water like a ghost.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D2-GROUPER-008',
+    name: 'Goliath Grouper',
+    depth: 2,
+    value: 6,
+    baseValue: 6,
+    difficulty: 7,
+    abilities: ['strong'],
+    tags: ['large'],
+    description: 'A massive fish that tests even experienced anglers.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D2-JELLYFISH-009',
+    name: 'Stinging Medusa',
+    depth: 2,
+    value: 4,
+    baseValue: 4,
+    difficulty: 5,
+    abilities: ['madness_+1'],
+    tags: ['jellyfish', 'dangerous'],
+    description: 'Its tentacles burn with eldritch venom. +1 Madness.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D2-MARLIN-010',
+    name: 'Striped Marlin',
+    depth: 2,
+    value: 8,
+    baseValue: 8,
+    difficulty: 9,
+    abilities: ['strong'],
+    tags: ['large', 'valuable'],
+    description: 'The king of sport fish, a true challenge.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D2-CUTTLEFISH-011',
+    name: 'Hypnotic Cuttlefish',
+    depth: 2,
+    value: 5,
+    baseValue: 5,
+    difficulty: 6,
+    abilities: ['regret_draw'],
+    tags: ['cephalopod', 'mystical'],
+    description: 'Its shifting colors entrance the mind. Draw a Regret.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D2-WAHOO-012',
+    name: 'Swift Wahoo',
+    depth: 2,
+    value: 6,
+    baseValue: 6,
+    difficulty: 7,
+    abilities: ['quick'],
+    tags: ['large'],
+    description: 'One of the fastest fish in the sea.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D2-LOBSTER-013',
+    name: 'Giant Lobster',
+    depth: 2,
+    value: 7,
+    baseValue: 7,
+    difficulty: 8,
+    abilities: [],
+    tags: ['crustacean', 'valuable'],
+    description: 'Massive claws guard succulent flesh.',
+    quality: 'fair'
   }
 ];
 
@@ -185,6 +377,102 @@ export const DEPTH_3_FISH: FishCard[] = [
     abilities: ['lure', 'horror', 'regret_draw'],
     tags: ['deep', 'horror'],
     description: 'Its hypnotic light draws you into madness. Draw a Regret.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D3-COLOSSAL-006',
+    name: 'Colossal Squid',
+    depth: 3,
+    value: 11,
+    baseValue: 11,
+    difficulty: 14,
+    abilities: ['tentacles', 'regret_draw'],
+    tags: ['cephalopod', 'legendary'],
+    description: 'Tentacles as thick as ship masts. Draw a Regret.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D3-WHALE-007',
+    name: 'Ghost Whale',
+    depth: 3,
+    value: 14,
+    baseValue: 14,
+    difficulty: 16,
+    abilities: ['legendary', 'ancient'],
+    tags: ['mammal', 'legendary'],
+    description: 'A spectral cetacean from beyond the veil.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D3-SERPENT-008',
+    name: 'Sea Serpent',
+    depth: 3,
+    value: 13,
+    baseValue: 13,
+    difficulty: 15,
+    abilities: ['legendary', 'madness_+1'],
+    tags: ['serpent', 'legendary'],
+    description: 'Ancient sailors warned of its coils. +1 Madness.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D3-COELACANTH-009',
+    name: 'Living Fossil',
+    depth: 3,
+    value: 9,
+    baseValue: 9,
+    difficulty: 11,
+    abilities: ['ancient'],
+    tags: ['ancient', 'rare'],
+    description: 'Thought extinct, it survives in the abyss.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D3-OARFISH-010',
+    name: 'Doom Oarfish',
+    depth: 3,
+    value: 10,
+    baseValue: 10,
+    difficulty: 12,
+    abilities: ['regret_draw'],
+    tags: ['serpent', 'omen'],
+    description: 'Its appearance heralds disaster. Draw a Regret.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D3-ISOPOD-011',
+    name: 'Giant Isopod',
+    depth: 3,
+    value: 7,
+    baseValue: 7,
+    difficulty: 10,
+    abilities: [],
+    tags: ['crustacean', 'deep'],
+    description: 'An armored scavenger from the deepest trenches.',
+    quality: 'fair'
+  },
+  {
+    id: 'FISH-D3-BLOBFISH-012',
+    name: 'Eldritch Blobfish',
+    depth: 3,
+    value: 6,
+    baseValue: 6,
+    difficulty: 9,
+    abilities: ['madness_+1'],
+    tags: ['deep', 'horror'],
+    description: 'Its melancholy face haunts your dreams. +1 Madness.',
+    quality: 'foul'
+  },
+  {
+    id: 'FISH-D3-DRAGON-013',
+    name: 'Abyssal Dragon',
+    depth: 3,
+    value: 16,
+    baseValue: 16,
+    difficulty: 18,
+    abilities: ['legendary', 'madness_+2', 'regret_draw'],
+    tags: ['beast', 'legendary'],
+    description: 'The ultimate prize of the deep. +2 Madness, draw a Regret.',
     quality: 'foul'
   }
 ];

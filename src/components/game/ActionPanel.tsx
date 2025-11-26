@@ -22,9 +22,9 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
     });
   };
 
-  const handleEndTurn = () => {
+  const handlePass = () => {
     onAction({
-      type: 'END_TURN',
+      type: 'PASS',
       playerId: currentPlayer.id,
       payload: {}
     });
@@ -79,8 +79,8 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
             )}
             
             {gameState.phase === 'action' && isPlayerTurn && (
-              <Button onClick={handleEndTurn} variant="outline" className="border-primary/30">
-                Pass Turn
+              <Button onClick={handlePass} variant="outline" className="border-primary/30">
+                Pass (End Day)
               </Button>
             )}
             

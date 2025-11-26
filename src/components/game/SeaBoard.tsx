@@ -63,6 +63,7 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
             const isCurrentDepth = currentPlayer.currentDepth === depth;
             const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
             const isPastDepth = depth < currentPlayer.currentDepth;
+            const stepsNeeded = depth - currentPlayer.currentDepth;
 
             return (
               <Button
@@ -83,7 +84,7 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                   {canDescend && (
                     <span className="flex items-center gap-1 text-xs opacity-80">
                       <ArrowDown className="h-3 w-3" />
-                      {(depth - currentPlayer.currentDepth) * 3} dice
+                      {stepsNeeded} die{stepsNeeded > 1 ? 's' : ''} (val ≥3)
                     </span>
                   )}
                 </div>

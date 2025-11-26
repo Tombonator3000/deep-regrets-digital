@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { GameState, Player } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
+import { getAbilityDescription } from '@/utils/abilityDescriptions';
 
 interface FishingActionsProps {
   gameState: GameState;
@@ -155,11 +156,21 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
             {revealedFish.abilities.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium">Abilities:</p>
-                {revealedFish.abilities.map((ability, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs mr-1">
-                    {ability}
-                  </Badge>
-                ))}
+                <div className="flex flex-wrap gap-1">
+                  {revealedFish.abilities.map((ability, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className={`text-xs ${
+                        ability.includes('regret') || ability.includes('madness')
+                          ? 'bg-destructive/20 text-destructive'
+                          : ''
+                      }`}
+                    >
+                      {getAbilityDescription(ability)}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -30,6 +30,10 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
   };
 
   const players: Player[] = selectedCharacters.map((character, index) => {
+    // All players start with basic equipment per rules
+    const basicRod = RODS[0]; // Glass Rod
+    const basicReel = REELS[0]; // Quick Release Reel
+
     const basePlayer: Player = {
       id: `player-${index + 1}`,
       name: character.name,
@@ -48,9 +52,9 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
       handFish: [],
       mountedFish: [],
       regrets: [],
-      equippedRod: undefined,
-      equippedReel: undefined,
-      supplies: [],
+      equippedRod: basicRod, // All players start with basic rod
+      equippedReel: basicReel, // All players start with basic reel
+      supplies: [], // Starting supplies handled by character bonuses
       dinks: [],
       activeEffects: [],
       madnessLevel: 0,
@@ -124,22 +128,25 @@ export const applyCharacterBonuses = (
 
   switch (characterId) {
     case 'ahab': {
+      // The Obsessed: +2 Fishbucks and upgrade to better rod (Carbon Fiber Rod)
       updated.fishbucks += 2;
-      const startingRod = RODS[0];
-      if (startingRod) {
-        updated.equippedRod = startingRod;
+      const betterRod = RODS[1]; // Carbon Fiber Rod (index 1)
+      if (betterRod) {
+        updated.equippedRod = betterRod;
       }
       break;
     }
     case 'nemo': {
-      const startingReel = REELS[0];
-      if (startingReel) {
-        updated.equippedReel = startingReel;
+      // The Engineer: Upgrade to better reel (Deep Sea Reel) and ignore first Regret
+      const betterReel = REELS[1]; // Deep Sea Reel (index 1)
+      if (betterReel) {
+        updated.equippedReel = betterReel;
       }
       updated.regretShields += 1;
       break;
     }
     case 'marina': {
+      // The Mystic: Start at Depth II and draw an extra Dink
       updated.currentDepth = 2;
       if (context.port) {
         const { card, deck } = drawCard(context.port.dinksDeck);
@@ -151,11 +158,13 @@ export const applyCharacterBonuses = (
       break;
     }
     case 'finn': {
+      // The Lucky: +3 Fishbucks and reroll 1s
       updated.fishbucks += 3;
       updated.rerollOnes = true;
       break;
     }
     case 'storm': {
+      // The Daredevil: +1 max dice and extra mount slot
       updated.maxDice += 1;
       updated.baseMaxDice += 1;
       updated.maxMountSlots += 1;
@@ -593,9 +602,25 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 
     case 'PASS':
       if (player) {
+        // Count how many players have already passed (before this player)
+        const passedCount = newState.players.filter(p => p.hasPassed).length;
         player.hasPassed = true;
-        // Grant passing reward (simplified)
-        player.fishbucks += 1;
+
+        // Grant passing rewards based on order
+        if (passedCount === 0) {
+          // First to pass: 2 Fishbucks + becomes next start player (Fish Coin)
+          player.fishbucks += 2;
+          newState.fishCoinOwner = player.id;
+        } else if (passedCount === 1) {
+          // Second to pass: 1 Supply token (Lucky Lure as default supply)
+          const supplyToGive = SUPPLIES[0];
+          if (supplyToGive) {
+            player.supplies = [...player.supplies, supplyToGive];
+          }
+        } else {
+          // Later players: 1 Fishbuck (or heal madness if they have few regrets - simplified to just fishbuck)
+          player.fishbucks += 1;
+        }
       }
       // Check if all players passed
       if (newState.players.every(p => p.hasPassed)) {
@@ -679,12 +704,13 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
   const handScore = calculateHandFishScore(player);
   const mountedScore = calculateMountedFishScore(player);
   const fishbuckScore = calculateFishbuckScore(player);
+  const regretValue = calculatePlayerRegretValue(player);
   return {
     handScore,
     mountedScore,
     fishbuckScore,
-    totalScore: handScore + mountedScore + fishbuckScore,
-    regretValue: calculatePlayerRegretValue(player)
+    totalScore: handScore + mountedScore + fishbuckScore - regretValue,
+    regretValue
   };
 };
 
