@@ -4,6 +4,8 @@ import { SeaBoard } from './game/SeaBoard';
 import { PortBoard } from './game/PortBoard';
 import { PlayerPanel } from './game/PlayerPanel';
 import { ActionPanel } from './game/ActionPanel';
+import { AnglerBoard } from './game/AnglerBoard';
+import { DayTracker } from './game/DayTracker';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -211,100 +213,81 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         </div>
       )}
       
-      {/* Main Game Layout */}
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-7xl grid-rows-[auto,1fr] gap-6 px-6 py-8 min-h-0">
-        {/* Header */}
-        <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-background/70 px-6 py-4 backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-          <div className="flex flex-col gap-3 lg:flex-1">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold leading-tight text-primary-glow">DEEP REGRETS</h1>
-              <p className="text-sm text-muted-foreground">Digital Edition</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <Badge className="rounded-full border-primary/40 bg-primary/10 px-4 py-1 text-sm text-primary">
-                Current: <span className="ml-1 font-semibold text-primary">{currentPlayer.name}</span>
-              </Badge>
-              <Badge variant="outline" className="rounded-full border-white/30 px-4 py-1 text-white">
-                {phaseDisplay[gameState.phase]} Phase
-              </Badge>
-              <Badge variant="secondary" className="rounded-full bg-muted/30 px-4 py-1 text-sm">
-                {dayLabel}
-              </Badge>
-            </div>
+      {/* Main Game Layout - Board Game Style */}
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-4 px-4 py-4 min-h-0">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-background/70 px-4 py-2 backdrop-blur">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-primary-glow">DEEP REGRETS</h1>
+            <Badge className="rounded-full border-primary/40 bg-primary/10 px-3 py-0.5 text-xs text-primary">
+              {currentPlayer.name}'s Turn
+            </Badge>
           </div>
-          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:justify-end lg:w-auto lg:gap-3">
-            <div className="flex flex-1 flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1 backdrop-blur-sm sm:flex-none">
-              <Sheet open={isPortOpen} onOpenChange={setIsPortOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    ref={portButtonRef}
-                    size="sm"
-                    className="btn-ocean flex items-center gap-2"
-                  >
-                    <Anchor className="h-4 w-4" />
-                    <span>Harbor Port</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className="flex h-full w-full max-w-5xl flex-col overflow-hidden border border-white/20 bg-background/80 p-0 backdrop-blur-xl [&>button[data-radix-dialog-close]]:hidden"
+          <div className="flex items-center gap-2">
+            <Sheet open={isPortOpen} onOpenChange={setIsPortOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  ref={portButtonRef}
+                  size="sm"
+                  className="btn-ocean flex items-center gap-2"
                 >
-                  <SheetHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-6 py-4 text-left">
-                    <div className="space-y-1 text-left">
-                      <SheetTitle className="text-2xl font-bold text-primary-glow">Harbor Port</SheetTitle>
-                      <SheetDescription className="text-sm text-muted-foreground">
-                        Safe waters for commerce and rest.
-                      </SheetDescription>
-                    </div>
-                    <SheetClose asChild>
-                      <Button
-                        ref={sheetCloseRef}
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Close Harbor Port</span>
-                      </Button>
-                    </SheetClose>
-                  </SheetHeader>
-                  <div className="flex flex-1 flex-col overflow-hidden">
-                    <div className="flex-1 overflow-y-auto px-6 py-6">
-                      <PortBoard
-                        className="h-full"
-                        gameState={gameState}
-                        onAction={onAction}
-                      />
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-              <Button
-                size="sm"
-                type="button"
-                variant="ghost"
-                className="flex items-center gap-2 text-white/80 hover:text-white"
-                onClick={toggleFullscreen}
+                  <Anchor className="h-4 w-4" />
+                  <span>Harbor Port</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="flex h-full w-full max-w-5xl flex-col overflow-hidden border border-white/20 bg-background/80 p-0 backdrop-blur-xl [&>button[data-radix-dialog-close]]:hidden"
               >
-                {isFullscreen ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
-                <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-              </Button>
-            </div>
+                <SheetHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-6 py-4 text-left">
+                  <div className="space-y-1 text-left">
+                    <SheetTitle className="text-2xl font-bold text-primary-glow">Harbor Port</SheetTitle>
+                    <SheetDescription className="text-sm text-muted-foreground">
+                      Safe waters for commerce and rest.
+                    </SheetDescription>
+                  </div>
+                  <SheetClose asChild>
+                    <Button
+                      ref={sheetCloseRef}
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close Harbor Port</span>
+                    </Button>
+                  </SheetClose>
+                </SheetHeader>
+                <div className="flex flex-1 flex-col overflow-hidden">
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <PortBoard
+                      className="h-full"
+                      gameState={gameState}
+                      onAction={onAction}
+                    />
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Button
+              size="sm"
+              type="button"
+              variant="ghost"
+              className="text-white/80 hover:text-white"
+              onClick={toggleFullscreen}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
                   type="button"
                   variant="outline"
-                  className="flex items-center gap-2 border-white/30 bg-white/5 text-white hover:bg-white/10"
+                  className="border-white/30 bg-white/5 text-white hover:bg-white/10"
                 >
                   <MoreHorizontal className="h-4 w-4" />
-                  <span>More</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -327,11 +310,23 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
         </div>
 
-        {/* Columns */}
-        <div className="grid h-full min-h-0 grid-cols-[1.6fr,minmax(320px,0.9fr)] gap-6">
-          {/* Sea Board Column */}
-          <div className="min-h-0 overflow-hidden rounded-3xl border border-white/10 bg-background/60 backdrop-blur">
-            <div className="h-full min-h-0 overflow-auto p-6">
+        {/* 3-Column Board Game Layout */}
+        <div className="grid h-full min-h-0 grid-cols-[minmax(280px,320px),1fr,minmax(280px,340px)] gap-4">
+          {/* Left Column - Angler Board (Player Board) */}
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+            <AnglerBoard
+              player={currentPlayer}
+              isCurrentPlayer={isPlayerTurn}
+            />
+            <DayTracker
+              day={gameState.day}
+              phase={gameState.phase}
+            />
+          </div>
+
+          {/* Center Column - The Briny Deep (Sea Board) */}
+          <div className="min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-background/60 backdrop-blur">
+            <div className="h-full min-h-0 overflow-auto p-4">
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
@@ -348,47 +343,13 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
             </div>
           </div>
 
-          {/* Status & Actions Column */}
-          <div className="flex min-h-0 flex-col gap-6 rounded-3xl border border-white/10 bg-background/50 p-6 backdrop-blur">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-primary">Captain's Log</h2>
-              <p className="text-sm text-muted-foreground">
-                Manage port business and your crew sheet through the modals. Keep your attention on the sea board to steer the day.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Location</span>
-                <span className="font-semibold text-foreground">
-                  {currentPlayer.location === 'sea' ? `🌊 At Sea (Depth ${currentPlayer.currentDepth})` : '⚓ In Port'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Fishbucks</span>
-                <span className="font-semibold text-fishbuck">${currentPlayer.fishbucks}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Regrets</span>
-                <span className="font-semibold text-destructive">{currentPlayer.regrets.length}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Dice Ready</span>
-                <span className="font-semibold text-foreground">
-                  {currentPlayer.freshDice.length}/{currentPlayer.maxDice}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Madness Level</span>
-                <span className="font-semibold text-primary">{currentPlayer.madnessLevel}</span>
-              </div>
-            </div>
-            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-background/70 p-6 backdrop-blur overflow-y-auto">
-              <ActionPanel
-                gameState={gameState}
-                selectedShoal={selectedShoal}
-                onAction={onAction}
-              />
-            </div>
+          {/* Right Column - Actions Panel */}
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-2xl border border-white/10 bg-background/50 p-4 backdrop-blur">
+            <ActionPanel
+              gameState={gameState}
+              selectedShoal={selectedShoal}
+              onAction={onAction}
+            />
           </div>
         </div>
       </div>
