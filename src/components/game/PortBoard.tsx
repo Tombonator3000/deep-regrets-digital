@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Anchor, Fish as FishIcon, Wrench } from 'lucide-react';
+import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap } from 'lucide-react';
 
 import harborPortBoard from '@/assets/harbor-port-board.jpg';
 
@@ -193,9 +193,57 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
 
         <TabsContent value="catch" className="space-y-4">
           {summaryHeader}
+
+          {/* Trophy Wall - Mounted Fish Display */}
+          <div className="rounded-xl border-2 border-fishbuck/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fishbuck/20">
+                <Trophy className="h-4 w-4 text-fishbuck" />
+              </div>
+              <div>
+                <h3 className="font-bold text-fishbuck">Trophy Wall</h3>
+                <p className="text-xs text-muted-foreground">Your prized catches mounted for glory</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {mountingSlots.map((slotIndex) => {
+                const mountedFish = currentPlayer.mountedFish.find((m) => m.slot === slotIndex);
+                const multiplier = getSlotMultiplier(slotIndex);
+                return (
+                  <div
+                    key={`trophy-${slotIndex}`}
+                    className={`relative flex min-h-[70px] flex-col items-center justify-center rounded-lg border-2 p-2 text-center ${
+                      mountedFish
+                        ? 'border-fishbuck/50 bg-fishbuck/10'
+                        : 'border-dashed border-white/20 bg-black/30'
+                    }`}
+                  >
+                    <div className={`absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
+                      multiplier >= 3 ? 'bg-fishbuck text-slate-900' : multiplier >= 2 ? 'bg-primary text-slate-900' : 'bg-slate-700 text-white'
+                    }`}>
+                      ×{multiplier}
+                    </div>
+                    {mountedFish ? (
+                      <>
+                        <FishIcon className="mb-1 h-4 w-4 text-fishbuck" />
+                        <span className="text-xs font-medium text-white line-clamp-1">{mountedFish.fish.name}</span>
+                        <span className="text-xs font-bold text-fishbuck">{mountedFish.fish.value * multiplier} pts</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Empty Slot</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <Card className="card-game">
             <CardHeader>
-              <CardTitle className="text-lg">Your Catch</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FishIcon className="h-5 w-5 text-primary" />
+                Fish in Hold
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {currentPlayer.handFish.length === 0 && (
@@ -389,76 +437,117 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
 
         <TabsContent value="upgrades" className="space-y-4">
           {summaryHeader}
-          <Card className="card-game">
-            <CardHeader>
-              <CardTitle className="text-lg">Tackle Dice</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Purchase additional dice for daring catches.
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {[1, 2, 3].map((count) => {
-                  if (!standardTackleDie) {
-                    return null;
-                  }
-                  const cost = count * standardTackleDie.cost;
-                  return (
-                    <Dialog key={count}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="text-xs h-full flex flex-col items-center justify-center"
-                          disabled={!canInteract || currentPlayer.fishbucks < cost}
-                        >
-                          <span className="text-sm font-semibold">{count} Dice</span>
-                          <span className="text-primary-glow">${cost}</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
-                        <DialogHeader>
-                          <DialogTitle>Buy {count} Tackle Dice</DialogTitle>
-                          <DialogDescription>
-                            This purchase costs{' '}
-                            <span className="text-primary-glow font-semibold">${cost}</span>.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <p className="text-sm text-muted-foreground">
-                          Remaining funds after purchase:{' '}
-                          <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - cost, 0)}</span>.
-                        </p>
-                        <DialogFooter className="pt-4">
-                          <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                          </DialogClose>
-                          <DialogClose asChild>
-                            <Button
-                              className="btn-ocean"
-                              disabled={!canInteract || currentPlayer.fishbucks < cost}
-                              onClick={() => handleBuyTackleDice(standardTackleDie.id, count)}
-                            >
-                              Confirm Purchase
-                            </Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {featuredUpgrades.map((upgrade) => (
-              <UpgradeOption
-                key={upgrade.id}
-                item={upgrade}
-                canInteract={canInteract}
-                funds={currentPlayer.fishbucks}
-                onConfirm={handleBuyUpgrade}
-              />
-            ))}
+          {/* Tackle Dice Shop */}
+          <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
+                <Zap className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold text-primary-glow">Tackle Dice</h3>
+                <p className="text-xs text-muted-foreground">Extra dice for daring catches</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((count) => {
+                if (!standardTackleDie) return null;
+                const cost = count * standardTackleDie.cost;
+                const canAfford = currentPlayer.fishbucks >= cost;
+                return (
+                  <Dialog key={count}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={`h-16 flex flex-col items-center justify-center gap-1 ${
+                          canAfford ? 'border-primary/40 hover:border-primary hover:bg-primary/10' : 'opacity-50'
+                        }`}
+                        disabled={!canInteract || !canAfford}
+                      >
+                        <span className="text-lg font-bold">{count}x</span>
+                        <span className="text-xs text-fishbuck">${cost}</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
+                      <DialogHeader>
+                        <DialogTitle>Buy {count} Tackle Dice</DialogTitle>
+                        <DialogDescription>
+                          This purchase costs <span className="text-primary-glow font-semibold">${cost}</span>.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <p className="text-sm text-muted-foreground">
+                        Remaining funds: <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - cost, 0)}</span>
+                      </p>
+                      <DialogFooter className="pt-4">
+                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                        <DialogClose asChild>
+                          <Button className="btn-ocean" disabled={!canInteract || !canAfford} onClick={() => handleBuyTackleDice(standardTackleDie.id, count)}>
+                            Confirm Purchase
+                          </Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Shop Sections - Like Physical Board Game Shops */}
+          <div className="space-y-4">
+            {/* Rods Shop */}
+            <div className="rounded-xl border-2 border-cyan-500/30 bg-gradient-to-r from-cyan-950/40 to-slate-950/60 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20">
+                  <Sparkles className="h-4 w-4 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-cyan-400">Rod Shop</h3>
+                  <p className="text-xs text-muted-foreground">Enhance your fishing technique</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {RODS.map((rod) => (
+                  <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                ))}
+              </div>
+            </div>
+
+            {/* Reels Shop */}
+            <div className="rounded-xl border-2 border-blue-500/30 bg-gradient-to-r from-blue-950/40 to-slate-950/60 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20">
+                  <Store className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-blue-400">Reel Shop</h3>
+                  <p className="text-xs text-muted-foreground">Mechanical advantages for the deep</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {REELS.map((reel) => (
+                  <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                ))}
+              </div>
+            </div>
+
+            {/* Supplies Shop */}
+            <div className="rounded-xl border-2 border-purple-500/30 bg-gradient-to-r from-purple-950/40 to-slate-950/60 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20">
+                  <Package className="h-4 w-4 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-purple-400">Supplies Shop</h3>
+                  <p className="text-xs text-muted-foreground">Essential gear and provisions</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {SUPPLIES.map((supply) => (
+                  <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                ))}
+              </div>
+            </div>
           </div>
         </TabsContent>
 
