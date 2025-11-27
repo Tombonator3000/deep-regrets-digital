@@ -69,11 +69,13 @@ Spillet varer i 6 dager (Mandag til Lørdag), og den med høyest poengsum ved sp
 **Friske terninger** - Tilgjengelige for bruk
 **Brukte terninger** - Allerede benyttet denne runden
 
-Hver handling i spillet koster terninger. For å fange fisk må du bruke terninger som til sammen matcher eller overgår fiskens vanskelighetsgrad.`,
+Hver handling i spillet koster terninger. For å fange fisk må du bruke terninger som til sammen matcher eller overgår fiskens vanskelighetsgrad.
+
+**Madness og terninger:** Jo flere Regrets du samler, jo flere terninger kan du ha (4-8 maks), men verdien på fisk endres basert på Madness-nivået ditt.`,
     icon: <Dices className="h-6 w-6" />,
     tips: [
       'Terninger "friskes opp" i begynnelsen av hver dag',
-      'Jo flere Regrets du har, jo færre terninger kan du ha friske',
+      'Flere Regrets gir deg flere terninger (4 ved 0 Regrets, opptil 8 ved 13+)',
       'Noen karakterer starter med bonusterninger',
     ],
   },
@@ -140,11 +142,16 @@ Montering koster forsyninger (Supplies), og du kan gjøre det i havnen.`,
 - **Montere fisk** - Sett fisk på troféveggen
 - **Leie Tackle Dice** - Spesialterninger med unike egenskaper
 
+**Port-fordeler ved ankomst:**
+- **Muster Your Courage** - Kast alle terningene dine på nytt
+- **Can of Worms** - Snu kortet med forsiden opp
+- **Kast én Regret** - Du kan frivillig kvitte deg med én Regret
+
 Du velger lokasjon (Hav eller Havn) i Declaration-fasen.`,
     icon: <Anchor className="h-6 w-6" />,
     tips: [
       'Havnen er risikofri - ingen Regrets her',
-      'Prisene varierer basert på hva du kjøper',
+      'Ved 13+ Regrets får du $1 rabatt på alle kjøp',
       'Tackle Dice kan gi deg en strategisk fordel',
     ],
   },
@@ -153,15 +160,23 @@ Du velger lokasjon (Hav eller Havn) i Declaration-fasen.`,
     title: 'Regrets - Vokterne av Galskap',
     content: `**Regrets** representerer den mentale påkjenningen av å utforske dypet. Du får Regrets når:
 
-- Du avslører visse farlige fisk
+- Du avslører visse farlige fisk (Foul-kvalitet)
 - Noen korteffekter gir deg Regrets
 - Du dykker for dypt uten forberedelse
 
-Regrets er **skjulte kort** med verdier 0-3. Ved spillslutt trekkes Regrets fra poengsummen din. I tillegg øker Madness-nivået ditt for hver 2-3 Regrets du har.`,
+Regrets er **skjulte kort** med verdier 0-3. Ved spillslutt trekkes Regrets fra poengsummen din.
+
+**Madness-systemet** påvirker fiskverdier:
+- **0 Regrets:** Fair +2, Foul -2, 4 maks terninger
+- **1-3 Regrets:** Fair +1, Foul -1, 4 maks terninger
+- **4-6 Regrets:** Fair +1, Foul ±0, 5 maks terninger
+- **7-9 Regrets:** Fair ±0, Foul +1, 6 maks terninger
+- **10-12 Regrets:** Fair -1, Foul +1, 7 maks terninger
+- **13+ Regrets:** Fair -2, Foul +2, 8 maks terninger + portrabatt`,
     icon: <Brain className="h-6 w-6" />,
     tips: [
-      'Høyere Madness = færre tilgjengelige terninger',
-      'Ved Madness 6+ risikerer du å utløse tidlig spillslutt',
+      'Flere Regrets gir deg flere terninger, men endrer fiskverdier',
+      'Ved 13+ Regrets får du $1 rabatt i havnen',
       'Life Preserver kan beskytte mot Regrets',
     ],
   },
@@ -175,12 +190,16 @@ Regrets er **skjulte kort** med verdier 0-3. Ved spillslutt trekkes Regrets fra 
 **3. Declaration** - Velg lokasjon (Hav eller Havn)
 **4. Action** - Utfør handlinger på valgt lokasjon
 
-Etter Action-fasen går turen til neste spiller. Når alle har passert, starter en ny dag.`,
+**Daglige effekter:**
+- **Onsdag/Fredag:** Alle spillere snur Can of Worms-kortet
+- **Torsdag/Lørdag:** Alle spillere får én Tackle-terning
+
+**Siste spiller-regelen:** Når alle andre har passet, får siste spiller 2 ekstra turer (hav) eller 4 turer (havn) før de må passe.`,
     icon: <CircleDot className="h-6 w-6" />,
     tips: [
-      'Pass-knappen avslutter din tur for dagen',
-      'Du får bonus-ressurser når du passer',
+      'Første spiller som passer får Fish Coin (blir startspiller neste dag)',
       'Planlegg dagen din basert på terningene du har',
+      'Siste spiller kan utnytte ekstra turer strategisk',
     ],
   },
   {
@@ -188,17 +207,19 @@ Etter Action-fasen går turen til neste spiller. Når alle har passert, starter 
     title: 'Poengberegning - Veien til Seier',
     content: `Ved spillets slutt beregnes poeng slik:
 
-**+ Monterte fisk** - Verdi × monteringsmultiplikator
-**+ Fisk i hånden** - Verdi (begrenset av Madness)
-**+ Fishbucks** - 1 poeng per 3 Fishbucks
+**+ Monterte fisk** - (Basisverdi + Madness-modifier) × monteringsmultiplikator
+**+ Fisk i hånden** - Basisverdi + Madness-modifier
+**+ Fishbucks** - 1 poeng per Fishbuck
 **- Regrets** - Trekk fra total Regret-verdi
 
-Spilleren med høyest totale poengsum vinner! Ved uavgjort vinner den med færrest Regrets.`,
+**Slutt-straff:** Spilleren med høyest Regret-verdi må kassere én montert fisk (laveste for 2 spillere, høyeste for 3+ spillere).
+
+Spilleren med høyest totale poengsum vinner! Ved uavgjort vinner den med lavest Regret-verdi, deretter færrest Regret-kort.`,
     icon: <Target className="h-6 w-6" />,
     tips: [
-      'Høy Madness begrenser hvor mye håndpoeng du kan få',
-      'Monterte fisk påvirkes ikke av Madness',
-      'Balansér fiske med å holde Regrets nede',
+      'Fair fisk gir bonus ved lav Madness, Foul fisk gir bonus ved høy',
+      'Monterte fisk justeres FØRST av Madness, SÅ ganget med multiplikator',
+      'Balansér mellom Fair og Foul fisk basert på din Madness-strategi',
     ],
   },
   {
@@ -262,18 +283,19 @@ const rulebookSections: RulebookSection[] = [
 - Hver spiller starter med 3 terninger
 - Terninger er enten Fresh (tilgjengelig) eller Spent (brukt)
 - Refresh-fasen gjør Spent-terninger Fresh igjen
-- Madness reduserer maks antall Fresh-terninger
+- Madness øker maks antall Fresh-terninger (4-8)
 
 **Tackle Dice:**
 - Spesialterninger som kan leies i havnen
 - Har unike verdier/distribusjoner
 - Koster Fishbucks å leie
 - Gir strategiske fordeler
+- Alle spillere får gratis Tackle-terning på torsdag og lørdag
 
 **Bruk av terninger:**
 - Avsløre fisk: 1 Fresh die
 - Fange fisk: Terninger ≥ fiskens vanskelighetsgrad
-- Bevege seg: Varierer basert på handling`,
+- Bevege seg dypere: Terning med verdi ≥ 3`,
   },
   {
     id: 'sea',
@@ -347,23 +369,29 @@ const rulebookSections: RulebookSection[] = [
 **Tips:**
 - Spar høyverdifisk til ×3-plassen
 - Planlegg montering tidlig
-- Montert fisk påvirkes ikke av Madness`,
+- Madness-modifier legges til FØR multiplikator`,
   },
   {
     id: 'port',
     title: 'Havnen',
     icon: <Anchor className="h-5 w-5" />,
     keywords: ['havn', 'port', 'harbor', 'butikk', 'shop', 'kjøp', 'selg', 'handel'],
-    content: `**Tilgjengelige handlinger:**
+    content: `**Port-fordeler ved ankomst:**
+- **Muster Your Courage:** Kast alle terningene dine på nytt
+- **Can of Worms:** Snu kortet med forsiden opp
+- **Kast Regret:** Du kan frivillig kvitte deg med én Regret
+
+**Tilgjengelige handlinger:**
 
 **Selge fisk:**
 - Selg fisk fra hånden
-- Motta Fishbucks basert på verdi
+- Verdi justeres av Madness (Fair/Foul-modifier)
 
 **Kjøpe utstyr:**
 - **Stenger (Rods):** Forbedrer fangstevne
 - **Hjul (Reels):** Gir spesialeffekter
 - **Forsyninger:** Trengs for montering
+- Ved 13+ Regrets: $1 rabatt på alle kjøp
 
 **Montere fisk:**
 - Plasser fisk på troféveggen
@@ -374,8 +402,7 @@ const rulebookSections: RulebookSection[] = [
 - Få spesialterninger for dagen
 
 **Sikkerhet:**
-- Ingen risiko for Regrets i havnen
-- Trygt sted for å reorganisere`,
+- Ingen risiko for Regrets i havnen`,
   },
   {
     id: 'regrets',
@@ -393,17 +420,18 @@ const rulebookSections: RulebookSection[] = [
 - Visse korteffekter
 - Dykke uforsiktig
 
-**Madness-nivåer:**
-| Regrets | Madness | Max Fresh Dice |
-|---------|---------|----------------|
-| 0-2     | 0       | 3              |
-| 3-4     | 1       | 3              |
-| 5-6     | 2       | 2              |
-| 7+      | 3+      | 1              |
+**Madness-systemet (6 nivåer):**
+| Regrets | Fair | Foul | Max Dice | Port |
+|---------|------|------|----------|------|
+| 0       | +2   | -2   | 4        | -    |
+| 1-3     | +1   | -1   | 4        | -    |
+| 4-6     | +1   | ±0   | 5        | -    |
+| 7-9     | ±0   | +1   | 6        | -    |
+| 10-12   | -1   | +1   | 7        | -    |
+| 13+     | -2   | +2   | 8        | -$1  |
 
-**Madness 6+:**
-- Kritisk tilstand
-- Må kaste 2 fisk ELLER utløse spillslutt`,
+**Fair/Foul:** Modifiserer fiskens verdi ved salg og scoring.
+**Port -$1:** Rabatt på alle kjøp i havnen ved 13+ Regrets.`,
   },
   {
     id: 'phases',
@@ -416,10 +444,12 @@ const rulebookSections: RulebookSection[] = [
 - Daglige effekter aktiveres
 - The Plug trekker seg tilbake
 - Sjekk for spillslutt-betingelser
+- **Onsdag/Fredag:** Alle snur Can of Worms
+- **Torsdag/Lørdag:** Alle får én Tackle-terning
 
 **2. Refresh-fase:**
 - Alle Spent dice blir Fresh
-- Madness begrenser maks Fresh
+- Madness bestemmer maks Fresh (4-8)
 
 **3. Declaration-fase:**
 - Hver spiller velger lokasjon
@@ -429,7 +459,11 @@ const rulebookSections: RulebookSection[] = [
 **4. Action-fase:**
 - Utfør handlinger på valgt lokasjon
 - Fortsett til du passer
-- Pass gir bonus-ressurser
+- Første å passe får Fish Coin
+
+**Siste spiller-regel:**
+- Når alle andre har passet
+- Siste spiller får 2 turer (hav) eller 4 turer (havn)
 
 **Neste dag:**
 - Når alle har passert
@@ -468,25 +502,27 @@ const rulebookSections: RulebookSection[] = [
     content: `**Poengkilder:**
 
 **+ Monterte fisk:**
-- Verdi × slot-multiplikator
-- Eksempel: Verdi 5 × ×3 = 15 poeng
+- (Basisverdi + Madness-modifier) × slot-multiplikator
+- Eksempel: Fair fisk verdi 5 ved 0 Regrets = (5+2) × 3 = 21 poeng
 
 **+ Fisk i hånden:**
-- Sum av verdier
-- Begrenset av Madness:
-  - Madness 0-1: Full verdi
-  - Madness 2: Maks 50%
-  - Madness 3+: Maks 25%
+- Basisverdi + Madness-modifier
+- Fair fisk: bonus ved lav Madness (+2 til -2)
+- Foul fisk: bonus ved høy Madness (-2 til +2)
 
 **+ Fishbucks:**
-- 1 poeng per 3 Fishbucks
-- Rundes ned
+- 1 poeng per Fishbuck
 
 **- Regrets:**
 - Avslørt og summert
 - Trekkes fra totalen
 
-**Uavgjort:** Spilleren med færrest Regrets vinner.`,
+**Slutt-straff:**
+- Spilleren med høyest Regret-verdi kasserer én mont:
+  - 2 spillere: laveste monterte fisk
+  - 3+ spillere: høyeste monterte fisk
+
+**Uavgjort:** Lavest Regret-verdi vinner, deretter færrest Regret-kort.`,
   },
   {
     id: 'characters',
