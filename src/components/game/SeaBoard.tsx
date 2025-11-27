@@ -2,9 +2,11 @@ import { GameState } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, Fish, Skull, Eye, Waves } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
 import { PlugMarker, DepthMarker, LighthouseToken } from './GameTokens';
+import { useTouchGestures } from '@/hooks/useTouchGestures';
+import { useToast } from '@/hooks/use-toast';
 
 interface SeaBoardProps {
   gameState: GameState;
@@ -22,14 +24,50 @@ const DEPTH_INFO = {
 
 export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectShoal, onAction }: SeaBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const { toast } = useToast();
 
   const handleDescend = (targetDepth: number) => {
-    onAction({
-      type: 'DESCEND',
-      playerId: currentPlayer.id,
-      payload: { targetDepth }
-    });
+    if (targetDepth > currentPlayer.currentDepth && targetDepth <= 3 && !currentPlayer.hasPassed) {
+      onAction({
+        type: 'DESCEND',
+        playerId: currentPlayer.id,
+        payload: { targetDepth }
+      });
+      toast({
+        title: "Descending",
+        description: `Swipe down to depth ${targetDepth}`,
+      });
+    }
   };
+
+  const handleAscend = (targetDepth: number) => {
+    if (targetDepth < currentPlayer.currentDepth && targetDepth >= 1 && !currentPlayer.hasPassed) {
+      onAction({
+        type: 'DESCEND',
+        playerId: currentPlayer.id,
+        payload: { targetDepth }
+      });
+      toast({
+        title: "Ascending",
+        description: `Swipe up to depth ${targetDepth}`,
+      });
+    }
+  };
+
+  // Touch gestures for depth navigation
+  const { touchHandlers, isSwiping } = useTouchGestures({
+    onSwipeUp: () => {
+      if (currentPlayer.location === 'sea' && currentPlayer.currentDepth > 1) {
+        handleAscend(currentPlayer.currentDepth - 1);
+      }
+    },
+    onSwipeDown: () => {
+      if (currentPlayer.location === 'sea' && currentPlayer.currentDepth < 3) {
+        handleDescend(currentPlayer.currentDepth + 1);
+      }
+    },
+    config: { threshold: 60 },
+  });
 
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-4">
@@ -60,50 +98,71 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
         </div>
       </div>
 
-      {/* Depth Navigation - Like descending into the sea */}
+      {/* Depth Navigation - Touch-friendly with swipe hint */}
       {currentPlayer.location === 'sea' && (
-        <div className="flex items-center justify-center gap-2">
-          {[1, 2, 3].map((depth) => {
-            const isCurrentDepth = currentPlayer.currentDepth === depth;
-            const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
-            const isPastDepth = depth < currentPlayer.currentDepth;
-            const stepsNeeded = depth - currentPlayer.currentDepth;
+        <div className="space-y-2">
+          {/* Swipe hint for mobile */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground md:hidden">
+            <ChevronUp className="h-4 w-4 animate-bounce" />
+            <span>Swipe to navigate depths</span>
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+          </div>
+          
+          <div className="flex items-center justify-center gap-2">
+            {[1, 2, 3].map((depth) => {
+              const isCurrentDepth = currentPlayer.currentDepth === depth;
+              const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
+              const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed;
+              const stepsNeeded = Math.abs(depth - currentPlayer.currentDepth);
 
-            return (
-              <Button
-                key={depth}
-                variant="outline"
-                onClick={() => canDescend && handleDescend(depth)}
-                disabled={isPastDepth || currentPlayer.hasPassed || isCurrentDepth}
-                className={`relative flex-1 max-w-[140px] h-12 ${
-                  isCurrentDepth
-                    ? 'btn-ocean ring-2 ring-primary/50'
-                    : canDescend
-                      ? 'border-primary/50 hover:border-primary hover:bg-primary/10'
-                      : 'opacity-40'
-                }`}
-              >
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold">Depth {depth}</span>
-                  {canDescend && (
-                    <span className="flex items-center gap-1 text-xs opacity-80">
-                      <ArrowDown className="h-3 w-3" />
-                      {stepsNeeded} die{stepsNeeded > 1 ? 's' : ''} (val ≥3)
-                    </span>
+              return (
+                <Button
+                  key={depth}
+                  variant="outline"
+                  onClick={() => {
+                    if (canDescend) handleDescend(depth);
+                    else if (canAscend) handleAscend(depth);
+                  }}
+                  disabled={currentPlayer.hasPassed || isCurrentDepth}
+                  className={`relative flex-1 max-w-[140px] h-14 sm:h-12 touch-manipulation ${
+                    isCurrentDepth
+                      ? 'btn-ocean ring-2 ring-primary/50'
+                      : canDescend || canAscend
+                        ? 'border-primary/50 hover:border-primary hover:bg-primary/10 active:scale-95'
+                        : 'opacity-40'
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm font-bold">Depth {depth}</span>
+                    {canDescend && (
+                      <span className="flex items-center gap-1 text-xs opacity-80">
+                        <ArrowDown className="h-3 w-3" />
+                        {stepsNeeded} step{stepsNeeded > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {canAscend && (
+                      <span className="flex items-center gap-1 text-xs opacity-80">
+                        <ArrowUp className="h-3 w-3" />
+                        {stepsNeeded} step{stepsNeeded > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {isCurrentDepth && (
+                    <div className="absolute -bottom-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-primary" />
                   )}
-                </div>
-                {isCurrentDepth && (
-                  <div className="absolute -bottom-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-primary" />
-                )}
-              </Button>
-            );
-          })}
+                </Button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* The Deep Sea Board - Organized by Depth Rows like physical board */}
-      <div className="flex-1 min-h-0 overflow-auto">
-        <div className="relative mx-auto w-full max-w-4xl rounded-2xl border-2 border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-4 shadow-2xl">
+      {/* The Deep Sea Board - Organized by Depth Rows with touch gestures */}
+      <div 
+        className="flex-1 min-h-0 overflow-auto touch-pan-y"
+        {...touchHandlers}
+      >
+        <div className={`relative mx-auto w-full max-w-4xl rounded-2xl border-2 border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-4 shadow-2xl transition-opacity ${isSwiping ? 'opacity-80' : ''}`}>
           {/* Depth Rows - Like the physical board's 3 depth sections */}
           <div className="space-y-4">
             {[1, 2, 3].map((depth) => {

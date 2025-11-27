@@ -302,24 +302,45 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                 Bruk bare det du trenger—ubrukte terninger forblir friske.
               </p>
 
-              <div className="grid grid-cols-3 gap-2">
-                {currentPlayer.freshDice.map((dieValue, index) => (
-                  <Tooltip key={`${dieValue}-${index}`}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={selectedDiceIndices.includes(index) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleDiceSelection(index)}
-                        className={`text-lg font-bold ${selectedDiceIndices.includes(index) ? "btn-ocean" : "border-primary/30"}`}
-                      >
-                        🎲 {dieValue}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{selectedDiceIndices.includes(index) ? 'Klikk for å fjerne' : 'Klikk for å velge'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
+              <div className="grid grid-cols-3 gap-3">
+                {currentPlayer.freshDice.map((dieValue, index) => {
+                  const isSelected = selectedDiceIndices.includes(index);
+                  return (
+                    <Tooltip key={`${dieValue}-${index}`}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => toggleDiceSelection(index)}
+                          className={`
+                            relative flex items-center justify-center
+                            min-h-[56px] min-w-[56px] p-3
+                            rounded-xl text-xl font-bold
+                            touch-manipulation select-none
+                            transition-all duration-150
+                            active:scale-90
+                            ${isSelected 
+                              ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg scale-105' 
+                              : 'bg-card border-2 border-primary/30 hover:border-primary hover:bg-primary/10'
+                            }
+                          `}
+                          aria-pressed={isSelected}
+                          aria-label={`Die value ${dieValue}, ${isSelected ? 'selected' : 'not selected'}`}
+                        >
+                          <span className="text-2xl">🎲</span>
+                          <span className="ml-1">{dieValue}</span>
+                          {isSelected && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{isSelected ? 'Tap to deselect' : 'Tap to select'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
 
               {/* Progress indicator */}
