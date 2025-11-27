@@ -560,7 +560,7 @@ const rulebookSections: RulebookSection[] = [
 - Hovedvaluta
 - Brukes til kjøp i havnen
 - Tjenes ved å selge fisk
-- Gir poeng ved spillslutt (1 per 3)
+- Gir 1 poeng per Fishbuck ved spillslutt
 
 **Supplies (📦):**
 - Trengs for montering
