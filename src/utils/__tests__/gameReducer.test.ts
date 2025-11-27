@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { calculatePlayerScoreBreakdown, gameReducer, initializeGame } from '../gameEngine';
-import { CharacterOption, FishCard, GameState } from '@/types/game';
+import { CharacterOption, FishCard, GameAction, GameState } from '@/types/game';
 import { REGRET_CARDS } from '@/data/regrets';
 import { RODS, REELS } from '@/data/upgrades';
 import { DINK_CARDS } from '@/data/dinks';
@@ -59,7 +59,7 @@ describe('character starting bonuses', () => {
 
 describe('gameReducer new actions', () => {
   it('declares a new location for the player', () => {
-    const action = {
+    const action: GameAction = {
       type: 'DECLARE_LOCATION',
       playerId: state.players[0].id,
       payload: { location: 'port' }
@@ -76,7 +76,7 @@ describe('gameReducer new actions', () => {
   it('descends to a target depth using one qualifying die per level', () => {
     state.players[0].freshDice = [3, 1, 5];
 
-    const action = {
+    const action: GameAction = {
       type: 'DESCEND',
       playerId: state.players[0].id,
       payload: { targetDepth: 3 }
@@ -94,7 +94,7 @@ describe('gameReducer new actions', () => {
   it('requires one die per depth when descending multiple levels in one action', () => {
     state.players[0].freshDice = [6, 4, 2, 5];
 
-    const action = {
+    const action: GameAction = {
       type: 'DESCEND',
       playerId: state.players[0].id,
       payload: { targetDepth: 3 }
@@ -112,7 +112,7 @@ describe('gameReducer new actions', () => {
   it('does not descend if there are not enough qualifying dice', () => {
     state.players[0].freshDice = [2, 2, 6];
 
-    const action = {
+    const action: GameAction = {
       type: 'DESCEND',
       playerId: state.players[0].id,
       payload: { targetDepth: 3 }
@@ -129,7 +129,7 @@ describe('gameReducer new actions', () => {
   it('moves exactly one depth deeper via MOVE_DEEPER', () => {
     state.players[0].freshDice = [5, 2, 1];
 
-    const action = {
+    const action: GameAction = {
       type: 'MOVE_DEEPER',
       playerId: state.players[0].id,
       payload: { newDepth: 2 }
@@ -149,7 +149,7 @@ describe('gameReducer new actions', () => {
     state.players[0].location = 'port';
     state.port.shops.rods = [upgrade];
 
-    const action = {
+    const action: GameAction = {
       type: 'BUY_UPGRADE',
       playerId: state.players[0].id,
       payload: { upgradeId: upgrade.id }
@@ -168,7 +168,7 @@ describe('gameReducer new actions', () => {
     state.players[0].fishbucks = 10;
     state.players[0].location = 'port';
 
-    const action = {
+    const action: GameAction = {
       type: 'BUY_TACKLE_DICE',
       playerId: state.players[0].id,
       payload: { dieId: tackleOption.id, count: 2 }
@@ -230,7 +230,7 @@ describe('gameReducer new actions', () => {
     state.players[0].regrets = [REGRET_CARDS[0], REGRET_CARDS[1]];
     state.port.regretsDiscard = [];
 
-    const action = {
+    const action: GameAction = {
       type: 'USE_LIFE_PRESERVER',
       playerId: state.players[0].id,
       payload: {}
@@ -252,7 +252,7 @@ describe('gameReducer new actions', () => {
     state.port.dinksDeck = [...DINK_CARDS.slice(0, 2)];
     const initialDeckLength = state.port.dinksDeck.length;
 
-    const action = {
+    const action: GameAction = {
       type: 'DRAW_DINK',
       playerId: state.players[0].id,
       payload: {}
@@ -270,7 +270,7 @@ describe('gameReducer new actions', () => {
     state.players[0].freshDice = [1, 2, 5];
     state.sea.shoals[1][0] = [fish];
 
-    const action = {
+    const action: GameAction = {
       type: 'CATCH_FISH',
       playerId: state.players[0].id,
       payload: {
@@ -297,7 +297,7 @@ describe('gameReducer new actions', () => {
     state.port.dinksDeck = [...DINK_CARDS.slice(0, 3)];
     const initialDeckLength = state.port.dinksDeck.length;
 
-    const action = {
+    const action: GameAction = {
       type: 'CATCH_FISH',
       playerId: state.players[0].id,
       payload: {
@@ -326,7 +326,7 @@ describe('gameReducer new actions', () => {
     state.port.dinksDeck = [...DINK_CARDS.slice(0, 2)];
     const initialDeckLength = state.port.dinksDeck.length;
 
-    const action = {
+    const action: GameAction = {
       type: 'CATCH_FISH',
       playerId: state.players[0].id,
       payload: {
@@ -373,7 +373,7 @@ describe('madness interactions', () => {
     const madnessFish = createMadnessFish();
     state.sea.shoals[1] = [[madnessFish]];
 
-    const action = {
+    const action: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
       payload: { fish: madnessFish, depth: 1, shoal: 0, diceIndices: [0] }
@@ -402,7 +402,7 @@ describe('madness interactions', () => {
     const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-003' });
     state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
 
-    const firstAction = {
+    const firstAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
       payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
@@ -414,7 +414,7 @@ describe('madness interactions', () => {
     expect(afterFirstCatch.madnessLevel).toBe(0);
     expect(afterFirstCatch.madnessOffset).toBe(0);
 
-    const secondAction = {
+    const secondAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: afterFirstCatch.id,
       payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
@@ -444,7 +444,7 @@ describe('madness interactions', () => {
     const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-005' });
     state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
 
-    const firstAction = {
+    const firstAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
       payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
@@ -457,7 +457,7 @@ describe('madness interactions', () => {
     expect(afterFirstCatch.madnessOffset).toBe(0);
     expect(afterFirstCatch.dinks.some(dink => dink.id === scrimshaw.id)).toBe(false);
 
-    const secondAction = {
+    const secondAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: afterFirstCatch.id,
       payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }

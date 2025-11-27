@@ -113,7 +113,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
       onAction({
         type: 'BUY_UPGRADE',
         playerId: currentPlayer.id,
-        payload: { upgradeId, cost }
+        payload: { upgradeId }
       });
     }
   };
@@ -266,12 +266,9 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                 </p>
               )}
               {currentPlayer.handFish.map((fish) => {
-                const saleDetails = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+                const saleDetails = calculateFishSaleValue(fish, currentPlayer.regrets.length);
                 const modifierText = saleDetails.modifier !== 0
                   ? ` • Modifiers ${saleDetails.modifier > 0 ? '+' : ''}${saleDetails.modifier}`
-                  : '';
-                const madnessText = saleDetails.madnessPenalty > 0
-                  ? ` • Madness -${saleDetails.madnessPenalty}`
                   : '';
 
                 return (
@@ -285,7 +282,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Base {saleDetails.baseValue}{modifierText}{madnessText}
+                          Base {saleDetails.baseValue}{modifierText}
                         </div>
                         <div className="text-sm">
                           Sale Value: <span className="text-primary-glow font-medium">${saleDetails.adjustedValue}</span>
@@ -312,13 +309,10 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
                               <DialogTitle>Sell {fish.name}</DialogTitle>
                               <DialogDescription>
                                 Gain <span className="text-primary-glow font-semibold">${saleDetails.adjustedValue}</span>{' '}
-                                {saleDetails.madnessPenalty > 0 ? (
-                                  <>
-                                    and suffer <span className="font-semibold text-destructive">{saleDetails.madnessPenalty}</span>{' '}
-                                    madness.
-                                  </>
+                                {fish.quality === 'foul' ? (
+                                  <>and draw 1 Regret.</>
                                 ) : (
-                                  <>with no additional madness.</>
+                                  <>with no additional effects.</>
                                 )}
                               </DialogDescription>
                             </DialogHeader>

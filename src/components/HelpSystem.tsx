@@ -50,7 +50,7 @@ interface TutorialStep {
 
 const getTutorialSteps = (language: Language): TutorialStep[] => {
   const trans = getTranslations(language);
-  const tutorial = trans.tutorial as Record<string, { title: string; content: string; tips: string[] }>;
+  const tutorial = trans.tutorial as unknown as Record<string, { title: string; content: string; tips: string[] }>;
 
   return [
     {
@@ -140,7 +140,7 @@ interface RulebookSection {
 
 const getRulebookSections = (language: Language): RulebookSection[] => {
   const trans = getTranslations(language);
-  const rulebook = trans.rulebook as Record<string, { title: string; content: string; keywords: string[] }>;
+  const rulebook = trans.rulebook as unknown as Record<string, { title: string; content: string; keywords: string[] }>;
 
   return [
     {
