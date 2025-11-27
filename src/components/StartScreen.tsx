@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,10 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import logoImage from '@/assets/deep-regrets-logo.jpg';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
+import { GraduationCap, Lightbulb, X } from 'lucide-react';
 
 export interface GameSetup {
   humanPlayers: number;
@@ -22,13 +24,34 @@ interface StartScreenProps {
   onStartGame: (playerCount: number, gameSetup?: GameSetup) => void;
 }
 
+const FIRST_TIME_KEY = 'deep-regrets-first-time';
+
 export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   const [humanPlayers, setHumanPlayers] = useState(1);
   const [aiPlayers, setAiPlayers] = useState(1);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
   const displaySettings = useDisplaySettings();
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem(FIRST_TIME_KEY);
+    if (!hasVisited) {
+      setShowFirstTimeBanner(true);
+    }
+  }, []);
+
+  const dismissFirstTimeBanner = () => {
+    localStorage.setItem(FIRST_TIME_KEY, 'true');
+    setShowFirstTimeBanner(false);
+  };
+
+  const openTutorialAndDismiss = () => {
+    localStorage.setItem(FIRST_TIME_KEY, 'true');
+    setShowFirstTimeBanner(false);
+    setIsHelpOpen(true);
+  };
 
   const totalPlayers = humanPlayers + aiPlayers;
   const maxAiPlayers = 5 - humanPlayers;
@@ -81,6 +104,41 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       {/* Tentacle shadows */}
       <div className="tentacle-shadow" />
       
+      {/* First-time player banner */}
+      {showFirstTimeBanner && (
+        <div className="fixed inset-x-0 top-0 z-50 p-4">
+          <Alert className="mx-auto max-w-2xl border-primary/50 bg-primary/10 backdrop-blur-md">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="font-semibold text-primary-glow">Velkommen til Deep Regrets!</p>
+                <p className="text-sm text-foreground/80">
+                  Første gang? Vi anbefaler å se på tutorialen for å lære spillets regler og mekanikker.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  size="sm"
+                  className="btn-ocean"
+                  onClick={openTutorialAndDismiss}
+                >
+                  <Lightbulb className="mr-1 h-4 w-4" />
+                  Se Tutorial
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={dismissFirstTimeBanner}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Main content */}
       <div className="relative z-10 w-full max-w-6xl px-6 py-12 lg:py-16">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch">
