@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Anchor,
+  HelpCircle,
   Maximize2,
   Minimize2,
   MoreHorizontal,
@@ -44,6 +45,7 @@ import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
+import { HelpSystem } from '@/components/HelpSystem';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -57,6 +59,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   const [isPortOpen, setIsPortOpen] = useState(false);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const portButtonRef = useRef<HTMLButtonElement>(null);
@@ -296,6 +299,13 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onSelect={() => setIsHelpOpen(true)}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  Hjelp & Regler
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center gap-2"
                   onSelect={() => setIsPlayerOpen(true)}
@@ -538,6 +548,20 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </DialogHeader>
           <div className="mt-4">
             <OptionsMenu />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+        <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-primary-glow">Hjelp & Regler</DialogTitle>
+            <DialogDescription>
+              Lær å spille eller slå opp regler underveis.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden">
+            <HelpSystem defaultTab="rulebook" />
           </div>
         </DialogContent>
       </Dialog>
