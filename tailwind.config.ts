@@ -103,6 +103,51 @@ export default {
           "0%, 100%": { boxShadow: "0 0 5px hsl(var(--regret) / 0.3)" },
           "50%": { boxShadow: "0 0 20px hsl(var(--regret) / 0.8)" },
         },
+        // New game polish animations
+        "boat-bob": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "25%": { transform: "translateY(-3px) rotate(2deg)" },
+          "75%": { transform: "translateY(2px) rotate(-2deg)" },
+        },
+        "coin-spin": {
+          "0%": { transform: "rotateY(0deg)" },
+          "50%": { transform: "rotateY(180deg)" },
+          "100%": { transform: "rotateY(360deg)" },
+        },
+        "ripple": {
+          "0%": { width: "0", height: "0", opacity: "0.5" },
+          "100%": { width: "200px", height: "200px", opacity: "0" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { filter: "drop-shadow(0 0 5px var(--glow-color, hsl(var(--primary))))" },
+          "50%": { filter: "drop-shadow(0 0 20px var(--glow-color, hsl(var(--primary))))" },
+        },
+        "score-float": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(-50px)", opacity: "0" },
+        },
+        "shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-5px)" },
+          "20%, 40%, 60%, 80%": { transform: "translateX(5px)" },
+        },
+        "bounce-in": {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "50%": { transform: "scale(1.2)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "slide-up-fade": {
+          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "token-appear": {
+          "0%": { transform: "scale(0) rotate(-180deg)", opacity: "0" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        "success-burst": {
+          "0%": { transform: "scale(0)", opacity: "1" },
+          "100%": { transform: "scale(2)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +157,17 @@ export default {
         "card-reveal": "card-reveal 0.6s ease-out",
         "dice-roll": "dice-roll 1s ease-in-out",
         "regret-pulse": "regret-pulse 2s infinite ease-in-out",
+        // New game polish animations
+        "boat-bob": "boat-bob 2s ease-in-out infinite",
+        "coin-spin": "coin-spin 3s ease-in-out infinite",
+        "ripple": "ripple 0.6s ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "score-float": "score-float 1s ease-out forwards",
+        "shake": "shake 0.5s ease-in-out",
+        "bounce-in": "bounce-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "slide-up-fade": "slide-up-fade 0.3s ease-out",
+        "token-appear": "token-appear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "success-burst": "success-burst 0.5s ease-out forwards",
       },
     },
   },
