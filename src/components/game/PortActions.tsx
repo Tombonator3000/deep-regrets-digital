@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { FishCard, GameState, Player, UpgradeCard } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { TACKLE_DICE } from '@/data/tackleDice';
-import { Heart, Dice1 } from 'lucide-react';
+import { Anchor, Coins, Dice1, Heart, HelpCircle, Lightbulb, Package, ShoppingBag, Trophy } from 'lucide-react';
 
 interface PortActionsProps {
   gameState: GameState;
@@ -142,217 +148,371 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-primary-glow">Port Actions</h3>
+    <TooltipProvider>
+      <div className="space-y-4">
+        {/* Port Actions Header with Tips */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-primary-glow flex items-center gap-2">
+            <Anchor className="h-5 w-5" />
+            Havnhandlinger
+          </h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-xs">
+              <p className="font-semibold mb-1">I havnen kan du:</p>
+              <ul className="text-xs space-y-1 list-disc list-inside">
+                <li>Selge fisk for Fishbucks</li>
+                <li>Montere fisk på troféveggen (×1, ×2, ×3)</li>
+                <li>Kjøpe oppgraderinger og utstyr</li>
+                <li>Leie spesialterninger</li>
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
-      {/* Life Preserver */}
-      {!currentPlayer.lifeboatFlipped && currentPlayer.regrets.length > 0 && (
-        <Card className="card-game p-3 border-red-500/30">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500" />
-              <div>
-                <h4 className="font-medium text-red-400">Life Preserver</h4>
-                <p className="text-xs text-muted-foreground">Discard 1 Regret (+10 penalty at end)</p>
-              </div>
-            </div>
-            <Button
-              onClick={handleUseLifePreserver}
-              size="sm"
-              variant="destructive"
-            >
-              Use
-            </Button>
+        {/* Quick Tips Card */}
+        <Card className="card-game p-3 bg-amber-900/20 border-amber-500/30">
+          <div className="flex items-center gap-2 text-sm">
+            <Lightbulb className="h-4 w-4 text-amber-400" />
+            <span className="text-amber-200">
+              {currentPlayer.handFish.length === 0
+                ? "Du har ingen fisk å selge eller montere. Gå til havet for å fiske!"
+                : currentPlayer.handFish.length === 1
+                  ? "Du har 1 fisk. Vurder å montere den på ×3-plassen for maksimale poeng!"
+                  : `Du har ${currentPlayer.handFish.length} fisk. Selg eller monter dem for poeng.`}
+            </span>
           </div>
         </Card>
-      )}
 
-      {/* Sell Fish */}
-      {currentPlayer.handFish.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-medium">Sell Fish</h4>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {currentPlayer.handFish.map((fish) => (
-              <Card key={fish.id} className="card-game p-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h5 className="font-medium text-primary-glow">{fish.name}</h5>
-                    <p className="text-sm text-muted-foreground">Value: {fish.value} Fishbucks</p>
-                    {fish.quality === 'foul' && (
-                      <p className="text-xs text-destructive font-semibold">Selling draws 1 Regret.</p>
-                    )}
-                  </div>
-                  <Button
-                    onClick={() => handleSellFish(fish)}
-                    size="sm"
-                    className="btn-ocean"
-                  >
-                    Sell
-                  </Button>
+        {/* Life Preserver */}
+        {!currentPlayer.lifeboatFlipped && currentPlayer.regrets.length > 0 && (
+          <Card className="card-game p-3 border-red-500/30">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                <div>
+                  <h4 className="font-medium text-red-400">Life Preserver</h4>
+                  <p className="text-xs text-muted-foreground">Kast 1 Regret (+10 straff ved slutt)</p>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Mount Fish */}
-      {currentPlayer.handFish.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-medium">Mount Fish (Trophy)</h4>
-          <div className="space-y-2">
-            {currentPlayer.handFish.map((fish) => (
-              <Card key={`mount-${fish.id}`} className="card-game p-3">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h5 className="font-medium text-primary-glow">{fish.name}</h5>
-                    <Badge variant="outline">Value: {fish.value}</Badge>
-                  </div>
-                  <div className="flex gap-1">
-                    {mountingSlots.map((slotIndex) => {
-                      const isOccupied = currentPlayer.mountedFish.some(mount => mount.slot === slotIndex);
-                      const multiplier = getSlotMultiplier(slotIndex);
-
-                      return (
-                        <Button
-                          key={slotIndex}
-                          onClick={() => handleMountFish(fish, slotIndex)}
-                          disabled={isOccupied}
-                          size="sm"
-                          variant={isOccupied ? "secondary" : "outline"}
-                          className="flex-1 text-xs"
-                        >
-                          Slot {slotIndex + 1} (×{multiplier})
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tackle Dice Shop */}
-      <div className="space-y-3">
-        <h4 className="font-medium flex items-center gap-2">
-          <Dice1 className="h-4 w-4" />
-          Tackle Dice
-        </h4>
-        <p className="text-xs text-muted-foreground">Special dice with better odds for catching fish</p>
-        <div className="grid grid-cols-2 gap-2">
-          {TACKLE_DICE.map((die) => (
-            <Card key={die.id} className="card-game p-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded ${dieColors[die.color] || 'bg-gray-500'}`} />
-                  <span className="text-sm font-medium">{die.name}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{die.description}</p>
-                <p className="text-xs">Faces: [{die.faces.join(', ')}]</p>
-                <Button
-                  onClick={() => handleBuyTackleDie(die.id, die.cost)}
-                  disabled={currentPlayer.fishbucks < die.cost}
-                  size="sm"
-                  className="w-full btn-ocean text-xs"
-                >
-                  Buy ({die.cost} Fishbucks)
-                </Button>
               </div>
-            </Card>
-          ))}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleUseLifePreserver}
+                    size="sm"
+                    variant="destructive"
+                  >
+                    Bruk
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Fjern én Regret nå, men få 10 straffpoeng ved spillslutt.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </Card>
+        )}
+
+        {/* Sell Fish */}
+        {currentPlayer.handFish.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Coins className="h-4 w-4 text-fishbuck" />
+              <h4 className="font-medium">Selg Fisk</h4>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Selg fisk for Fishbucks. 1 Fishbuck = 1 poeng ved spillslutt.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {currentPlayer.handFish.map((fish) => {
+                const saleValue = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+                return (
+                  <Card key={fish.id} className="card-game p-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h5 className="font-medium text-primary-glow">{fish.name}</h5>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Verdi:</span>
+                          <span className="ml-1 text-fishbuck font-semibold">{saleValue.adjustedValue}</span>
+                          <span className="text-xs text-muted-foreground ml-1">Fishbucks</span>
+                        </p>
+                        {fish.quality === 'foul' && (
+                          <p className="text-xs text-destructive font-semibold">⚠️ Å selge gir 1 Regret</p>
+                        )}
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleSellFish(fish)}
+                            size="sm"
+                            className="btn-ocean"
+                          >
+                            <ShoppingBag className="h-3 w-3 mr-1" />
+                            Selg
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Selg for {saleValue.adjustedValue} Fishbucks</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Mount Fish */}
+        {currentPlayer.handFish.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-yellow-500" />
+              <h4 className="font-medium">Monter Fisk (Trofé)</h4>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="font-semibold mb-1">Monteringsplasser:</p>
+                  <ul className="text-xs space-y-1">
+                    <li>• Plass 1: ×1 (normal verdi)</li>
+                    <li>• Plass 2: ×2 (dobbel verdi)</li>
+                    <li>• Plass 3: ×3 (trippel verdi!)</li>
+                  </ul>
+                  <p className="text-xs mt-1 text-muted-foreground">Spar beste fisk til ×3!</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="space-y-2">
+              {currentPlayer.handFish.map((fish) => (
+                <Card key={`mount-${fish.id}`} className="card-game p-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h5 className="font-medium text-primary-glow">{fish.name}</h5>
+                      <Badge variant="outline" className="border-green-500/50 text-green-400">
+                        Verdi: {fish.value}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      {mountingSlots.map((slotIndex) => {
+                        const isOccupied = currentPlayer.mountedFish.some(mount => mount.slot === slotIndex);
+                        const multiplier = getSlotMultiplier(slotIndex);
+                        const potentialScore = fish.value * multiplier;
+
+                        return (
+                          <Tooltip key={slotIndex}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => handleMountFish(fish, slotIndex)}
+                                disabled={isOccupied}
+                                size="sm"
+                                variant={isOccupied ? "secondary" : "outline"}
+                                className={`flex-1 text-xs ${!isOccupied && multiplier === 3 ? 'border-yellow-500/50 text-yellow-400' : ''}`}
+                              >
+                                {isOccupied ? '🔒' : `×${multiplier}`}
+                                {!isOccupied && ` (${potentialScore}p)`}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {isOccupied
+                                ? 'Denne plassen er opptatt'
+                                : `Monter her for ${potentialScore} poeng (${fish.value} × ${multiplier})`}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tackle Dice Shop */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Dice1 className="h-4 w-4 text-violet-400" />
+            <h4 className="font-medium">Spesialterninger</h4>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Spesialterninger med bedre odds. Lei dem for dagen!</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {TACKLE_DICE.map((die) => (
+              <Card key={die.id} className="card-game p-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded ${dieColors[die.color] || 'bg-gray-500'}`} />
+                    <span className="text-sm font-medium">{die.name}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{die.description}</p>
+                  <p className="text-xs">Sider: [{die.faces.join(', ')}]</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => handleBuyTackleDie(die.id, die.cost)}
+                        disabled={currentPlayer.fishbucks < die.cost}
+                        size="sm"
+                        className="w-full btn-ocean text-xs"
+                      >
+                        Kjøp ({die.cost} FB)
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {currentPlayer.fishbucks < die.cost
+                        ? `Du trenger ${die.cost - currentPlayer.fishbucks} Fishbucks mer`
+                        : `Lei denne terningen for ${die.cost} Fishbucks`}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Buy Upgrades */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-orange-400" />
+            <h4 className="font-medium">Oppgraderingsbutikk</h4>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Kjøp permanente oppgraderinger for å forbedre fiskingen.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Rods */}
+          {gameState.port.shops.rods.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-primary-glow">Stenger</h5>
+              {gameState.port.shops.rods.map((rod) => (
+                <Card key={rod.id} className="card-game p-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h6 className="font-medium">{rod.name}</h6>
+                      <p className="text-xs text-muted-foreground">{rod.description}</p>
+                    </div>
+                    <div className="text-right ml-2">
+                      <p className="text-sm font-bold text-fishbuck">{rod.cost} FB</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleBuyUpgrade(rod)}
+                            disabled={currentPlayer.fishbucks < rod.cost}
+                            size="sm"
+                            className="btn-ocean mt-1"
+                          >
+                            Kjøp
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {currentPlayer.fishbucks < rod.cost
+                            ? `Trenger ${rod.cost - currentPlayer.fishbucks} FB mer`
+                            : 'Kjøp denne oppgraderingen'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Reels */}
+          {gameState.port.shops.reels.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-primary-glow">Hjul</h5>
+              {gameState.port.shops.reels.map((reel) => (
+                <Card key={reel.id} className="card-game p-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h6 className="font-medium">{reel.name}</h6>
+                      <p className="text-xs text-muted-foreground">{reel.description}</p>
+                    </div>
+                    <div className="text-right ml-2">
+                      <p className="text-sm font-bold text-fishbuck">{reel.cost} FB</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleBuyUpgrade(reel)}
+                            disabled={currentPlayer.fishbucks < reel.cost}
+                            size="sm"
+                            className="btn-ocean mt-1"
+                          >
+                            Kjøp
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {currentPlayer.fishbucks < reel.cost
+                            ? `Trenger ${reel.cost - currentPlayer.fishbucks} FB mer`
+                            : 'Kjøp denne oppgraderingen'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Supplies */}
+          {gameState.port.shops.supplies.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-primary-glow">Forsyninger</h5>
+              {gameState.port.shops.supplies.map((supply) => (
+                <Card key={supply.id} className="card-game p-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h6 className="font-medium">{supply.name}</h6>
+                      <p className="text-xs text-muted-foreground">{supply.description}</p>
+                    </div>
+                    <div className="text-right ml-2">
+                      <p className="text-sm font-bold text-fishbuck">{supply.cost} FB</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleBuyUpgrade(supply)}
+                            disabled={currentPlayer.fishbucks < supply.cost}
+                            size="sm"
+                            className="btn-ocean mt-1"
+                          >
+                            Kjøp
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {currentPlayer.fishbucks < supply.cost
+                            ? `Trenger ${supply.cost - currentPlayer.fishbucks} FB mer`
+                            : 'Kjøp forsyninger'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Buy Upgrades */}
-      <div className="space-y-3">
-        <h4 className="font-medium">Upgrade Shop</h4>
-
-        {/* Rods */}
-        {gameState.port.shops.rods.length > 0 && (
-          <div className="space-y-2">
-            <h5 className="text-sm font-medium text-primary-glow">Rods</h5>
-            {gameState.port.shops.rods.map((rod) => (
-              <Card key={rod.id} className="card-game p-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h6 className="font-medium">{rod.name}</h6>
-                    <p className="text-xs text-muted-foreground">{rod.description}</p>
-                  </div>
-                  <div className="text-right ml-2">
-                    <p className="text-sm font-bold">{rod.cost} Fishbucks</p>
-                    <Button
-                      onClick={() => handleBuyUpgrade(rod)}
-                      disabled={currentPlayer.fishbucks < rod.cost}
-                      size="sm"
-                      className="btn-ocean mt-1"
-                    >
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Reels */}
-        {gameState.port.shops.reels.length > 0 && (
-          <div className="space-y-2">
-            <h5 className="text-sm font-medium text-primary-glow">Reels</h5>
-            {gameState.port.shops.reels.map((reel) => (
-              <Card key={reel.id} className="card-game p-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h6 className="font-medium">{reel.name}</h6>
-                    <p className="text-xs text-muted-foreground">{reel.description}</p>
-                  </div>
-                  <div className="text-right ml-2">
-                    <p className="text-sm font-bold">{reel.cost} Fishbucks</p>
-                    <Button
-                      onClick={() => handleBuyUpgrade(reel)}
-                      disabled={currentPlayer.fishbucks < reel.cost}
-                      size="sm"
-                      className="btn-ocean mt-1"
-                    >
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Supplies */}
-        {gameState.port.shops.supplies.length > 0 && (
-          <div className="space-y-2">
-            <h5 className="text-sm font-medium text-primary-glow">Supplies</h5>
-            {gameState.port.shops.supplies.map((supply) => (
-              <Card key={supply.id} className="card-game p-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h6 className="font-medium">{supply.name}</h6>
-                    <p className="text-xs text-muted-foreground">{supply.description}</p>
-                  </div>
-                  <div className="text-right ml-2">
-                    <p className="text-sm font-bold">{supply.cost} Fishbucks</p>
-                    <Button
-                      onClick={() => handleBuyUpgrade(supply)}
-                      disabled={currentPlayer.fishbucks < supply.cost}
-                      size="sm"
-                      className="btn-ocean mt-1"
-                    >
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };
