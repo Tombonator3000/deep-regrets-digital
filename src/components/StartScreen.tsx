@@ -12,15 +12,26 @@ import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
 
+export interface GameSetup {
+  humanPlayers: number;
+  aiPlayers: number;
+  aiDifficulty: 'easy' | 'medium' | 'hard';
+}
+
 interface StartScreenProps {
-  onStartGame: (playerCount: number) => void;
+  onStartGame: (playerCount: number, gameSetup?: GameSetup) => void;
 }
 
 export const StartScreen = ({ onStartGame }: StartScreenProps) => {
-  const [playerCount, setPlayerCount] = useState(2);
+  const [humanPlayers, setHumanPlayers] = useState(1);
+  const [aiPlayers, setAiPlayers] = useState(1);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const displaySettings = useDisplaySettings();
+
+  const totalPlayers = humanPlayers + aiPlayers;
+  const maxAiPlayers = 5 - humanPlayers;
 
   const particles = useMemo(
     () =>
@@ -107,7 +118,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     type="button"
                     size="lg"
                     className="btn-ocean w-full justify-center text-lg font-semibold"
-                    onClick={() => onStartGame(playerCount)}
+                    onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty })}
                   >
                     New Game
                   </Button>
@@ -137,30 +148,99 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               </ul>
             </nav>
 
-            <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-6 space-y-4">
+            <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-6 space-y-5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-card-foreground">Select Players</h3>
+                <h3 className="text-xl font-semibold text-card-foreground">Game Setup</h3>
                 <p className="text-sm text-muted-foreground">
-                  {playerCount === 1 ? 'Solo Mode' : `${playerCount} Players`}
+                  {totalPlayers} {totalPlayers === 1 ? 'Player' : 'Players'} Total
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                {[1, 2, 3, 4, 5].map((count) => (
-                  <Button
-                    key={count}
-                    variant={playerCount === count ? "default" : "outline"}
-                    size="lg"
-                    onClick={() => setPlayerCount(count)}
-                    className={`w-12 h-12 ${
-                      playerCount === count
-                        ? 'btn-ocean'
-                        : 'border-primary/30 hover:border-primary'
-                    }`}
-                  >
-                    {count}
-                  </Button>
-                ))}
+
+              {/* Human Players */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Human Players</label>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((count) => (
+                    <Button
+                      key={count}
+                      variant={humanPlayers === count ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setHumanPlayers(count);
+                        if (count + aiPlayers > 5) {
+                          setAiPlayers(5 - count);
+                        }
+                      }}
+                      className={`w-10 h-10 ${
+                        humanPlayers === count
+                          ? 'btn-ocean'
+                          : 'border-primary/30 hover:border-primary'
+                      }`}
+                    >
+                      {count}
+                    </Button>
+                  ))}
+                </div>
               </div>
+
+              {/* AI Opponents */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">AI Opponents</label>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[0, 1, 2, 3, 4].filter(count => count <= maxAiPlayers).map((count) => (
+                    <Button
+                      key={count}
+                      variant={aiPlayers === count ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setAiPlayers(count)}
+                      className={`w-10 h-10 ${
+                        aiPlayers === count
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                          : 'border-purple-400/30 hover:border-purple-400'
+                      }`}
+                    >
+                      {count}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI Difficulty */}
+              {aiPlayers > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/80">AI Difficulty</label>
+                  <div className="flex justify-center gap-2">
+                    {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                      <Button
+                        key={diff}
+                        variant={aiDifficulty === diff ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAiDifficulty(diff)}
+                        className={`px-4 h-9 capitalize ${
+                          aiDifficulty === diff
+                            ? diff === 'easy' ? 'bg-green-600 hover:bg-green-700' :
+                              diff === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                              'bg-red-600 hover:bg-red-700'
+                            : 'border-primary/30 hover:border-primary'
+                        }`}
+                      >
+                        {diff}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Game mode description */}
+              <p className="text-xs text-center text-muted-foreground">
+                {aiPlayers === 0
+                  ? humanPlayers === 1
+                    ? 'Solo practice mode'
+                    : 'Local multiplayer'
+                  : humanPlayers === 0
+                    ? 'Spectator mode - watch AI players compete'
+                    : `${humanPlayers} human${humanPlayers > 1 ? 's' : ''} vs ${aiPlayers} AI opponent${aiPlayers > 1 ? 's' : ''}`}
+              </p>
             </div>
           </div>
         </div>
