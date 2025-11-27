@@ -145,14 +145,12 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
 
   // Handle mounting fish via drag and drop
   const handleMountFish = useCallback((fish: FishCard, slotIndex: number) => {
-    const multiplier = getSlotMultiplier(slotIndex);
     onAction({
       type: 'MOUNT_FISH',
       playerId: currentPlayer.id,
       payload: {
-        fish,
+        fishId: fish.id,
         slot: slotIndex,
-        multiplier,
       },
     });
   }, [currentPlayer.id, onAction]);
@@ -244,45 +242,47 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       )}
       
       {/* Main Game Layout - Board Game Style */}
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-4 px-4 py-4 min-h-0">
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-2 px-2 py-2 min-h-0 sm:gap-4 sm:px-4 sm:py-4">
         {/* Compact Header */}
-        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-background/70 px-4 py-2 backdrop-blur">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-primary-glow">DEEP REGRETS</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-background/70 px-3 py-2 backdrop-blur sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h1 className="text-base font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
             <Badge
-              className={`rounded-full px-3 py-0.5 text-xs ${
+              className={`rounded-full px-2 py-0.5 text-xs sm:px-3 ${
                 currentPlayer.isAI
                   ? 'border-purple-400/40 bg-purple-600/20 text-purple-300'
                   : 'border-primary/40 bg-primary/10 text-primary'
               }`}
             >
               {currentPlayer.isAI && (
-                <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-purple-400" />
+                <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-purple-400 sm:mr-1.5" />
               )}
-              {currentPlayer.name}'s Turn
+              <span className="hidden xs:inline">{currentPlayer.name}'s Turn</span>
+              <span className="xs:hidden">{currentPlayer.name}</span>
               {currentPlayer.isAI && ' (AI)'}
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Sheet open={isPortOpen} onOpenChange={setIsPortOpen}>
               <SheetTrigger asChild>
                 <Button
                   ref={portButtonRef}
                   size="sm"
-                  className="btn-ocean flex items-center gap-2"
+                  className="btn-ocean flex items-center gap-1 px-2 sm:gap-2 sm:px-3"
                 >
                   <Anchor className="h-4 w-4" />
-                  <span>Harbor Port</span>
+                  <span className="hidden sm:inline">Harbor Port</span>
+                  <span className="sm:hidden">Port</span>
                 </Button>
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="flex h-full w-full max-w-5xl flex-col overflow-hidden border border-white/20 bg-background/80 p-0 backdrop-blur-xl [&>button[data-radix-dialog-close]]:hidden"
+                className="flex h-full w-full max-w-full flex-col overflow-hidden border border-white/20 bg-background/80 p-0 backdrop-blur-xl sm:max-w-5xl [&>button[data-radix-dialog-close]]:hidden"
               >
-                <SheetHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-6 py-4 text-left">
+                <SheetHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-4 py-3 text-left sm:px-6 sm:py-4">
                   <div className="space-y-1 text-left">
-                    <SheetTitle className="text-2xl font-bold text-primary-glow">Harbor Port</SheetTitle>
-                    <SheetDescription className="text-sm text-muted-foreground">
+                    <SheetTitle className="text-xl font-bold text-primary-glow sm:text-2xl">Harbor Port</SheetTitle>
+                    <SheetDescription className="text-xs text-muted-foreground sm:text-sm">
                       Safe waters for commerce and rest.
                     </SheetDescription>
                   </div>
@@ -300,7 +300,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                   </SheetClose>
                 </SheetHeader>
                 <div className="flex flex-1 flex-col overflow-hidden">
-                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                  <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
                     <PortBoard
                       className="h-full"
                       gameState={gameState}
@@ -314,7 +314,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               size="sm"
               type="button"
               variant="ghost"
-              className="text-white/80 hover:text-white"
+              className="h-8 w-8 p-0 text-white/80 hover:text-white sm:h-auto sm:w-auto sm:px-3"
               onClick={toggleFullscreen}
             >
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -325,7 +325,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                   size="sm"
                   type="button"
                   variant="outline"
-                  className="border-white/30 bg-white/5 text-white hover:bg-white/10"
+                  className="h-8 w-8 border-white/30 bg-white/5 p-0 text-white hover:bg-white/10 sm:h-auto sm:w-auto sm:px-3"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -357,10 +357,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
         </div>
 
-        {/* 3-Column Board Game Layout */}
-        <div className="grid h-full min-h-0 grid-cols-[minmax(280px,320px),1fr,minmax(280px,340px)] gap-4">
-          {/* Left Column - Angler Board (Player Board) */}
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+        {/* Responsive Board Game Layout */}
+        <div className="grid h-full min-h-0 gap-2 sm:gap-4 grid-cols-1 md:grid-cols-[minmax(240px,280px),1fr] lg:grid-cols-[minmax(260px,300px),1fr,minmax(260px,320px)] xl:grid-cols-[minmax(280px,320px),1fr,minmax(280px,340px)]">
+          {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
+          <div className="hidden min-h-0 flex-col gap-2 overflow-y-auto sm:gap-4 md:flex">
             <AnglerBoard
               player={currentPlayer}
               isCurrentPlayer={isPlayerTurn}
@@ -374,8 +374,8 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
 
           {/* Center Column - The Briny Deep (Sea Board) */}
-          <div className="min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-background/60 backdrop-blur">
-            <div className="h-full min-h-0 overflow-auto p-4">
+          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10 bg-background/60 backdrop-blur sm:rounded-2xl">
+            <div className="h-full min-h-0 overflow-auto p-2 sm:p-4">
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
@@ -393,12 +393,29 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
 
           {/* Right Column - Actions Panel */}
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-2xl border border-white/10 bg-background/50 p-4 backdrop-blur">
+          <div className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-xl border border-white/10 bg-background/50 p-2 backdrop-blur sm:gap-4 sm:rounded-2xl sm:p-4 lg:flex">
+            {/* Show compact player info on mobile/tablet */}
+            <div className="md:hidden">
+              <AnglerBoard
+                player={currentPlayer}
+                isCurrentPlayer={isPlayerTurn}
+                gameState={gameState}
+                onMountFish={handleMountFish}
+                compact
+              />
+            </div>
             <ActionPanel
               gameState={gameState}
               selectedShoal={selectedShoal}
               onAction={onAction}
             />
+            {/* Show day tracker on mobile */}
+            <div className="md:hidden">
+              <DayTracker
+                day={gameState.day}
+                phase={gameState.phase}
+              />
+            </div>
           </div>
         </div>
       </div>

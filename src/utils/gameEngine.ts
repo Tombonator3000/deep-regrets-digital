@@ -799,7 +799,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     default:
-      console.warn('Unknown action type:', action.type);
+      console.warn('Unknown action type:', (action as { type: string }).type);
   }
 
   // Check win condition

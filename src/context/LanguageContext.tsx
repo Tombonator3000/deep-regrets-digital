@@ -40,7 +40,7 @@ const getStoredLanguage = (): Language => {
 };
 
 // Translation type for nested objects
-type TranslationValue = string | { [key: string]: TranslationValue };
+type TranslationValue = string | string[] | { [key: string]: TranslationValue };
 type Translations = { [key: string]: TranslationValue };
 
 // Norwegian translations

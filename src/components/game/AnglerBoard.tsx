@@ -11,9 +11,10 @@ interface AnglerBoardProps {
   isCurrentPlayer: boolean;
   gameState?: GameState;
   onMountFish?: (fish: FishCard, slotIndex: number) => void;
+  compact?: boolean;
 }
 
-export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish }: AnglerBoardProps) => {
+export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, compact = false }: AnglerBoardProps) => {
   const hasLifePreserver = gameState?.lifePreserverOwner === player.id;
   const hasFishCoin = gameState?.fishCoinOwner === player.id;
   const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
@@ -54,6 +55,74 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish }:
       console.error('Failed to parse drag data', err);
     }
   };
+
+  // Compact mode for mobile - show essential info only
+  if (compact) {
+    return (
+      <div className="angler-board relative rounded-xl border border-primary/30 bg-gradient-to-b from-slate-900/90 to-slate-950 p-3 shadow-lg">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+              <Anchor className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-primary-glow">{player.name}</h3>
+              <p className="text-xs text-muted-foreground">{player.character}</p>
+            </div>
+          </div>
+          {isCurrentPlayer && (
+            <Badge className="bg-primary/20 text-primary-glow animate-pulse text-xs">
+              Your Turn
+            </Badge>
+          )}
+        </div>
+
+        {/* Compact Stats Row */}
+        <div className="grid grid-cols-4 gap-2 mb-3">
+          <div className="flex flex-col items-center rounded-lg border border-fishbuck/30 bg-fishbuck/10 p-1.5">
+            <Coins className="h-3 w-3 text-fishbuck" />
+            <span className="text-sm font-bold text-fishbuck">${player.fishbucks}</span>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-destructive/30 bg-destructive/10 p-1.5">
+            <Skull className="h-3 w-3 text-destructive" />
+            <span className="text-sm font-bold text-destructive">{player.regrets.length}</span>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-purple-500/30 bg-purple-500/10 p-1.5">
+            <Brain className="h-3 w-3 text-purple-400" />
+            <span className="text-sm font-bold text-purple-400">{player.madnessLevel}</span>
+          </div>
+          <div className="flex flex-col items-center rounded-lg border border-primary/30 bg-primary/10 p-1.5">
+            <Dice6 className="h-3 w-3 text-primary" />
+            <span className="text-sm font-bold text-primary">{player.freshDice.length}</span>
+          </div>
+        </div>
+
+        {/* Compact Dice Display */}
+        <div className="flex flex-wrap gap-1 mb-3">
+          {player.freshDice.map((value, index) => (
+            <div
+              key={`fresh-${index}`}
+              className="flex h-7 w-7 items-center justify-center rounded bg-primary/20 text-xs font-bold text-primary-glow"
+            >
+              {value}
+            </div>
+          ))}
+        </div>
+
+        {/* Compact Location */}
+        <div
+          className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
+            player.location === 'sea'
+              ? 'border-primary/50 bg-primary/10 text-primary'
+              : 'border-fishbuck/50 bg-fishbuck/10 text-fishbuck'
+          }`}
+        >
+          {player.location === 'sea' ? `At Sea (Depth ${player.currentDepth})` : 'In Port'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="angler-board relative rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-950 p-4 shadow-xl">
