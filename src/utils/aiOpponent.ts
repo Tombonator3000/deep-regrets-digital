@@ -1,6 +1,12 @@
 import { GameState, Player, GameAction, FishCard, Depth, Location, UpgradeCard } from '@/types/game';
 import { AIDifficulty, AIDecision, FishCatchEvaluation, AIContext } from '@/types/ai';
-import { calculatePlayerScoreBreakdown } from './gameEngine';
+import {
+  calculatePlayerScoreBreakdown,
+  calculateFishValueWithMadness,
+  getFairValueModifier,
+  getFoulValueModifier,
+  hasPortDiscount
+} from './gameEngine';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 
 // Day order for calculating remaining days
@@ -244,7 +250,7 @@ const evaluateFishCatches = (
 };
 
 /**
- * Evaluate catching a single fish
+ * Evaluate catching a single fish using rulebook madness-based value calculations
  */
 const evaluateSingleFish = (
   fish: FishCard,
@@ -255,6 +261,7 @@ const evaluateSingleFish = (
 ): FishCatchEvaluation => {
   const difficulty_num = fish.difficulty;
   const totalDice = player.freshDice.reduce((a, b) => a + b, 0);
+  const regretCount = player.regrets.length;
 
   // Calculate success probability
   let successProbability = 0;
@@ -292,22 +299,44 @@ const evaluateSingleFish = (
     }
   }
 
-  // Calculate expected value
+  // Calculate expected value using rulebook madness-based modifiers
   let expectedValue = 0;
   if (successProbability > 0) {
-    const fishValue = fish.value;
-    const regretPenalty = fish.abilities.includes('regret_draw') ? 1.5 :
-                         fish.abilities.includes('regret_draw_2') ? 3 : 0;
+    // Use the proper madness-adjusted fish value per rulebook
+    const madnessAdjustedValue = calculateFishValueWithMadness(fish, regretCount);
 
-    // Risk adjustment based on difficulty
+    // Calculate potential future value if we gain regrets
+    const futureRegrets = regretCount + (fish.abilities.includes('regret_draw') ? 1 :
+                                          fish.abilities.includes('regret_draw_2') ? 2 : 0);
+    const futureValue = calculateFishValueWithMadness(fish, futureRegrets);
+
+    // For foul fish, higher regrets = higher value (per rulebook madness table)
+    // For fair fish, higher regrets = lower value
+    const isFoul = fish.quality === 'foul';
+
+    // Risk adjustment based on difficulty level
     const riskMod = difficulty === 'easy' ? 0.5 : difficulty === 'medium' ? 0.3 : 0.1;
-    const adjustedRegretPenalty = regretPenalty * (1 + riskMod);
 
-    expectedValue = successProbability * (fishValue - adjustedRegretPenalty);
+    // Regret penalty for scoring (each regret card costs points at game end)
+    const regretPenalty = fish.abilities.includes('regret_draw') ? 1.5 * (1 + riskMod) :
+                         fish.abilities.includes('regret_draw_2') ? 3 * (1 + riskMod) : 0;
 
-    // Bonus for foul fish if we have high fishbucks
-    if (fish.quality === 'foul' && player.fishbucks > 5) {
-      expectedValue -= 1;
+    // AI strategy: Prefer foul fish when at high madness (7+ regrets)
+    // because foul fish value increases with madness
+    let strategyBonus = 0;
+    if (isFoul && regretCount >= 7) {
+      // At high madness, foul fish are worth more
+      strategyBonus = getFoulValueModifier(regretCount) * 0.5;
+    } else if (!isFoul && regretCount <= 3) {
+      // At low madness, fair fish are worth more
+      strategyBonus = getFairValueModifier(regretCount) * 0.5;
+    }
+
+    expectedValue = successProbability * (madnessAdjustedValue - regretPenalty + strategyBonus);
+
+    // Additional penalty for foul fish that cause regret draw when sold
+    if (isFoul) {
+      expectedValue -= 0.5 * (1 + riskMod);
     }
   }
 
@@ -358,6 +387,44 @@ const evaluateDescend = (context: AIContext, difficulty: AIDifficulty): number =
 };
 
 /**
+ * Try to discard a regret (optional action when making port per rulebook p.17)
+ */
+const tryDiscardRegret = (
+  context: AIContext,
+  difficulty: AIDifficulty
+): AIDecision | null => {
+  const { player } = context;
+
+  // Can only discard if we have regrets
+  if (player.regrets.length === 0) return null;
+
+  // AI strategy: Discard regret if we're at risk of being the highest regret player
+  // or if we're crossing a madness tier threshold
+  const regretCount = player.regrets.length;
+
+  // At hard difficulty, be more strategic about regret management
+  const shouldDiscard = difficulty === 'hard'
+    ? regretCount >= 10 || (regretCount >= 7 && regretCount % 3 === 0)
+    : difficulty === 'medium'
+      ? regretCount >= 7
+      : regretCount >= 10; // Easy AI only discards at very high regrets
+
+  if (shouldDiscard) {
+    return {
+      action: {
+        type: 'DISCARD_REGRET',
+        playerId: player.id,
+        payload: {}
+      },
+      confidence: 0.7,
+      reasoning: `Discarding a regret (current count: ${regretCount})`
+    };
+  }
+
+  return null;
+};
+
+/**
  * Generate action while at port
  */
 const generatePortAction = (
@@ -366,7 +433,11 @@ const generatePortAction = (
 ): AIDecision => {
   const { player, gameState, daysRemaining } = context;
 
-  // Priority: Mount fish > Sell fish > Buy upgrades > Pass
+  // Priority: Discard regret (if beneficial) > Mount fish > Sell fish > Buy upgrades > Pass
+
+  // Try to discard a regret (free action per rulebook p.17)
+  const discardAction = tryDiscardRegret(context, difficulty);
+  if (discardAction) return discardAction;
 
   // Try to mount valuable fish
   const mountAction = tryMountFish(context, difficulty);
@@ -423,7 +494,7 @@ const tryMountFish = (
 };
 
 /**
- * Try to sell fish
+ * Try to sell fish - uses rulebook madness-based value calculations
  */
 const trySellFish = (
   context: AIContext,
@@ -433,42 +504,58 @@ const trySellFish = (
 
   if (player.handFish.length === 0) return null;
 
-  // Sell criteria:
-  // - Low value fish
-  // - Foul quality fish (if we need fishbucks)
-  // - Any fish if mount slots are full
-
+  const regretCount = player.regrets.length;
   const emptySlots = player.maxMountSlots - player.mountedFish.length;
 
-  // Find a fish to sell
-  const sortedFish = [...player.handFish].sort((a, b) => a.value - b.value);
+  // Calculate madness-adjusted values for all fish
+  const fishWithValues = player.handFish.map(fish => ({
+    fish,
+    value: calculateFishValueWithMadness(fish, regretCount),
+    isFoul: fish.quality === 'foul'
+  })).sort((a, b) => a.value - b.value);
 
   // Sell lowest value fish if we have more than mount slots
   if (player.handFish.length > emptySlots) {
-    const fishToSell = sortedFish[0];
+    const fishToSell = fishWithValues[0];
     return {
       action: {
         type: 'SELL_FISH',
         playerId: player.id,
-        payload: { fishId: fishToSell.id }
+        payload: { fishId: fishToSell.fish.id }
       },
       confidence: 0.8,
-      reasoning: `Selling ${fishToSell.name} (low value, mount slots limited)`
+      reasoning: `Selling ${fishToSell.fish.name} (value: ${fishToSell.value}, mount slots limited)`
     };
   }
 
-  // Sell foul fish if we need fishbucks
+  // At high madness (7+ regrets), foul fish are worth more - consider selling fair fish instead
+  if (regretCount >= 7 && player.fishbucks < 3) {
+    const fairFish = fishWithValues.find(f => !f.isFoul);
+    if (fairFish) {
+      return {
+        action: {
+          type: 'SELL_FISH',
+          playerId: player.id,
+          payload: { fishId: fairFish.fish.id }
+        },
+        confidence: 0.6,
+        reasoning: `Selling fair fish ${fairFish.fish.name} (foul fish worth more at high madness)`
+      };
+    }
+  }
+
+  // Sell foul fish if we need fishbucks (but be aware it causes regret draw)
   if (player.fishbucks < 3) {
-    const foulFish = player.handFish.find(f => f.quality === 'foul');
+    const foulFish = fishWithValues.find(f => f.isFoul);
     if (foulFish) {
       return {
         action: {
           type: 'SELL_FISH',
           playerId: player.id,
-          payload: { fishId: foulFish.id }
+          payload: { fishId: foulFish.fish.id }
         },
-        confidence: 0.6,
-        reasoning: `Selling foul fish ${foulFish.name} for fishbucks`
+        confidence: 0.5,
+        reasoning: `Selling foul fish ${foulFish.fish.name} for fishbucks (will draw regret)`
       };
     }
   }
@@ -477,7 +564,7 @@ const trySellFish = (
 };
 
 /**
- * Try to buy upgrades
+ * Try to buy upgrades - accounts for port discount at 13+ regrets per rulebook
  */
 const tryBuyUpgrade = (
   context: AIContext,
@@ -485,30 +572,36 @@ const tryBuyUpgrade = (
 ): AIDecision | null => {
   const { player, gameState, daysRemaining } = context;
 
-  if (player.fishbucks < 2) return null; // Not enough to buy anything
+  // Check for port discount (13+ regrets per rulebook p.21)
+  const discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
+
+  if (player.fishbucks < (2 - discount)) return null; // Not enough to buy anything
 
   const shops = gameState.port.shops;
 
   // Prioritize based on game state
   const affordableUpgrades: UpgradeCard[] = [];
 
-  // Check rods
+  // Check rods - apply discount
   shops.rods.forEach(rod => {
-    if (rod.cost <= player.fishbucks) {
+    const effectiveCost = Math.max(0, rod.cost - discount);
+    if (effectiveCost <= player.fishbucks) {
       affordableUpgrades.push(rod);
     }
   });
 
-  // Check reels
+  // Check reels - apply discount
   shops.reels.forEach(reel => {
-    if (reel.cost <= player.fishbucks) {
+    const effectiveCost = Math.max(0, reel.cost - discount);
+    if (effectiveCost <= player.fishbucks) {
       affordableUpgrades.push(reel);
     }
   });
 
-  // Check supplies
+  // Check supplies - apply discount
   shops.supplies.forEach(supply => {
-    if (supply.cost <= player.fishbucks) {
+    const effectiveCost = Math.max(0, supply.cost - discount);
+    if (effectiveCost <= player.fishbucks) {
       affordableUpgrades.push(supply);
     }
   });
@@ -517,6 +610,7 @@ const tryBuyUpgrade = (
 
   // Pick the most expensive affordable upgrade (generally better)
   const bestUpgrade = affordableUpgrades.sort((a, b) => b.cost - a.cost)[0];
+  const effectiveCost = Math.max(0, bestUpgrade.cost - discount);
 
   // Only buy if it seems valuable
   if (daysRemaining < 2 && bestUpgrade.type !== 'supply') {
@@ -530,7 +624,7 @@ const tryBuyUpgrade = (
       payload: { upgradeId: bestUpgrade.id }
     },
     confidence: 0.7,
-    reasoning: `Buying ${bestUpgrade.name} for ${bestUpgrade.cost} fishbucks`
+    reasoning: `Buying ${bestUpgrade.name} for ${effectiveCost} fishbucks${discount > 0 ? ' (with madness discount)' : ''}`
   };
 };
 
