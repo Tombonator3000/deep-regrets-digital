@@ -34,6 +34,7 @@ import {
   Trophy,
   Waves,
 } from 'lucide-react';
+import { useLanguage, getTranslations, type Language } from '@/context/LanguageContext';
 
 // ============================================================================
 // TUTORIAL DATA
@@ -47,199 +48,83 @@ interface TutorialStep {
   tips?: string[];
 }
 
-const tutorialSteps: TutorialStep[] = [
-  {
-    id: 'welcome',
-    title: 'Velkommen til Deep Regrets!',
-    content: `Deep Regrets er et "push-your-luck" fiskespill satt i en mørk, eldritch-inspirert verden. Du spiller som en skipper som våger seg ut i stadig farligere farvann for å fange verdifull fisk - men jo dypere du går, jo større er risikoen for å miste forstanden.
+const getTutorialSteps = (language: Language): TutorialStep[] => {
+  const trans = getTranslations(language);
+  const tutorial = trans.tutorial as Record<string, { title: string; content: string; tips: string[] }>;
 
-Spillet varer i 6 dager (Mandag til Lørdag), og den med høyest poengsum ved spillets slutt vinner!`,
-    icon: <Ship className="h-6 w-6" />,
-    tips: [
-      'Spillet handler om å balansere risiko og belønning',
-      '2-5 spillere kan delta',
-      'En runde tar ca. 30 minutter per spiller',
-    ],
-  },
-  {
-    id: 'dice',
-    title: 'Terninger - Din Viktigste Ressurs',
-    content: `Du starter med 3 terninger som representerer din evne til å handle. Terninger har to tilstander:
-
-**Friske terninger** - Tilgjengelige for bruk
-**Brukte terninger** - Allerede benyttet denne runden
-
-Hver handling i spillet koster terninger. For å fange fisk må du bruke terninger som til sammen matcher eller overgår fiskens vanskelighetsgrad.
-
-**Madness og terninger:** Jo flere Regrets du samler, jo flere terninger kan du ha (4-8 maks), men verdien på fisk endres basert på Madness-nivået ditt.`,
-    icon: <Dices className="h-6 w-6" />,
-    tips: [
-      'Terninger "friskes opp" i begynnelsen av hver dag',
-      'Flere Regrets gir deg flere terninger (4 ved 0 Regrets, opptil 8 ved 13+)',
-      'Noen karakterer starter med bonusterninger',
-    ],
-  },
-  {
-    id: 'sea',
-    title: 'Havet - Utforsk Dypet',
-    content: `Havet er et 3x3 rutenett fordelt på 3 dybdenivåer:
-
-**Dybde I (Grunt)** - Enkel fisk, lav risiko
-**Dybde II (Middels)** - Mer verdifull fisk, moderat risiko
-**Dybde III (Dypt)** - Sjelden og verdifull fisk, høy risiko
-
-Hver rute kalles en "shoal" og inneholder en stabel med fiskekort. Du kan kun se og fange den øverste fisken i hver shoal.`,
-    icon: <Waves className="h-6 w-6" />,
-    tips: [
-      'Dypere fisk gir flere poeng men er vanskeligere å fange',
-      'Du må bruke terninger for å dykke til dypere nivåer',
-      'Når en shoal tømmes, er den tom resten av spillet',
-    ],
-  },
-  {
-    id: 'fishing',
-    title: 'Fiske - Fang Din Fangst',
-    content: `For å fange en fisk:
-
-1. **Velg en shoal** - Klikk på en rute i havet
-2. **Avslør fisken** - Se hva som skjuler seg der (koster 1 terning)
-3. **Bestem deg** - Fang fisken eller la den være
-
-For å fange må summen av dine valgte terninger være **lik eller høyere** enn fiskens vanskelighetsgrad. Brukte terninger blir "spent" og kan ikke brukes igjen før neste dag.`,
-    icon: <Fish className="h-6 w-6" />,
-    tips: [
-      'Du trenger ikke fange en fisk du avslører',
-      'Noen fisk har spesielle evner som aktiveres når du fanger dem',
-      'Fisk i hånden gir poeng, men monterte fisk gir mer!',
-    ],
-  },
-  {
-    id: 'mounting',
-    title: 'Montering - Vis Frem Trofeene',
-    content: `Fisk du fanger havner først i hånden din. For å maksimere poeng bør du **montere** fisk på troféveggen din.
-
-Du har 3 monteringsplasser med ulike multiplikatorer:
-- **Plass 1:** ×1 (normal verdi)
-- **Plass 2:** ×2 (dobbel verdi)
-- **Plass 3:** ×3 (trippel verdi)
-
-Montering koster forsyninger (Supplies), og du kan gjøre det i havnen.`,
-    icon: <Trophy className="h-6 w-6" />,
-    tips: [
-      'Planlegg hvilken fisk som skal på hvilken plass',
-      'En fisk med verdi 5 på ×3-plassen gir 15 poeng!',
-      'Du kan kun montere når du er i havnen',
-    ],
-  },
-  {
-    id: 'port',
-    title: 'Havnen - Din Trygge Havn',
-    content: `Havnen er et trygt sted hvor du kan:
-
-- **Selge fisk** - Bytt uønsket fisk mot Fishbucks
-- **Kjøpe oppgraderinger** - Bedre stenger og hjul
-- **Kjøpe forsyninger** - Trengs for montering
-- **Montere fisk** - Sett fisk på troféveggen
-- **Leie Tackle Dice** - Spesialterninger med unike egenskaper
-
-**Port-fordeler ved ankomst:**
-- **Muster Your Courage** - Kast alle terningene dine på nytt
-- **Can of Worms** - Snu kortet med forsiden opp
-- **Kast én Regret** - Du kan frivillig kvitte deg med én Regret
-
-Du velger lokasjon (Hav eller Havn) i Declaration-fasen.`,
-    icon: <Anchor className="h-6 w-6" />,
-    tips: [
-      'Havnen er risikofri - ingen Regrets her',
-      'Ved 13+ Regrets får du $1 rabatt på alle kjøp',
-      'Tackle Dice kan gi deg en strategisk fordel',
-    ],
-  },
-  {
-    id: 'regrets',
-    title: 'Regrets - Vokterne av Galskap',
-    content: `**Regrets** representerer den mentale påkjenningen av å utforske dypet. Du får Regrets når:
-
-- Du avslører visse farlige fisk (Foul-kvalitet)
-- Noen korteffekter gir deg Regrets
-- Du dykker for dypt uten forberedelse
-
-Regrets er **skjulte kort** med verdier 0-3. Ved spillslutt trekkes Regrets fra poengsummen din.
-
-**Madness-systemet** påvirker fiskverdier:
-- **0 Regrets:** Fair +2, Foul -2, 4 maks terninger
-- **1-3 Regrets:** Fair +1, Foul -1, 4 maks terninger
-- **4-6 Regrets:** Fair +1, Foul ±0, 5 maks terninger
-- **7-9 Regrets:** Fair ±0, Foul +1, 6 maks terninger
-- **10-12 Regrets:** Fair -1, Foul +1, 7 maks terninger
-- **13+ Regrets:** Fair -2, Foul +2, 8 maks terninger + portrabatt`,
-    icon: <Brain className="h-6 w-6" />,
-    tips: [
-      'Flere Regrets gir deg flere terninger, men endrer fiskverdier',
-      'Ved 13+ Regrets får du $1 rabatt i havnen',
-      'Life Preserver kan beskytte mot Regrets',
-    ],
-  },
-  {
-    id: 'phases',
-    title: 'Spillfaser - Dagens Rytme',
-    content: `Hver dag har fire faser:
-
-**1. Start** - Nye daglige effekter og "The Plug" aktiveres
-**2. Refresh** - Alle spillere frisker opp terninger
-**3. Declaration** - Velg lokasjon (Hav eller Havn)
-**4. Action** - Utfør handlinger på valgt lokasjon
-
-**Daglige effekter:**
-- **Onsdag/Fredag:** Alle spillere snur Can of Worms-kortet
-- **Torsdag/Lørdag:** Alle spillere får én Tackle-terning
-
-**Siste spiller-regelen:** Når alle andre har passet, får siste spiller 2 ekstra turer (hav) eller 4 turer (havn) før de må passe.`,
-    icon: <CircleDot className="h-6 w-6" />,
-    tips: [
-      'Første spiller som passer får Fish Coin (blir startspiller neste dag)',
-      'Planlegg dagen din basert på terningene du har',
-      'Siste spiller kan utnytte ekstra turer strategisk',
-    ],
-  },
-  {
-    id: 'scoring',
-    title: 'Poengberegning - Veien til Seier',
-    content: `Ved spillets slutt beregnes poeng slik:
-
-**+ Monterte fisk** - (Basisverdi + Madness-modifier) × monteringsmultiplikator
-**+ Fisk i hånden** - Basisverdi + Madness-modifier
-**+ Fishbucks** - 1 poeng per Fishbuck
-**- Regrets** - Trekk fra total Regret-verdi
-
-**Slutt-straff:** Spilleren med høyest Regret-verdi må kassere én montert fisk (laveste for 2 spillere, høyeste for 3+ spillere).
-
-Spilleren med høyest totale poengsum vinner! Ved uavgjort vinner den med lavest Regret-verdi, deretter færrest Regret-kort.`,
-    icon: <Target className="h-6 w-6" />,
-    tips: [
-      'Fair fisk gir bonus ved lav Madness, Foul fisk gir bonus ved høy',
-      'Monterte fisk justeres FØRST av Madness, SÅ ganget med multiplikator',
-      'Balansér mellom Fair og Foul fisk basert på din Madness-strategi',
-    ],
-  },
-  {
-    id: 'tips',
-    title: 'Strategitips for Nybegynnere',
-    content: `Her er noen tips for å komme i gang:
-
-🎯 **Start forsiktig** - Lær mekanikkene i Dybde I før du dykker dypere
-💰 **Spar Fishbucks** - Du trenger dem til forsyninger og oppgraderinger
-🎲 **Bruk terninger smart** - Ikke bruk alle på én fisk
-🏆 **Prioritér montering** - ×3-plassen er gull verdt
-⚠️ **Pass på Regrets** - En liten mengde er OK, for mange er katastrofe`,
-    icon: <GraduationCap className="h-6 w-6" />,
-    tips: [
-      'Det er bedre å passe tidlig enn å miste alle terningene',
-      'Karaktervalg påvirker strategi - les bonusene nøye',
-      'Øvelse gjør mester - spill noen runder for å lære!',
-    ],
-  },
-];
+  return [
+    {
+      id: 'welcome',
+      title: tutorial.welcome.title,
+      content: tutorial.welcome.content,
+      icon: <Ship className="h-6 w-6" />,
+      tips: tutorial.welcome.tips,
+    },
+    {
+      id: 'dice',
+      title: tutorial.dice.title,
+      content: tutorial.dice.content,
+      icon: <Dices className="h-6 w-6" />,
+      tips: tutorial.dice.tips,
+    },
+    {
+      id: 'sea',
+      title: tutorial.sea.title,
+      content: tutorial.sea.content,
+      icon: <Waves className="h-6 w-6" />,
+      tips: tutorial.sea.tips,
+    },
+    {
+      id: 'fishing',
+      title: tutorial.fishing.title,
+      content: tutorial.fishing.content,
+      icon: <Fish className="h-6 w-6" />,
+      tips: tutorial.fishing.tips,
+    },
+    {
+      id: 'mounting',
+      title: tutorial.mounting.title,
+      content: tutorial.mounting.content,
+      icon: <Trophy className="h-6 w-6" />,
+      tips: tutorial.mounting.tips,
+    },
+    {
+      id: 'port',
+      title: tutorial.port.title,
+      content: tutorial.port.content,
+      icon: <Anchor className="h-6 w-6" />,
+      tips: tutorial.port.tips,
+    },
+    {
+      id: 'regrets',
+      title: tutorial.regrets.title,
+      content: tutorial.regrets.content,
+      icon: <Brain className="h-6 w-6" />,
+      tips: tutorial.regrets.tips,
+    },
+    {
+      id: 'phases',
+      title: tutorial.phases.title,
+      content: tutorial.phases.content,
+      icon: <CircleDot className="h-6 w-6" />,
+      tips: tutorial.phases.tips,
+    },
+    {
+      id: 'scoring',
+      title: tutorial.scoring.title,
+      content: tutorial.scoring.content,
+      icon: <Target className="h-6 w-6" />,
+      tips: tutorial.scoring.tips,
+    },
+    {
+      id: 'tips',
+      title: tutorial.tips.title,
+      content: tutorial.tips.content,
+      icon: <GraduationCap className="h-6 w-6" />,
+      tips: tutorial.tips.tips,
+    },
+  ];
+};
 
 // ============================================================================
 // RULEBOOK DATA
@@ -253,359 +138,104 @@ interface RulebookSection {
   keywords: string[];
 }
 
-const rulebookSections: RulebookSection[] = [
-  {
-    id: 'overview',
-    title: 'Spilloversikt',
-    icon: <BookOpen className="h-5 w-5" />,
-    keywords: ['oversikt', 'introduksjon', 'hva er', 'spill', 'regler', 'mål'],
-    content: `**Deep Regrets** er et push-your-luck fiskespill for 2-5 spillere.
+const getRulebookSections = (language: Language): RulebookSection[] => {
+  const trans = getTranslations(language);
+  const rulebook = trans.rulebook as Record<string, { title: string; content: string; keywords: string[] }>;
 
-**Mål:** Ha flest poeng ved spillets slutt (etter 6 dager).
-
-**Tema:** Du er en skipper som fisker i farlige, eldritch-infiserte farvann. Jo dypere du går, jo bedre fangst - men også større risiko for galskap.
-
-**Spilletid:** Ca. 30 minutter per spiller.
-
-**Komponenter:**
-- Fiskekort (3 dybder)
-- Terninger (spiller- og tackle-terninger)
-- Regret-kort
-- Dink-kort
-- Fishbucks og Supplies tokens`,
-  },
-  {
-    id: 'dice',
-    title: 'Terninger',
-    icon: <Dices className="h-5 w-5" />,
-    keywords: ['terning', 'dice', 'fresh', 'spent', 'kast', 'rulle', 'tackle'],
-    content: `**Spillerterninger:**
-- Hver spiller starter med 3 terninger
-- Terninger er enten Fresh (tilgjengelig) eller Spent (brukt)
-- Refresh-fasen gjør Spent-terninger Fresh igjen
-- Madness øker maks antall Fresh-terninger (4-8)
-
-**Tackle Dice:**
-- Spesialterninger som kan leies i havnen
-- Har unike verdier/distribusjoner
-- Koster Fishbucks å leie
-- Gir strategiske fordeler
-- Alle spillere får gratis Tackle-terning på torsdag og lørdag
-
-**Bruk av terninger:**
-- Avsløre fisk: 1 Fresh die
-- Fange fisk: Terninger ≥ fiskens vanskelighetsgrad
-- Bevege seg dypere: Terning med verdi ≥ 3`,
-  },
-  {
-    id: 'sea',
-    title: 'Havet',
-    icon: <Waves className="h-5 w-5" />,
-    keywords: ['hav', 'sea', 'dybde', 'depth', 'shoal', 'grid', 'brett'],
-    content: `**Struktur:**
-- 3×3 rutenett per dybde
-- 3 dybder totalt (I, II, III)
-- Hver rute = en "shoal" med fiskekort
-
-**Dybde I (Grunt):**
-- Enkel fisk (verdi 1-4)
-- Lav vanskelighetsgrad
-- Minimal risiko
-
-**Dybde II (Middels):**
-- Moderat verdi (3-8)
-- Middels vanskelighetsgrad
-- Noe risiko for Regrets
-
-**Dybde III (Dypt):**
-- Høy verdi (5-15+)
-- Høy vanskelighetsgrad
-- Betydelig risiko
-- Sjeldne, mektige fisk`,
-  },
-  {
-    id: 'fishing',
-    title: 'Fiske',
-    icon: <Fish className="h-5 w-5" />,
-    keywords: ['fiske', 'fang', 'catch', 'reveal', 'avsløre', 'fisk', 'kort'],
-    content: `**Avsløre fisk:**
-1. Velg en shoal
-2. Betal 1 Fresh die
-3. Se den øverste fisken
-
-**Fange fisk:**
-1. Velg terninger fra din pool
-2. Summer må ≥ fiskens vanskelighetsgrad
-3. Valgte terninger blir Spent
-4. Fisken går til hånden din
-
-**Fiskekort-egenskaper:**
-- **Navn:** Fiskens identitet
-- **Verdi:** Poengverdi
-- **Vanskelighetsgrad:** Minimum terningsum
-- **Evner:** Spesialeffekter ved fangst
-- **Kvalitet:** Fair (trygg) eller Foul (kan gi Regrets)`,
-  },
-  {
-    id: 'mounting',
-    title: 'Montering',
-    icon: <Trophy className="h-5 w-5" />,
-    keywords: ['monter', 'mount', 'trophy', 'trofé', 'vegg', 'multiplikator', 'slot'],
-    content: `**Troféveggen:**
-- 3 monteringsplasser per spiller
-- Hver plass har en multiplikator
-
-**Multiplikatorer:**
-- Plass 1: ×1 (normal verdi)
-- Plass 2: ×2 (dobbel verdi)
-- Plass 3: ×3 (trippel verdi)
-
-**Montering:**
-- Kun mulig i havnen
-- Koster Supplies
-- Velg fisk fra hånden
-- Plasser på ledig slot
-
-**Tips:**
-- Spar høyverdifisk til ×3-plassen
-- Planlegg montering tidlig
-- Madness-modifier legges til FØR multiplikator`,
-  },
-  {
-    id: 'port',
-    title: 'Havnen',
-    icon: <Anchor className="h-5 w-5" />,
-    keywords: ['havn', 'port', 'harbor', 'butikk', 'shop', 'kjøp', 'selg', 'handel'],
-    content: `**Port-fordeler ved ankomst:**
-- **Muster Your Courage:** Kast alle terningene dine på nytt
-- **Can of Worms:** Snu kortet med forsiden opp
-- **Kast Regret:** Du kan frivillig kvitte deg med én Regret
-
-**Tilgjengelige handlinger:**
-
-**Selge fisk:**
-- Selg fisk fra hånden
-- Verdi justeres av Madness (Fair/Foul-modifier)
-
-**Kjøpe utstyr:**
-- **Stenger (Rods):** Forbedrer fangstevne
-- **Hjul (Reels):** Gir spesialeffekter
-- **Forsyninger:** Trengs for montering
-- Ved 13+ Regrets: $1 rabatt på alle kjøp
-
-**Montere fisk:**
-- Plasser fisk på troféveggen
-- Koster Supplies per fisk
-
-**Leie Tackle Dice:**
-- Betal Fishbucks
-- Få spesialterninger for dagen
-
-**Sikkerhet:**
-- Ingen risiko for Regrets i havnen`,
-  },
-  {
-    id: 'regrets',
-    title: 'Regrets og Madness',
-    icon: <Skull className="h-5 w-5" />,
-    keywords: ['regret', 'madness', 'galskap', 'sinnssykdom', 'mental', 'skjult'],
-    content: `**Regrets:**
-- Skjulte kort med verdier 0-3
-- Representerer mental belastning
-- Trekkes fra sluttpoengsum
-- Kan ikke ses før spillslutt
-
-**Hvordan du får Regrets:**
-- Avsløre Foul-kvalitet fisk
-- Visse korteffekter
-- Dykke uforsiktig
-
-**Madness-systemet (6 nivåer):**
-| Regrets | Fair | Foul | Max Dice | Port |
-|---------|------|------|----------|------|
-| 0       | +2   | -2   | 4        | -    |
-| 1-3     | +1   | -1   | 4        | -    |
-| 4-6     | +1   | ±0   | 5        | -    |
-| 7-9     | ±0   | +1   | 6        | -    |
-| 10-12   | -1   | +1   | 7        | -    |
-| 13+     | -2   | +2   | 8        | -$1  |
-
-**Fair/Foul:** Modifiserer fiskens verdi ved salg og scoring.
-**Port -$1:** Rabatt på alle kjøp i havnen ved 13+ Regrets.`,
-  },
-  {
-    id: 'phases',
-    title: 'Spillfaser',
-    icon: <CircleDot className="h-5 w-5" />,
-    keywords: ['fase', 'phase', 'tur', 'turn', 'dag', 'day', 'runde'],
-    content: `**Daglig syklus:**
-
-**1. Start-fase:**
-- Daglige effekter aktiveres
-- The Plug trekker seg tilbake
-- Sjekk for spillslutt-betingelser
-- **Onsdag/Fredag:** Alle snur Can of Worms
-- **Torsdag/Lørdag:** Alle får én Tackle-terning
-
-**2. Refresh-fase:**
-- Alle Spent dice blir Fresh
-- Madness bestemmer maks Fresh (4-8)
-
-**3. Declaration-fase:**
-- Hver spiller velger lokasjon
-- Hav ELLER Havn for dagen
-- Kan ikke endres etter valg
-
-**4. Action-fase:**
-- Utfør handlinger på valgt lokasjon
-- Fortsett til du passer
-- Første å passe får Fish Coin
-
-**Siste spiller-regel:**
-- Når alle andre har passet
-- Siste spiller får 2 turer (hav) eller 4 turer (havn)
-
-**Neste dag:**
-- Når alle har passert
-- Nytt døgn begynner
-- 6 dager totalt (Man-Lør)`,
-  },
-  {
-    id: 'theplug',
-    title: 'The Plug',
-    icon: <MapPin className="h-5 w-5" />,
-    keywords: ['plug', 'erosjon', 'erosion', 'slutt', 'drowned', 'world'],
-    content: `**Hva er The Plug?**
-- Et spesielt kort som representerer havets erosjon
-- Når det avsløres, aktiveres erosjonsmekanismen
-
-**Erosjon:**
-- Hver Start-fase fjernes én fisk fra shoals
-- Erosjon sprer seg systematisk
-- Når alle shoals tømmes = "Drowned World"
-
-**Drowned World:**
-- Utløser umiddelbart spillslutt
-- Poengberegning skjer som normalt
-- Kan skje før dag 6!
-
-**Strategi:**
-- Hold øye med hvor mange fisk som gjenstår
-- The Plug kan akselerere spillslutt
-- Planlegg for tidlig slutt`,
-  },
-  {
-    id: 'scoring',
-    title: 'Poengberegning',
-    icon: <Target className="h-5 w-5" />,
-    keywords: ['poeng', 'score', 'vinner', 'slutt', 'beregning', 'total'],
-    content: `**Poengkilder:**
-
-**+ Monterte fisk:**
-- (Basisverdi + Madness-modifier) × slot-multiplikator
-- Eksempel: Fair fisk verdi 5 ved 0 Regrets = (5+2) × 3 = 21 poeng
-
-**+ Fisk i hånden:**
-- Basisverdi + Madness-modifier
-- Fair fisk: bonus ved lav Madness (+2 til -2)
-- Foul fisk: bonus ved høy Madness (-2 til +2)
-
-**+ Fishbucks:**
-- 1 poeng per Fishbuck
-
-**- Regrets:**
-- Avslørt og summert
-- Trekkes fra totalen
-
-**Slutt-straff:**
-- Spilleren med høyest Regret-verdi kasserer én mont:
-  - 2 spillere: laveste monterte fisk
-  - 3+ spillere: høyeste monterte fisk
-
-**Uavgjort:** Lavest Regret-verdi vinner, deretter færrest Regret-kort.`,
-  },
-  {
-    id: 'characters',
-    title: 'Karakterer',
-    icon: <Heart className="h-5 w-5" />,
-    keywords: ['karakter', 'character', 'captain', 'kaptein', 'bonus', 'evne'],
-    content: `**Captain Ahab:**
-- +2 Fishbucks ved start
-- Bedre startstang
-
-**Captain Nemo:**
-- Bedre starthjul
-- Ignorerer første Regret
-
-**Marina Deepcurrent:**
-- Starter på Dybde II
-- +1 ekstra Dink-kort
-
-**Finn Saltwater:**
-- +3 Fishbucks ved start
-- Kan rerulle 1-ere
-
-**Storm Blackwater:**
-- +1 maks terning
-- +1 ekstra monteringsslot
-
-**Tips:** Velg karakter basert på spillestil - aggressiv, forsiktig, eller balansert.`,
-  },
-  {
-    id: 'resources',
-    title: 'Ressurser',
-    icon: <Coins className="h-5 w-5" />,
-    keywords: ['ressurs', 'resource', 'fishbucks', 'supplies', 'dinks', 'token'],
-    content: `**Fishbucks (💰):**
-- Hovedvaluta
-- Brukes til kjøp i havnen
-- Tjenes ved å selge fisk
-- Gir 1 poeng per Fishbuck ved spillslutt
-
-**Supplies (📦):**
-- Trengs for montering
-- Kjøpes i havnen
-- Noen fisk gir Supplies ved fangst
-
-**Dink-kort (🃏):**
-- Engangskort med spesialeffekter
-- Kan snu kampen
-- Begrensede i antall
-- Les kortene nøye!
-
-**Life Preserver (🛟):**
-- Beskytter mot neste Regret
-- Sjelden og verdifull
-- Kan være livreddende i dypet`,
-  },
-  {
-    id: 'upgrades',
-    title: 'Oppgraderinger',
-    icon: <Package className="h-5 w-5" />,
-    keywords: ['oppgradering', 'upgrade', 'rod', 'stang', 'reel', 'hjul', 'utstyr'],
-    content: `**Stenger (Rods):**
-- Forbedrer fangstevne
-- Ulike nivåer med bonuser
-- Kan gi ekstra terningverdi
-- Permanent oppgradering
-
-**Hjul (Reels):**
-- Gir passive bonuser
-- Kan påvirke dykking
-- Noen gir ekstra handlinger
-- Velg basert på strategi
-
-**Kjøp i havnen:**
-- Koster Fishbucks
-- Erstatter gammelt utstyr
-- Vurder kost vs. nytte
-
-**Anbefaling:**
-- Oppgrader tidlig for langvarig gevinst
-- Stenger for aggressive fiskere
-- Hjul for forsiktige spillere`,
-  },
-];
+  return [
+    {
+      id: 'overview',
+      title: rulebook.overview.title,
+      icon: <BookOpen className="h-5 w-5" />,
+      keywords: rulebook.overview.keywords,
+      content: rulebook.overview.content,
+    },
+    {
+      id: 'dice',
+      title: rulebook.dice.title,
+      icon: <Dices className="h-5 w-5" />,
+      keywords: rulebook.dice.keywords,
+      content: rulebook.dice.content,
+    },
+    {
+      id: 'sea',
+      title: rulebook.sea.title,
+      icon: <Waves className="h-5 w-5" />,
+      keywords: rulebook.sea.keywords,
+      content: rulebook.sea.content,
+    },
+    {
+      id: 'fishing',
+      title: rulebook.fishing.title,
+      icon: <Fish className="h-5 w-5" />,
+      keywords: rulebook.fishing.keywords,
+      content: rulebook.fishing.content,
+    },
+    {
+      id: 'mounting',
+      title: rulebook.mounting.title,
+      icon: <Trophy className="h-5 w-5" />,
+      keywords: rulebook.mounting.keywords,
+      content: rulebook.mounting.content,
+    },
+    {
+      id: 'port',
+      title: rulebook.port.title,
+      icon: <Anchor className="h-5 w-5" />,
+      keywords: rulebook.port.keywords,
+      content: rulebook.port.content,
+    },
+    {
+      id: 'regrets',
+      title: rulebook.regrets.title,
+      icon: <Skull className="h-5 w-5" />,
+      keywords: rulebook.regrets.keywords,
+      content: rulebook.regrets.content,
+    },
+    {
+      id: 'phases',
+      title: rulebook.phases.title,
+      icon: <CircleDot className="h-5 w-5" />,
+      keywords: rulebook.phases.keywords,
+      content: rulebook.phases.content,
+    },
+    {
+      id: 'theplug',
+      title: rulebook.theplug.title,
+      icon: <MapPin className="h-5 w-5" />,
+      keywords: rulebook.theplug.keywords,
+      content: rulebook.theplug.content,
+    },
+    {
+      id: 'scoring',
+      title: rulebook.scoring.title,
+      icon: <Target className="h-5 w-5" />,
+      keywords: rulebook.scoring.keywords,
+      content: rulebook.scoring.content,
+    },
+    {
+      id: 'characters',
+      title: rulebook.characters.title,
+      icon: <Heart className="h-5 w-5" />,
+      keywords: rulebook.characters.keywords,
+      content: rulebook.characters.content,
+    },
+    {
+      id: 'resources',
+      title: rulebook.resources.title,
+      icon: <Coins className="h-5 w-5" />,
+      keywords: rulebook.resources.keywords,
+      content: rulebook.resources.content,
+    },
+    {
+      id: 'upgrades',
+      title: rulebook.upgrades.title,
+      icon: <Package className="h-5 w-5" />,
+      keywords: rulebook.upgrades.keywords,
+      content: rulebook.upgrades.content,
+    },
+  ];
+};
 
 // ============================================================================
 // TUTORIAL COMPONENT
@@ -616,6 +246,9 @@ interface TutorialProps {
 }
 
 const Tutorial = ({ onComplete }: TutorialProps) => {
+  const { language, t } = useLanguage();
+  const tutorialSteps = useMemo(() => getTutorialSteps(language), [language]);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
 
@@ -665,9 +298,9 @@ const Tutorial = ({ onComplete }: TutorialProps) => {
       {/* Step counter */}
       <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Steg {currentStep + 1} av {tutorialSteps.length}
+          {t('common.step')} {currentStep + 1} {t('common.of')} {tutorialSteps.length}
         </span>
-        <span>{Math.round(((currentStep + 1) / tutorialSteps.length) * 100)}% fullført</span>
+        <span>{Math.round(((currentStep + 1) / tutorialSteps.length) * 100)}% {language === 'no' ? 'fullført' : 'complete'}</span>
       </div>
 
       {/* Content area */}
@@ -703,7 +336,7 @@ const Tutorial = ({ onComplete }: TutorialProps) => {
             <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
               <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
                 <HelpCircle className="h-4 w-4" />
-                Tips
+                {t('common.tips')}
               </h4>
               <ul className="space-y-1">
                 {step.tips.map((tip, i) => (
@@ -727,14 +360,14 @@ const Tutorial = ({ onComplete }: TutorialProps) => {
           className="border-white/30"
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
-          Forrige
+          {t('common.previous')}
         </Button>
 
         <div className="flex items-center gap-2">
           {completedSteps.size === tutorialSteps.length && (
             <Badge className="bg-green-500/20 text-green-400">
               <CheckCircle2 className="mr-1 h-3 w-3" />
-              Fullført!
+              {t('common.completed')}
             </Badge>
           )}
         </div>
@@ -742,12 +375,12 @@ const Tutorial = ({ onComplete }: TutorialProps) => {
         <Button onClick={handleNext} className="btn-ocean">
           {isLastStep ? (
             <>
-              Fullfør
+              {t('common.complete')}
               <CheckCircle2 className="ml-2 h-4 w-4" />
             </>
           ) : (
             <>
-              Neste
+              {t('common.next')}
               <ChevronRight className="ml-2 h-4 w-4" />
             </>
           )}
@@ -762,6 +395,8 @@ const Tutorial = ({ onComplete }: TutorialProps) => {
 // ============================================================================
 
 const Rulebook = () => {
+  const { language, t } = useLanguage();
+  const rulebookSections = useMemo(() => getRulebookSections(language), [language]);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSections = useMemo(() => {
@@ -774,7 +409,7 @@ const Rulebook = () => {
         section.content.toLowerCase().includes(query) ||
         section.keywords.some((kw) => kw.includes(query))
     );
-  }, [searchQuery]);
+  }, [searchQuery, rulebookSections]);
 
   return (
     <div className="flex h-full flex-col">
@@ -783,7 +418,7 @@ const Rulebook = () => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Søk i regelboken..."
+          placeholder={t('help.searchRulebook')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -793,7 +428,7 @@ const Rulebook = () => {
       {/* Results count */}
       {searchQuery && (
         <div className="mb-2 text-xs text-muted-foreground">
-          {filteredSections.length} resultat{filteredSections.length !== 1 ? 'er' : ''} funnet
+          {filteredSections.length} {filteredSections.length !== 1 ? t('common.results') : t('common.result')} {t('common.found')}
         </div>
       )}
 
@@ -914,13 +549,13 @@ const Rulebook = () => {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground/50" />
-            <p className="text-muted-foreground">Ingen resultater for "{searchQuery}"</p>
+            <p className="text-muted-foreground">{t('help.noResultsFor')} "{searchQuery}"</p>
             <Button
               variant="link"
               onClick={() => setSearchQuery('')}
               className="mt-2 text-primary"
             >
-              Nullstill søk
+              {t('help.resetSearch')}
             </Button>
           </div>
         )}
@@ -931,7 +566,7 @@ const Rulebook = () => {
         <Button asChild variant="outline" className="w-full border-primary/30">
           <a href="/Deep%20Regrets%20Rulebook_EN.pdf" target="_blank" rel="noreferrer">
             <BookOpen className="mr-2 h-4 w-4" />
-            Åpne komplett regelbok (PDF)
+            {t('help.openFullRulebook')}
           </a>
         </Button>
       </div>
@@ -949,6 +584,8 @@ interface HelpSystemProps {
 }
 
 export const HelpSystem = ({ defaultTab = 'tutorial', onTutorialComplete }: HelpSystemProps) => {
+  const { t } = useLanguage();
+
   return (
     <Tabs defaultValue={defaultTab} className="flex h-full flex-col">
       <TabsList className="grid w-full grid-cols-2 bg-background/50">
@@ -957,14 +594,14 @@ export const HelpSystem = ({ defaultTab = 'tutorial', onTutorialComplete }: Help
           className="flex items-center gap-2 data-[state=active]:bg-primary/20"
         >
           <GraduationCap className="h-4 w-4" />
-          Tutorial
+          {t('help.tutorial')}
         </TabsTrigger>
         <TabsTrigger
           value="rulebook"
           className="flex items-center gap-2 data-[state=active]:bg-primary/20"
         >
           <BookOpen className="h-4 w-4" />
-          Regelbok
+          {t('help.rulebook')}
         </TabsTrigger>
       </TabsList>
 

@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useAudio } from '@/context/AudioContext';
+import { useLanguage, type Language } from '@/context/LanguageContext';
 import {
+  Globe,
   Monitor,
   Music,
   Pause,
@@ -72,6 +74,8 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
     playBubbleSfx,
     retryPlayback,
   } = useAudio();
+
+  const { language, setLanguage, t } = useLanguage();
 
   // Display settings state
   const [animationsEnabled, setAnimationsEnabled] = useState(() =>
@@ -135,14 +139,18 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
 
   return (
     <Tabs defaultValue="audio" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-background/50">
+      <TabsList className="grid w-full grid-cols-3 bg-background/50">
         <TabsTrigger value="audio" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
           <Volume2 className="h-4 w-4" />
-          Audio
+          {t('options.audio')}
         </TabsTrigger>
         <TabsTrigger value="display" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
           <Monitor className="h-4 w-4" />
-          Display
+          {t('options.display')}
+        </TabsTrigger>
+        <TabsTrigger value="language" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
+          <Globe className="h-4 w-4" />
+          {t('options.language')}
         </TabsTrigger>
       </TabsList>
 
@@ -155,9 +163,9 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                 <Volume2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-card-foreground">Master Volume</h4>
+                <h4 className="text-base font-semibold text-card-foreground">{t('options.masterVolume')}</h4>
                 <p className="text-xs text-muted-foreground">
-                  Controls overall audio level
+                  {t('options.masterVolumeDesc')}
                 </p>
               </div>
             </div>
@@ -184,15 +192,15 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                 <Music className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-card-foreground">Background Music</h4>
+                <h4 className="text-base font-semibold text-card-foreground">{t('options.backgroundMusic')}</h4>
                 <p className="text-xs text-muted-foreground">
-                  Atmospheric soundtracks from the deep
+                  {t('options.backgroundMusicDesc')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="music-enabled" className="text-xs uppercase tracking-wide text-muted-foreground">
-                {isMusicEnabled ? 'On' : 'Off'}
+                {isMusicEnabled ? t('common.on') : t('common.off')}
               </Label>
               <Switch id="music-enabled" checked={isMusicEnabled} onCheckedChange={setMusicEnabled} />
             </div>
@@ -200,9 +208,9 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
 
           {requiresUserActivation && isMusicEnabled && (
             <div className="rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-              <p className="mb-2 font-medium">Browser blocked audio autoplay</p>
+              <p className="mb-2 font-medium">{t('options.browserBlocked')}</p>
               <Button type="button" size="sm" variant="secondary" onClick={() => void retryPlayback()}>
-                <Volume2 className="mr-2 h-4 w-4" /> Enable Sound
+                <Volume2 className="mr-2 h-4 w-4" /> {t('options.enableSound')}
               </Button>
             </div>
           )}
@@ -211,7 +219,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="music-track" className="text-sm font-medium text-card-foreground">
-                  Select Track
+                  {t('options.selectTrack')}
                 </Label>
                 <Select
                   value={currentTrack?.id ?? tracks[0]?.id ?? ''}
@@ -219,7 +227,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                   disabled={!isMusicEnabled}
                 >
                   <SelectTrigger id="music-track" className="bg-background/50">
-                    <SelectValue placeholder="Choose a track" />
+                    <SelectValue placeholder={t('options.chooseTrack')} />
                   </SelectTrigger>
                   <SelectContent>
                     {tracks.map((track) => (
@@ -241,11 +249,11 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                 >
                   {isPlaying ? (
                     <>
-                      <Pause className="mr-2 h-4 w-4" /> Pause
+                      <Pause className="mr-2 h-4 w-4" /> {t('options.pause')}
                     </>
                   ) : (
                     <>
-                      <Play className="mr-2 h-4 w-4" /> Play
+                      <Play className="mr-2 h-4 w-4" /> {t('options.play')}
                     </>
                   )}
                 </Button>
@@ -256,14 +264,14 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                   onClick={pause}
                   disabled={!isPlaying}
                 >
-                  <VolumeX className="mr-2 h-4 w-4" /> Stop
+                  <VolumeX className="mr-2 h-4 w-4" /> {t('options.stop')}
                 </Button>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <Label htmlFor="music-volume" className="font-medium text-card-foreground">
-                    Music Volume
+                    {t('options.musicVolume')}
                   </Label>
                   <span className="text-muted-foreground">{formatPercent(musicVolume)}</span>
                 </div>
@@ -280,7 +288,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             </div>
           ) : (
             <p className="rounded-lg border border-dashed border-primary/30 bg-background/60 p-4 text-sm text-muted-foreground">
-              No music tracks found. Add MP3 files to <code className="rounded bg-background px-1">src/assets/muzak</code>
+              {t('options.noMusicTracks')} <code className="rounded bg-background px-1">src/assets/muzak</code>
             </p>
           )}
         </section>
@@ -293,15 +301,15 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
                 <Waves className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-card-foreground">Sound Effects</h4>
+                <h4 className="text-base font-semibold text-card-foreground">{t('options.soundEffects')}</h4>
                 <p className="text-xs text-muted-foreground">
-                  Bubbles, splashes, and interface sounds
+                  {t('options.soundEffectsDesc')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="sfx-enabled" className="text-xs uppercase tracking-wide text-muted-foreground">
-                {isSfxEnabled ? 'On' : 'Off'}
+                {isSfxEnabled ? t('common.on') : t('common.off')}
               </Label>
               <Switch id="sfx-enabled" checked={isSfxEnabled} onCheckedChange={setSfxEnabled} />
             </div>
@@ -310,7 +318,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <Label htmlFor="sfx-volume" className="font-medium text-card-foreground">
-                Effects Volume
+                {t('options.effectsVolume')}
               </Label>
               <span className="text-muted-foreground">{formatPercent(sfxVolume)}</span>
             </div>
@@ -333,7 +341,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             disabled={!isSfxEnabled}
             onClick={playBubbleSfx}
           >
-            <Waves className="mr-2 h-4 w-4" /> Test Sound
+            <Waves className="mr-2 h-4 w-4" /> {t('options.testSound')}
           </Button>
         </section>
 
@@ -346,7 +354,7 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             className="text-muted-foreground hover:text-foreground"
             onClick={handleResetAudio}
           >
-            <RotateCcw className="mr-2 h-4 w-4" /> Reset to Defaults
+            <RotateCcw className="mr-2 h-4 w-4" /> {t('common.resetToDefaults')}
           </Button>
         </div>
       </TabsContent>
@@ -359,9 +367,9 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h4 className="text-base font-semibold text-card-foreground">Visual Effects</h4>
+              <h4 className="text-base font-semibold text-card-foreground">{t('options.visualEffects')}</h4>
               <p className="text-xs text-muted-foreground">
-                Control animations and particle effects
+                {t('options.visualEffectsDesc')}
               </p>
             </div>
           </div>
@@ -370,10 +378,10 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             <div className="flex items-center justify-between rounded-lg bg-background/30 p-3">
               <div>
                 <Label htmlFor="animations-toggle" className="text-sm font-medium text-card-foreground">
-                  UI Animations
+                  {t('options.uiAnimations')}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Card flips, dice rolls, transitions
+                  {t('options.uiAnimationsDesc')}
                 </p>
               </div>
               <Switch
@@ -386,10 +394,10 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             <div className="flex items-center justify-between rounded-lg bg-background/30 p-3">
               <div>
                 <Label htmlFor="particles-toggle" className="text-sm font-medium text-card-foreground">
-                  Ocean Particles
+                  {t('options.oceanParticles')}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Floating debris and light effects
+                  {t('options.oceanParticlesDesc')}
                 </p>
               </div>
               <Switch
@@ -402,10 +410,10 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             <div className="flex items-center justify-between rounded-lg bg-background/30 p-3">
               <div>
                 <Label htmlFor="bubbles-toggle" className="text-sm font-medium text-card-foreground">
-                  Rising Bubbles
+                  {t('options.risingBubbles')}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Animated bubble effects in background
+                  {t('options.risingBubblesDesc')}
                 </p>
               </div>
               <Switch
@@ -419,11 +427,11 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
 
         {/* Performance Tips */}
         <section className="rounded-lg border border-dashed border-primary/30 bg-background/30 p-4">
-          <h4 className="mb-2 text-sm font-semibold text-card-foreground">Performance Tips</h4>
+          <h4 className="mb-2 text-sm font-semibold text-card-foreground">{t('options.performanceTips')}</h4>
           <ul className="space-y-1 text-xs text-muted-foreground">
-            <li>• Disable visual effects on older devices for smoother gameplay</li>
-            <li>• Bubbles and particles have the most impact on performance</li>
-            <li>• Use fullscreen mode for the best experience</li>
+            <li>• {t('options.performanceTip1')}</li>
+            <li>• {t('options.performanceTip2')}</li>
+            <li>• {t('options.performanceTip3')}</li>
           </ul>
         </section>
 
@@ -436,9 +444,63 @@ export const OptionsMenu = ({ onDisplaySettingsChange }: OptionsMenuProps) => {
             className="text-muted-foreground hover:text-foreground"
             onClick={handleResetDisplay}
           >
-            <RotateCcw className="mr-2 h-4 w-4" /> Reset to Defaults
+            <RotateCcw className="mr-2 h-4 w-4" /> {t('common.resetToDefaults')}
           </Button>
         </div>
+      </TabsContent>
+
+      <TabsContent value="language" className="mt-6 space-y-6">
+        {/* Language Selection */}
+        <section className="space-y-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
+              <Globe className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h4 className="text-base font-semibold text-card-foreground">{t('options.languageSelection')}</h4>
+              <p className="text-xs text-muted-foreground">
+                {t('options.languageSelectionDesc')}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="language-select" className="text-sm font-medium text-card-foreground">
+                {t('options.selectLanguage')}
+              </Label>
+              <Select
+                value={language}
+                onValueChange={(value) => setLanguage(value as Language)}
+              >
+                <SelectTrigger id="language-select" className="bg-background/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">
+                    <span className="flex items-center gap-2">
+                      <span>🇳🇴</span>
+                      <span>{t('options.norwegian')}</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="en">
+                    <span className="flex items-center gap-2">
+                      <span>🇬🇧</span>
+                      <span>{t('options.english')}</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
+
+        {/* Language Note */}
+        <section className="rounded-lg border border-dashed border-primary/30 bg-background/30 p-4">
+          <p className="text-xs text-muted-foreground">
+            {t('options.languageNote')}
+          </p>
+        </section>
       </TabsContent>
     </Tabs>
   );
