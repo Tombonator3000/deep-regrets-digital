@@ -122,6 +122,7 @@ export interface GameState {
   omenDieValue: number;
   isGameOver: boolean;
   winner?: string;
+  lastPlayerTurnsRemaining?: number; // For last-to-pass rule: 2 at sea, 4 at port
 }
 
 export interface GameAction {
