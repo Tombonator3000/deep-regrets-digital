@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowDown, Fish, Skull, Eye, Waves } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
+import { PlugMarker, DepthMarker, LighthouseToken } from './GameTokens';
 
 interface SeaBoardProps {
   gameState: GameState;
@@ -48,10 +49,13 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
             {currentPlayer.location === 'port' && ' (In Port)'}
           </div>
           {gameState.sea.plugActive && (
-            <Badge className="bg-destructive/20 text-destructive animate-pulse">
-              <Skull className="mr-1 h-3 w-3" />
-              The Plug is Active!
-            </Badge>
+            <div className="flex items-center gap-2">
+              <PlugMarker size="sm" animated />
+              <Badge className="bg-destructive/20 text-destructive animate-pulse">
+                <Skull className="mr-1 h-3 w-3" />
+                The Plug is Active!
+              </Badge>
+            </div>
           )}
         </div>
       </div>
@@ -137,6 +141,9 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                       const topFish = shoal[0];
                       const shoalEmpty = shoal.length === 0;
                       const canInteract = isAccessible && !currentPlayer.hasPassed;
+                      const hasPlug = gameState.sea.plugActive &&
+                        gameState.sea.plugCursor.depth === depth &&
+                        gameState.sea.plugCursor.shoal === shoalIndex;
 
                       return (
                         <Card
@@ -157,11 +164,20 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                           className={`shoal-card relative overflow-hidden rounded-lg border-2 bg-slate-950/70 p-3 text-white shadow-lg backdrop-blur transition-all ${
                             isSelected ? 'border-primary ring-2 ring-primary/70' : 'border-transparent'
                           } ${
+                            hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50' : ''
+                          } ${
                             shoalEmpty ? 'opacity-40' : ''
                           } ${
                             canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-950/90 hover:scale-[1.02]' : 'cursor-not-allowed'
                           }`}
                         >
+                          {/* Plug Marker Indicator */}
+                          {hasPlug && (
+                            <div className="absolute -top-2 -right-2 z-10 animate-bounce-in">
+                              <PlugMarker size="sm" animated />
+                            </div>
+                          )}
+
                           {/* Shoal Header */}
                           <div className="mb-2 flex items-center justify-between text-xs">
                             <span className="rounded bg-black/30 px-2 py-0.5 font-medium text-white/70">

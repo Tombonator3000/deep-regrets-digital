@@ -1,15 +1,19 @@
-import { Player } from '@/types/game';
+import { Player, GameState } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
 import { PlayerHand } from './PlayerHand';
+import { LifebuoyToken, FishCoinToken, BoatToken } from './GameTokens';
 
 interface AnglerBoardProps {
   player: Player;
   isCurrentPlayer: boolean;
+  gameState?: GameState;
 }
 
-export const AnglerBoard = ({ player, isCurrentPlayer }: AnglerBoardProps) => {
+export const AnglerBoard = ({ player, isCurrentPlayer, gameState }: AnglerBoardProps) => {
+  const hasLifePreserver = gameState?.lifePreserverOwner === player.id;
+  const hasFishCoin = gameState?.fishCoinOwner === player.id;
   const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
 
   return (
@@ -25,11 +29,24 @@ export const AnglerBoard = ({ player, isCurrentPlayer }: AnglerBoardProps) => {
             <p className="text-xs text-muted-foreground">{player.character}</p>
           </div>
         </div>
-        {isCurrentPlayer && (
-          <Badge className="bg-primary/20 text-primary-glow animate-pulse">
-            Your Turn
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Special Token Indicators */}
+          {hasLifePreserver && (
+            <div className="animate-token-appear" title="Owns Life Preserver - Protection from regrets">
+              <LifebuoyToken size="sm" highlight animated />
+            </div>
+          )}
+          {hasFishCoin && (
+            <div className="animate-token-appear" title="Owns Fish Coin - Bonus earnings">
+              <FishCoinToken size="sm" highlight animated />
+            </div>
+          )}
+          {isCurrentPlayer && (
+            <Badge className="bg-primary/20 text-primary-glow animate-pulse">
+              Your Turn
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Trophy Mounting Slots - Key Feature from Board Game */}
@@ -154,18 +171,29 @@ export const AnglerBoard = ({ player, isCurrentPlayer }: AnglerBoardProps) => {
         </div>
       </div>
 
-      {/* Location Badge */}
+      {/* Location Badge with Token */}
       <div className="mt-4 flex justify-center">
-        <Badge
-          variant="outline"
-          className={`px-4 py-1 ${
+        <div
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
             player.location === 'sea'
-              ? 'border-primary/50 bg-primary/10 text-primary'
-              : 'border-fishbuck/50 bg-fishbuck/10 text-fishbuck'
+              ? 'border-primary/50 bg-primary/10'
+              : 'border-fishbuck/50 bg-fishbuck/10'
           }`}
         >
-          {player.location === 'sea' ? `🌊 At Sea (Depth ${player.currentDepth})` : '⚓ In Port'}
-        </Badge>
+          {player.location === 'sea' ? (
+            <>
+              <BoatToken size="sm" animated color="primary" />
+              <span className="text-sm font-medium text-primary">
+                At Sea (Depth {player.currentDepth})
+              </span>
+            </>
+          ) : (
+            <>
+              <Anchor className="h-4 w-4 text-fishbuck" />
+              <span className="text-sm font-medium text-fishbuck">In Port</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Player Hand - Cards */}
