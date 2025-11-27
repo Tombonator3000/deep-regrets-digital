@@ -21,7 +21,6 @@ export interface CardDragData {
 interface PlayerHandProps {
   player: Player;
   isCurrentPlayer: boolean;
-  onCardClick?: (card: FishCard | DinkCard | UpgradeCard, type: 'fish' | 'dink' | 'supply') => void;
 }
 
 interface MiniCardProps {
@@ -153,7 +152,7 @@ const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false }: Fi
             </div>
           )}
           <div className="text-xs text-muted-foreground italic mt-1">
-            Dra kortet eller trykk for forstorring
+            Trykk for å forstørre, dra for å plassere
           </div>
         </div>
       }
@@ -208,7 +207,7 @@ const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false }: Di
             ))}
           </div>
           <div className="text-xs text-muted-foreground italic mt-1">
-            Dra kortet eller trykk for forstorring
+            Trykk for å forstørre, dra for å plassere
           </div>
         </div>
       }
@@ -262,7 +261,7 @@ const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false }
             ))}
           </div>
           <div className="text-xs text-muted-foreground italic mt-1">
-            Dra kortet eller trykk for forstorring
+            Trykk for å forstørre, dra for å plassere
           </div>
         </div>
       }
@@ -275,29 +274,22 @@ const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false }
   );
 };
 
-export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandProps) => {
+export const PlayerHand = ({ player, isCurrentPlayer }: PlayerHandProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const totalCards = player.handFish.length + player.dinks.length + player.supplies.length;
-
-  // Try to use CardModal if available (wrapped in provider)
-  let cardModal: { openCard: (card: any, type: CardDragType) => void } | null = null;
-  try {
-    cardModal = useCardModal();
-  } catch {
-    // CardModal not available, enlarge will not work
-  }
+  const { openCard } = useCardModal();
 
   const handleEnlargeFish = useCallback((fish: FishCard) => {
-    cardModal?.openCard(fish, 'fish');
-  }, [cardModal]);
+    openCard(fish, 'fish');
+  }, [openCard]);
 
   const handleEnlargeDink = useCallback((dink: DinkCard) => {
-    cardModal?.openCard(dink, 'dink');
-  }, [cardModal]);
+    openCard(dink, 'dink');
+  }, [openCard]);
 
   const handleEnlargeSupply = useCallback((supply: UpgradeCard) => {
-    cardModal?.openCard(supply, 'supply');
-  }, [cardModal]);
+    openCard(supply, 'supply');
+  }, [openCard]);
 
   if (totalCards === 0) {
     return (
@@ -343,7 +335,7 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                       fish={fish}
                       index={index}
                       draggable={isCurrentPlayer}
-                      onClick={() => onCardClick?.(fish, 'fish')}
+                      onClick={() => handleEnlargeFish(fish)}
                       onEnlarge={() => handleEnlargeFish(fish)}
                     />
                   ))}
@@ -365,7 +357,7 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                       dink={dink}
                       index={index}
                       draggable={isCurrentPlayer}
-                      onClick={() => onCardClick?.(dink, 'dink')}
+                      onClick={() => handleEnlargeDink(dink)}
                       onEnlarge={() => handleEnlargeDink(dink)}
                     />
                   ))}
@@ -387,7 +379,7 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                       supply={supply}
                       index={index}
                       draggable={isCurrentPlayer}
-                      onClick={() => onCardClick?.(supply, 'supply')}
+                      onClick={() => handleEnlargeSupply(supply)}
                       onEnlarge={() => handleEnlargeSupply(supply)}
                     />
                   ))}
