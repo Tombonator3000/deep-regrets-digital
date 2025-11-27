@@ -10,6 +10,7 @@ import {
 import logoImage from '@/assets/deep-regrets-logo.jpg';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
+import { HelpSystem } from '@/components/HelpSystem';
 
 interface StartScreenProps {
   onStartGame: (playerCount: number) => void;
@@ -18,6 +19,7 @@ interface StartScreenProps {
 export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   const [playerCount, setPlayerCount] = useState(2);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const displaySettings = useDisplaySettings();
 
   const particles = useMemo(
@@ -122,14 +124,14 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                   </Button>
                 </li>
                 <li>
-                  <Button asChild variant="ghost" size="lg" className="w-full justify-center text-lg">
-                    <a
-                      href="/Deep%20Regrets%20Rulebook_EN.pdf"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      How to Play
-                    </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className="w-full justify-center text-lg"
+                    onClick={() => setIsHelpOpen(true)}
+                  >
+                    How to Play
                   </Button>
                 </li>
               </ul>
@@ -173,6 +175,20 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
             </DialogHeader>
             <div className="mt-4">
               <OptionsMenu />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+          <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-primary-glow">How to Play</DialogTitle>
+              <DialogDescription>
+                Learn how to play Deep Regrets with our interactive tutorial.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 min-h-0 flex-1 overflow-hidden">
+              <HelpSystem defaultTab="tutorial" />
             </div>
           </DialogContent>
         </Dialog>
