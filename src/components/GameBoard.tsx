@@ -49,9 +49,11 @@ import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
 import { getSlotMultiplier } from '@/utils/mounting';
 
+import { GameAction } from '@/types/game';
+
 interface GameBoardProps {
   gameState: GameState;
-  onAction: (action: any) => void;
+  onAction: (action: GameAction) => void;
   onNewGame: () => void;
 }
 

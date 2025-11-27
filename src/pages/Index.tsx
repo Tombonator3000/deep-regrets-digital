@@ -3,6 +3,7 @@ import { IntroScreen } from '@/components/IntroScreen';
 import { StartScreen, GameSetup } from '@/components/StartScreen';
 import { CharacterSelection, SelectedCharacter } from '@/components/CharacterSelection';
 import { GameBoard } from '@/components/GameBoard';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CharacterOption, GameState, GameAction } from '@/types/game';
 import { initializeGame, gameReducer } from '@/utils/gameEngine';
 import { useToast } from '@/hooks/use-toast';
@@ -82,7 +83,7 @@ const Index = () => {
     setCurrentScreen('start');
   };
 
-  const handleGameAction = useCallback((action: any) => {
+  const handleGameAction = useCallback((action: GameAction) => {
     if (gameState) {
       dispatch(action);
     }
@@ -164,11 +165,13 @@ const Index = () => {
       }
       
       return (
-        <GameBoard 
-          gameState={gameState}
-          onAction={handleGameAction}
-          onNewGame={handleNewGame}
-        />
+        <ErrorBoundary onReset={handleNewGame}>
+          <GameBoard
+            gameState={gameState}
+            onAction={handleGameAction}
+            onNewGame={handleNewGame}
+          />
+        </ErrorBoundary>
       );
     
     default:
