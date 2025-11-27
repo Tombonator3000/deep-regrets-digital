@@ -12,6 +12,7 @@ import logoImage from '@/assets/deep-regrets-logo.jpg';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
+import { useLanguage } from '@/context/LanguageContext';
 import { GraduationCap, Lightbulb, X } from 'lucide-react';
 
 export interface GameSetup {
@@ -34,6 +35,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
   const displaySettings = useDisplaySettings();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const hasVisited = localStorage.getItem(FIRST_TIME_KEY);
@@ -111,9 +113,9 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
             <GraduationCap className="h-5 w-5 text-primary" />
             <AlertDescription className="flex items-center justify-between gap-4">
               <div className="space-y-1">
-                <p className="font-semibold text-primary-glow">Velkommen til Deep Regrets!</p>
+                <p className="font-semibold text-primary-glow">{t('startScreen.welcomeBanner.title')}</p>
                 <p className="text-sm text-foreground/80">
-                  Første gang? Vi anbefaler å se på tutorialen for å lære spillets regler og mekanikker.
+                  {t('startScreen.welcomeBanner.message')}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -123,7 +125,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                   onClick={openTutorialAndDismiss}
                 >
                   <Lightbulb className="mr-1 h-4 w-4" />
-                  Se Tutorial
+                  {t('startScreen.welcomeBanner.seeTutorial')}
                 </Button>
                 <Button
                   size="sm"
@@ -152,19 +154,19 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
             </div>
             <div className="space-y-3 max-w-xl">
               <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-b from-primary-glow to-primary bg-clip-text text-transparent">
-                DEEP REGRETS
+                {t('startScreen.title')}
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground italic">
-                An Unfortunate Fishing Game
+                {t('startScreen.subtitle')}
               </p>
               <p className="text-base lg:text-lg text-foreground/80">
-                Venture into the dark depths of the ocean, catch eldritch fish, and manage your growing regrets in this push-your-luck fishing adventure.
+                {t('startScreen.description')}
               </p>
             </div>
             <div className="card-game w-full max-w-xl p-5 text-sm text-muted-foreground space-y-2">
-              <p><strong>Game Time:</strong> ~30 minutes per player</p>
-              <p><strong>Objective:</strong> Catch valuable fish while managing regrets</p>
-              <p><strong>Warning:</strong> The deeper you go, the greater the rewards... and the horror</p>
+              <p><strong>{t('startScreen.gameTime')}</strong> {t('startScreen.gameTimeValue')}</p>
+              <p><strong>{t('startScreen.objective')}</strong> {t('startScreen.objectiveValue')}</p>
+              <p><strong>{t('startScreen.warning')}</strong> {t('startScreen.warningValue')}</p>
             </div>
           </div>
 
@@ -178,7 +180,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     className="btn-ocean w-full justify-center text-lg font-semibold"
                     onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty })}
                   >
-                    New Game
+                    {t('startScreen.newGame')}
                   </Button>
                 </li>
                 <li>
@@ -189,7 +191,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     className="w-full justify-center text-lg"
                     onClick={() => setIsOptionsOpen(true)}
                   >
-                    Options
+                    {t('startScreen.options')}
                   </Button>
                 </li>
                 <li>
@@ -200,7 +202,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     className="w-full justify-center text-lg"
                     onClick={() => setIsHelpOpen(true)}
                   >
-                    How to Play
+                    {t('startScreen.howToPlay')}
                   </Button>
                 </li>
               </ul>
@@ -208,15 +210,15 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
             <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-6 space-y-5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-card-foreground">Game Setup</h3>
+                <h3 className="text-xl font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {totalPlayers} {totalPlayers === 1 ? 'Player' : 'Players'} Total
+                  {totalPlayers} {totalPlayers === 1 ? t('startScreen.player') : t('startScreen.players')} {t('startScreen.playersTotal').split(' ').slice(-1)[0]}
                 </p>
               </div>
 
               {/* Human Players */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/80">Human Players</label>
+                <label className="text-sm font-medium text-foreground/80">{t('startScreen.humanPlayers')}</label>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[1, 2, 3, 4, 5].map((count) => (
                     <Button
@@ -243,7 +245,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
               {/* AI Opponents */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/80">AI Opponents</label>
+                <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiOpponents')}</label>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[0, 1, 2, 3, 4].filter(count => count <= maxAiPlayers).map((count) => (
                     <Button
@@ -266,7 +268,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               {/* AI Difficulty */}
               {aiPlayers > 0 && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">AI Difficulty</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiDifficulty')}</label>
                   <div className="flex justify-center gap-2">
                     {(['easy', 'medium', 'hard'] as const).map((diff) => (
                       <Button
@@ -274,7 +276,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                         variant={aiDifficulty === diff ? "default" : "outline"}
                         size="sm"
                         onClick={() => setAiDifficulty(diff)}
-                        className={`px-4 h-9 capitalize ${
+                        className={`px-4 h-9 ${
                           aiDifficulty === diff
                             ? diff === 'easy' ? 'bg-green-600 hover:bg-green-700' :
                               diff === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' :
@@ -282,7 +284,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                             : 'border-primary/30 hover:border-primary'
                         }`}
                       >
-                        {diff}
+                        {t(`startScreen.${diff}`)}
                       </Button>
                     ))}
                   </div>
@@ -293,11 +295,11 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               <p className="text-xs text-center text-muted-foreground">
                 {aiPlayers === 0
                   ? humanPlayers === 1
-                    ? 'Solo practice mode'
-                    : 'Local multiplayer'
+                    ? t('startScreen.soloPractice')
+                    : t('startScreen.localMultiplayer')
                   : humanPlayers === 0
-                    ? 'Spectator mode - watch AI players compete'
-                    : `${humanPlayers} human${humanPlayers > 1 ? 's' : ''} vs ${aiPlayers} AI opponent${aiPlayers > 1 ? 's' : ''}`}
+                    ? t('startScreen.spectatorMode')
+                    : `${humanPlayers} ${humanPlayers > 1 ? t('startScreen.humans') : t('startScreen.human')} ${t('startScreen.vsAi')} ${aiPlayers} ${aiPlayers > 1 ? t('startScreen.aiOpponents2') : t('startScreen.aiOpponent')}`}
               </p>
             </div>
           </div>
@@ -306,9 +308,9 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         <Dialog open={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-primary-glow">Options</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-primary-glow">{t('options.title')}</DialogTitle>
               <DialogDescription>
-                Configure your audio and display preferences before descending into the depths.
+                {t('options.description')}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4">
@@ -320,9 +322,9 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
           <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-primary-glow">How to Play</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-primary-glow">{t('help.title')}</DialogTitle>
               <DialogDescription>
-                Learn how to play Deep Regrets with our interactive tutorial.
+                {t('help.description')}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 min-h-0 flex-1 overflow-hidden">
