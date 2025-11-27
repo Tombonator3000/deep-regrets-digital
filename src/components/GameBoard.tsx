@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GameState, FishCard } from '@/types/game';
 import { SeaBoard } from './game/SeaBoard';
 import { PortBoard } from './game/PortBoard';
@@ -6,6 +6,7 @@ import { PlayerPanel } from './game/PlayerPanel';
 import { ActionPanel } from './game/ActionPanel';
 import { AnglerBoard } from './game/AnglerBoard';
 import { DayTracker } from './game/DayTracker';
+import { CardModalProvider } from './game/CardModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -46,6 +47,7 @@ import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
+import { getSlotMultiplier } from '@/utils/mounting';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -139,7 +141,22 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
     }
   };
 
+  // Handle mounting fish via drag and drop
+  const handleMountFish = useCallback((fish: FishCard, slotIndex: number) => {
+    const multiplier = getSlotMultiplier(slotIndex);
+    onAction({
+      type: 'MOUNT_FISH',
+      playerId: currentPlayer.id,
+      payload: {
+        fish,
+        slot: slotIndex,
+        multiplier,
+      },
+    });
+  }, [currentPlayer.id, onAction]);
+
   return (
+    <CardModalProvider>
     <div ref={boardRef} className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
@@ -345,6 +362,8 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
             <AnglerBoard
               player={currentPlayer}
               isCurrentPlayer={isPlayerTurn}
+              gameState={gameState}
+              onMountFish={handleMountFish}
             />
             <DayTracker
               day={gameState.day}
@@ -579,5 +598,6 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         </DialogContent>
       </Dialog>
     </div>
+    </CardModalProvider>
   );
 };

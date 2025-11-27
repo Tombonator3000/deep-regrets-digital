@@ -1,6 +1,6 @@
 import { Player, FishCard, DinkCard, UpgradeCard } from '@/types/game';
-import { Fish, Sparkles, Package, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { Fish, Sparkles, Package, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { useState, DragEvent, useCallback } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +8,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { useCardModal } from './CardModal';
+
+// Drag data types for different card interactions
+export type CardDragType = 'fish' | 'dink' | 'supply';
+export interface CardDragData {
+  type: CardDragType;
+  card: FishCard | DinkCard | UpgradeCard;
+  cardIndex: number;
+}
 
 interface PlayerHandProps {
   player: Player;
@@ -20,14 +29,62 @@ interface MiniCardProps {
   className?: string;
   tooltip?: React.ReactNode;
   onClick?: () => void;
+  onEnlarge?: () => void;
+  draggable?: boolean;
+  onDragStart?: (e: DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (e: DragEvent<HTMLDivElement>) => void;
 }
 
-const MiniCard = ({ children, className = '', tooltip, onClick }: MiniCardProps) => {
+const MiniCard = ({
+  children,
+  className = '',
+  tooltip,
+  onClick,
+  onEnlarge,
+  draggable = false,
+  onDragStart,
+  onDragEnd,
+}: MiniCardProps) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    onDragStart?.(e);
+  };
+
+  const handleDragEnd = (e: DragEvent<HTMLDivElement>) => {
+    setIsDragging(false);
+    onDragEnd?.(e);
+  };
+
   const card = (
     <div
-      className={`relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer shadow-lg ${className}`}
+      className={`group relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer shadow-lg select-none ${className} ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}`}
       onClick={onClick}
+      draggable={draggable}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
+      {/* Drag handle indicator */}
+      {draggable && (
+        <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity">
+          <GripVertical className="h-3 w-3 text-white/60" />
+        </div>
+      )}
+      {/* Enlarge button */}
+      {onEnlarge && (
+        <button
+          className="absolute -top-1 -right-1 z-10 h-4 w-4 rounded-full bg-white/20 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/40"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEnlarge();
+          }}
+          title="Vis stort kort"
+        >
+          <Eye className="h-2.5 w-2.5 text-white" />
+        </button>
+      )}
       {children}
     </div>
   );
@@ -48,15 +105,36 @@ const MiniCard = ({ children, className = '', tooltip, onClick }: MiniCardProps)
   return card;
 };
 
-const FishMiniCard = ({ fish, onClick }: { fish: FishCard; onClick?: () => void }) => {
+interface FishMiniCardProps {
+  fish: FishCard;
+  index: number;
+  onClick?: () => void;
+  onEnlarge?: () => void;
+  draggable?: boolean;
+}
+
+const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false }: FishMiniCardProps) => {
   const qualityClass = fish.quality === 'foul'
     ? 'border-purple-500/60 bg-gradient-to-b from-purple-900/80 to-purple-950/90'
     : 'border-cyan-500/60 bg-gradient-to-b from-cyan-900/80 to-cyan-950/90';
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    const dragData: CardDragData = {
+      type: 'fish',
+      card: fish,
+      cardIndex: index,
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', `fish:${fish.id}`);
+  };
 
   return (
     <MiniCard
       className={qualityClass}
       onClick={onClick}
+      onEnlarge={onEnlarge}
+      draggable={draggable}
+      onDragStart={handleDragStart}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-primary">{fish.name}</div>
@@ -74,6 +152,9 @@ const FishMiniCard = ({ fish, onClick }: { fish: FishCard; onClick?: () => void 
               ))}
             </div>
           )}
+          <div className="text-xs text-muted-foreground italic mt-1">
+            Dra kortet eller trykk for forstorring
+          </div>
         </div>
       }
     >
@@ -88,11 +169,32 @@ const FishMiniCard = ({ fish, onClick }: { fish: FishCard; onClick?: () => void 
   );
 };
 
-const DinkMiniCard = ({ dink, onClick }: { dink: DinkCard; onClick?: () => void }) => {
+interface DinkMiniCardProps {
+  dink: DinkCard;
+  index: number;
+  onClick?: () => void;
+  onEnlarge?: () => void;
+  draggable?: boolean;
+}
+
+const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false }: DinkMiniCardProps) => {
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    const dragData: CardDragData = {
+      type: 'dink',
+      card: dink,
+      cardIndex: index,
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', `dink:${dink.id}`);
+  };
+
   return (
     <MiniCard
       className="border-amber-500/60 bg-gradient-to-b from-amber-900/80 to-amber-950/90"
       onClick={onClick}
+      onEnlarge={onEnlarge}
+      draggable={draggable}
+      onDragStart={handleDragStart}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-amber-400">{dink.name}</div>
@@ -104,6 +206,9 @@ const DinkMiniCard = ({ dink, onClick }: { dink: DinkCard; onClick?: () => void 
                 {t}
               </Badge>
             ))}
+          </div>
+          <div className="text-xs text-muted-foreground italic mt-1">
+            Dra kortet eller trykk for forstorring
           </div>
         </div>
       }
@@ -119,11 +224,32 @@ const DinkMiniCard = ({ dink, onClick }: { dink: DinkCard; onClick?: () => void 
   );
 };
 
-const SupplyMiniCard = ({ supply, onClick }: { supply: UpgradeCard; onClick?: () => void }) => {
+interface SupplyMiniCardProps {
+  supply: UpgradeCard;
+  index: number;
+  onClick?: () => void;
+  onEnlarge?: () => void;
+  draggable?: boolean;
+}
+
+const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false }: SupplyMiniCardProps) => {
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    const dragData: CardDragData = {
+      type: 'supply',
+      card: supply,
+      cardIndex: index,
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', `supply:${supply.id}`);
+  };
+
   return (
     <MiniCard
       className="border-emerald-500/60 bg-gradient-to-b from-emerald-900/80 to-emerald-950/90"
       onClick={onClick}
+      onEnlarge={onEnlarge}
+      draggable={draggable}
+      onDragStart={handleDragStart}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-emerald-400">{supply.name}</div>
@@ -134,6 +260,9 @@ const SupplyMiniCard = ({ supply, onClick }: { supply: UpgradeCard; onClick?: ()
                 {effect}
               </Badge>
             ))}
+          </div>
+          <div className="text-xs text-muted-foreground italic mt-1">
+            Dra kortet eller trykk for forstorring
           </div>
         </div>
       }
@@ -149,6 +278,26 @@ const SupplyMiniCard = ({ supply, onClick }: { supply: UpgradeCard; onClick?: ()
 export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const totalCards = player.handFish.length + player.dinks.length + player.supplies.length;
+
+  // Try to use CardModal if available (wrapped in provider)
+  let cardModal: { openCard: (card: any, type: CardDragType) => void } | null = null;
+  try {
+    cardModal = useCardModal();
+  } catch {
+    // CardModal not available, enlarge will not work
+  }
+
+  const handleEnlargeFish = useCallback((fish: FishCard) => {
+    cardModal?.openCard(fish, 'fish');
+  }, [cardModal]);
+
+  const handleEnlargeDink = useCallback((dink: DinkCard) => {
+    cardModal?.openCard(dink, 'dink');
+  }, [cardModal]);
+
+  const handleEnlargeSupply = useCallback((supply: UpgradeCard) => {
+    cardModal?.openCard(supply, 'supply');
+  }, [cardModal]);
 
   if (totalCards === 0) {
     return (
@@ -192,7 +341,10 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                     <FishMiniCard
                       key={`${fish.id}-${index}`}
                       fish={fish}
+                      index={index}
+                      draggable={isCurrentPlayer}
                       onClick={() => onCardClick?.(fish, 'fish')}
+                      onEnlarge={() => handleEnlargeFish(fish)}
                     />
                   ))}
                 </div>
@@ -211,7 +363,10 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                     <DinkMiniCard
                       key={`${dink.id}-${index}`}
                       dink={dink}
+                      index={index}
+                      draggable={isCurrentPlayer}
                       onClick={() => onCardClick?.(dink, 'dink')}
+                      onEnlarge={() => handleEnlargeDink(dink)}
                     />
                   ))}
                 </div>
@@ -230,7 +385,10 @@ export const PlayerHand = ({ player, isCurrentPlayer, onCardClick }: PlayerHandP
                     <SupplyMiniCard
                       key={`${supply.id}-${index}`}
                       supply={supply}
+                      index={index}
+                      draggable={isCurrentPlayer}
                       onClick={() => onCardClick?.(supply, 'supply')}
+                      onEnlarge={() => handleEnlargeSupply(supply)}
                     />
                   ))}
                 </div>

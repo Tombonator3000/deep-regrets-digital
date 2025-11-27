@@ -1,20 +1,59 @@
-import { Player, GameState } from '@/types/game';
+import { Player, GameState, FishCard } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
-import { PlayerHand } from './PlayerHand';
+import { PlayerHand, CardDragData } from './PlayerHand';
 import { LifebuoyToken, FishCoinToken, BoatToken } from './GameTokens';
+import { DragEvent, useState } from 'react';
 
 interface AnglerBoardProps {
   player: Player;
   isCurrentPlayer: boolean;
   gameState?: GameState;
+  onMountFish?: (fish: FishCard, slotIndex: number) => void;
 }
 
-export const AnglerBoard = ({ player, isCurrentPlayer, gameState }: AnglerBoardProps) => {
+export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish }: AnglerBoardProps) => {
   const hasLifePreserver = gameState?.lifePreserverOwner === player.id;
   const hasFishCoin = gameState?.fishCoinOwner === player.id;
   const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
+  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, slotIndex: number) => {
+    e.preventDefault();
+    const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
+    // Only allow drop if slot is empty and player is current player
+    if (!mountedFish && isCurrentPlayer) {
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverSlot(slotIndex);
+    } else {
+      e.dataTransfer.dropEffect = 'none';
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSlot(null);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, slotIndex: number) => {
+    e.preventDefault();
+    setDragOverSlot(null);
+
+    const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
+    if (mountedFish || !isCurrentPlayer) return;
+
+    try {
+      const data = e.dataTransfer.getData('application/json');
+      if (data) {
+        const dragData: CardDragData = JSON.parse(data);
+        if (dragData.type === 'fish' && onMountFish) {
+          onMountFish(dragData.card as FishCard, slotIndex);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse drag data', err);
+    }
+  };
 
   return (
     <div className="angler-board relative rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-950 p-4 shadow-xl">
@@ -60,14 +99,24 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState }: AnglerBoardP
             const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
             const multiplier = getSlotMultiplier(slotIndex);
 
+            const isDropTarget = dragOverSlot === slotIndex;
+            const canDrop = !mountedFish && isCurrentPlayer;
+
             return (
               <div
                 key={slotIndex}
                 className={`trophy-slot relative flex min-h-[80px] flex-col items-center justify-center rounded-lg border-2 p-2 text-center transition-all ${
                   mountedFish
                     ? 'border-fishbuck/50 bg-fishbuck/10'
+                    : isDropTarget
+                    ? 'border-primary border-solid bg-primary/20 scale-105 shadow-lg'
+                    : canDrop
+                    ? 'border-dashed border-white/30 bg-black/30 hover:border-primary/50 hover:bg-primary/5'
                     : 'border-dashed border-white/20 bg-black/30'
                 }`}
+                onDragOver={(e) => handleDragOver(e, slotIndex)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, slotIndex)}
               >
                 {/* Multiplier Badge */}
                 <div className={`absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
@@ -90,8 +139,10 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState }: AnglerBoardP
                   </>
                 ) : (
                   <>
-                    <div className="h-8 w-8 rounded border border-dashed border-white/20" />
-                    <span className="mt-1 text-xs text-muted-foreground">Empty</span>
+                    <div className={`h-8 w-8 rounded border border-dashed ${isDropTarget ? 'border-primary/60' : 'border-white/20'}`} />
+                    <span className={`mt-1 text-xs ${isDropTarget ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                      {isDropTarget ? 'Slipp for å montere' : 'Dra fisk hit'}
+                    </span>
                   </>
                 )}
               </div>
