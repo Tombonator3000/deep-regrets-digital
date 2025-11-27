@@ -183,11 +183,14 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                     key={player.id}
                     className={`rounded-md border border-border/40 p-3 transition ${
                       isWinner ? 'border-primary text-primary-glow' : ''
-                    }`}
+                    } ${player.isAI ? 'bg-purple-900/20' : ''}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
                         {player.name}
+                        {player.isAI && (
+                          <span className="ml-2 text-xs text-purple-400">(AI)</span>
+                        )}
                       </span>
                       <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
                         {breakdown.totalScore} pts
@@ -227,8 +230,18 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-background/70 px-4 py-2 backdrop-blur">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-primary-glow">DEEP REGRETS</h1>
-            <Badge className="rounded-full border-primary/40 bg-primary/10 px-3 py-0.5 text-xs text-primary">
+            <Badge
+              className={`rounded-full px-3 py-0.5 text-xs ${
+                currentPlayer.isAI
+                  ? 'border-purple-400/40 bg-purple-600/20 text-purple-300'
+                  : 'border-primary/40 bg-primary/10 text-primary'
+              }`}
+            >
+              {currentPlayer.isAI && (
+                <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-purple-400" />
+              )}
               {currentPlayer.name}'s Turn
+              {currentPlayer.isAI && ' (AI)'}
             </Badge>
           </div>
           <div className="flex items-center gap-2">

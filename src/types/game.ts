@@ -83,6 +83,8 @@ export interface Player {
   lifeboatFlipped: boolean;
   canOfWormsFaceUp: boolean;
   hasPassed: boolean;
+  isAI?: boolean;
+  aiDifficulty?: 'easy' | 'medium' | 'hard';
 }
 
 export interface GameState {

@@ -1,24 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CHARACTERS } from '@/data/characters';
 import { CharacterOption } from '@/types/game';
 import { BubbleField } from '@/components/effects/BubbleField';
+import { GameSetup } from './StartScreen';
+
+export interface SelectedCharacter extends CharacterOption {
+  isAI?: boolean;
+  aiDifficulty?: 'easy' | 'medium' | 'hard';
+}
 
 interface CharacterSelectionProps {
   playerCount: number;
-  onCharactersSelected: (selectedCharacters: CharacterOption[]) => void;
+  gameSetup?: GameSetup;
+  onCharactersSelected: (selectedCharacters: SelectedCharacter[]) => void;
   onBack: () => void;
 }
 
-export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }: CharacterSelectionProps) => {
-  const [selectedCharacters, setSelectedCharacters] = useState<CharacterOption[]>([]);
+export const CharacterSelection = ({ playerCount, gameSetup, onCharactersSelected, onBack }: CharacterSelectionProps) => {
+  const [selectedCharacters, setSelectedCharacters] = useState<SelectedCharacter[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
+  const humanPlayers = gameSetup?.humanPlayers ?? playerCount;
+  const aiPlayers = gameSetup?.aiPlayers ?? 0;
+  const aiDifficulty = gameSetup?.aiDifficulty ?? 'medium';
+
+  const isSelectingForAI = currentPlayerIndex >= humanPlayers;
+  const currentLabel = isSelectingForAI
+    ? `AI ${currentPlayerIndex - humanPlayers + 1}`
+    : `Player ${currentPlayerIndex + 1}`;
+
+  // Auto-select for AI players
+  useEffect(() => {
+    if (isSelectingForAI && selectedCharacters.length === currentPlayerIndex) {
+      // Get available characters
+      const available = CHARACTERS.filter(
+        char => !selectedCharacters.some(selected => selected.id === char.id)
+      );
+
+      if (available.length > 0) {
+        // Randomly select a character for AI
+        const randomIndex = Math.floor(Math.random() * available.length);
+        const aiCharacter: SelectedCharacter = {
+          ...available[randomIndex],
+          isAI: true,
+          aiDifficulty
+        };
+
+        const newSelected = [...selectedCharacters, aiCharacter];
+
+        // Small delay for visual feedback
+        const timer = setTimeout(() => {
+          setSelectedCharacters(newSelected);
+
+          if (newSelected.length === playerCount) {
+            onCharactersSelected(newSelected);
+          } else {
+            setCurrentPlayerIndex(currentPlayerIndex + 1);
+          }
+        }, 300);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentPlayerIndex, selectedCharacters, isSelectingForAI, playerCount, aiDifficulty, onCharactersSelected]);
+
   const handleCharacterSelect = (character: CharacterOption) => {
-    const newSelected = [...selectedCharacters, character];
+    const selectedChar: SelectedCharacter = {
+      ...character,
+      isAI: false
+    };
+    const newSelected = [...selectedCharacters, selectedChar];
     setSelectedCharacters(newSelected);
-    
+
     if (newSelected.length === playerCount) {
       onCharactersSelected(newSelected);
     } else {
@@ -52,19 +107,34 @@ export const CharacterSelection = ({ playerCount, onCharactersSelected, onBack }
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary-glow mb-2">
-            Choose Your Captain
+            {isSelectingForAI ? 'AI Selecting...' : 'Choose Your Captain'}
           </h1>
           <p className="text-xl text-muted-foreground">
-            Player {currentPlayerIndex + 1} of {playerCount}
+            {currentLabel} of {playerCount}
           </p>
           {selectedCharacters.length > 0 && (
-            <div className="mt-4 flex justify-center space-x-4">
+            <div className="mt-4 flex justify-center flex-wrap gap-3">
               {selectedCharacters.map((char, index) => (
-                <div key={char.id} className="text-sm">
-                  <span className="text-primary">P{index + 1}:</span> {char.name}
+                <div
+                  key={char.id}
+                  className={`text-sm px-3 py-1 rounded-full ${
+                    char.isAI
+                      ? 'bg-purple-600/30 border border-purple-400/50'
+                      : 'bg-primary/20 border border-primary/30'
+                  }`}
+                >
+                  <span className={char.isAI ? 'text-purple-300' : 'text-primary'}>
+                    {char.isAI ? `AI ${index - humanPlayers + 2}` : `P${index + 1}`}:
+                  </span>{' '}
+                  {char.name}
                 </div>
               ))}
             </div>
+          )}
+          {aiPlayers > 0 && (
+            <p className="mt-2 text-sm text-purple-400">
+              {aiPlayers} AI opponent{aiPlayers > 1 ? 's' : ''} ({aiDifficulty} difficulty)
+            </p>
           )}
         </div>
 
