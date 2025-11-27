@@ -122,6 +122,8 @@ export interface GameState {
   omenDieValue: number;
   isGameOver: boolean;
   winner?: string;
+  // Last-to-pass rule: when all but one player has passed
+  lastPlayerTurnsRemaining?: number;
 }
 
 export interface GameAction {

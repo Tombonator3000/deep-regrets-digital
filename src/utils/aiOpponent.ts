@@ -1,7 +1,33 @@
 import { GameState, Player, GameAction, FishCard, Depth, Location, UpgradeCard } from '@/types/game';
 import { AIDifficulty, AIDecision, FishCatchEvaluation, AIContext } from '@/types/ai';
-import { calculatePlayerScoreBreakdown } from './gameEngine';
+import {
+  calculatePlayerScoreBreakdown,
+  calculateFishValueWithMadness,
+  getFairValueModifier,
+  getFoulValueModifier,
+  getMadnessTier,
+  hasPortDiscount
+} from './gameEngine';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
+
+// Fish difficulty ranges by size and depth from rulebook (p.13)
+// DEPTH | SMALL | MID | LARGE
+// I     | 0-2   | 1-3 | 2-4
+// II    | 1-3   | 2-4 | 3-5
+// III   | 2-4   | 3-5 | 4-?
+const FISH_DIFFICULTY_RANGES: Record<number, { small: [number, number], mid: [number, number], large: [number, number] }> = {
+  1: { small: [0, 2], mid: [1, 3], large: [2, 4] },
+  2: { small: [1, 3], mid: [2, 4], large: [3, 5] },
+  3: { small: [2, 4], mid: [3, 5], large: [4, 7] }, // Large at depth 3 can go higher
+};
+
+// Fair:Foul ratio by depth from rulebook (p.14)
+// Depth I: 3:1, Depth II: 1:1, Depth III: 1:3
+const FOUL_PROBABILITY_BY_DEPTH: Record<number, number> = {
+  1: 0.25, // 1 in 4 chance of foul
+  2: 0.50, // 1 in 2 chance of foul
+  3: 0.75, // 3 in 4 chance of foul
+};
 
 // Day order for calculating remaining days
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
@@ -244,7 +270,7 @@ const evaluateFishCatches = (
 };
 
 /**
- * Evaluate catching a single fish
+ * Evaluate catching a single fish using rulebook mechanics
  */
 const evaluateSingleFish = (
   fish: FishCard,
@@ -253,27 +279,28 @@ const evaluateSingleFish = (
   player: Player,
   difficulty: AIDifficulty
 ): FishCatchEvaluation => {
-  const difficulty_num = fish.difficulty;
+  const fishDifficulty = fish.difficulty;
   const totalDice = player.freshDice.reduce((a, b) => a + b, 0);
+  const regretCount = player.regrets.length;
 
   // Calculate success probability
   let successProbability = 0;
   const diceRequired: number[] = [];
   const tackleDiceRequired: number[] = [];
 
-  // Find dice combination that can catch this fish
+  // Find optimal dice combination to meet fish difficulty
   const sortedDiceIndices = player.freshDice
     .map((value, index) => ({ value, index }))
     .sort((a, b) => b.value - a.value);
 
   let runningTotal = 0;
   for (const { value, index } of sortedDiceIndices) {
-    if (runningTotal >= difficulty_num) break;
+    if (runningTotal >= fishDifficulty) break;
     runningTotal += value;
     diceRequired.push(index);
   }
 
-  if (runningTotal >= difficulty_num) {
+  if (runningTotal >= fishDifficulty) {
     successProbability = 1.0;
   } else {
     // Check if tackle dice can help
@@ -287,27 +314,43 @@ const evaluateSingleFish = (
       }
     });
 
-    if (runningTotal + tackleTotal >= difficulty_num) {
+    if (runningTotal + tackleTotal >= fishDifficulty) {
       successProbability = 0.7; // Uncertainty with tackle dice
     }
   }
 
-  // Calculate expected value
+  // Calculate expected value using proper madness modifiers
   let expectedValue = 0;
   if (successProbability > 0) {
-    const fishValue = fish.value;
-    const regretPenalty = fish.abilities.includes('regret_draw') ? 1.5 :
-                         fish.abilities.includes('regret_draw_2') ? 3 : 0;
+    // Use madness-adjusted value (rulebook p.16-17, p.21)
+    const madnessAdjustedValue = calculateFishValueWithMadness(fish, regretCount);
 
-    // Risk adjustment based on difficulty
+    // Calculate regret risk penalty
+    let regretPenalty = 0;
+    if (fish.abilities.includes('regret_draw')) {
+      regretPenalty = 1.5;
+    } else if (fish.abilities.includes('regret_draw_2')) {
+      regretPenalty = 3.0;
+    }
+
+    // Foul fish cause regret when sold (rulebook p.16)
+    if (fish.quality === 'foul') {
+      regretPenalty += 0.5;
+    }
+
+    // Risk adjustment based on AI difficulty
     const riskMod = difficulty === 'easy' ? 0.5 : difficulty === 'medium' ? 0.3 : 0.1;
     const adjustedRegretPenalty = regretPenalty * (1 + riskMod);
 
-    expectedValue = successProbability * (fishValue - adjustedRegretPenalty);
+    expectedValue = successProbability * (madnessAdjustedValue - adjustedRegretPenalty);
 
-    // Bonus for foul fish if we have high fishbucks
-    if (fish.quality === 'foul' && player.fishbucks > 5) {
-      expectedValue -= 1;
+    // Consider how fish value changes with more regrets
+    // At low madness, fair fish are worth more (+2)
+    // At high madness, foul fish are worth more (+2)
+    if (fish.quality === 'foul' && regretCount >= 7) {
+      expectedValue += 1; // Foul fish become more valuable at high madness
+    } else if (fish.quality === 'fair' && regretCount < 4) {
+      expectedValue += 0.5; // Fair fish are more valuable at low madness
     }
   }
 
@@ -366,7 +409,11 @@ const generatePortAction = (
 ): AIDecision => {
   const { player, gameState, daysRemaining } = context;
 
-  // Priority: Mount fish > Sell fish > Buy upgrades > Pass
+  // Priority: Make Port benefits > Mount fish > Sell fish > Buy upgrades > Pass
+
+  // Try Make Port benefits first (rulebook p.17)
+  const makePortAction = tryMakePortBenefits(context, difficulty);
+  if (makePortAction) return makePortAction;
 
   // Try to mount valuable fish
   const mountAction = tryMountFish(context, difficulty);
@@ -382,6 +429,84 @@ const generatePortAction = (
 
   // Pass if nothing to do
   return createPassAction(player, 'No valuable port actions');
+};
+
+/**
+ * Try to use Make Port benefits (rulebook p.17)
+ * - Reroll dice if current roll is poor
+ * - Flip Can of Worms if not already flipped
+ * - Discard a regret if at high madness
+ */
+const tryMakePortBenefits = (
+  context: AIContext,
+  difficulty: AIDifficulty
+): AIDecision | null => {
+  const { player } = context;
+  const regretCount = player.regrets.length;
+
+  // Consider discarding a regret if at high madness (7+ regrets)
+  if (regretCount >= 7 && player.regrets.length > 0) {
+    // Find highest value regret to discard
+    const sortedRegrets = [...player.regrets].sort((a, b) => b.value - a.value);
+    const regretToDiscard = sortedRegrets[0];
+
+    // Harder difficulties are more likely to discard strategically
+    const discardThreshold = difficulty === 'easy' ? 0.3 : difficulty === 'medium' ? 0.6 : 0.9;
+    if (Math.random() < discardThreshold) {
+      return {
+        action: {
+          type: 'DISCARD_REGRET',
+          playerId: player.id,
+          payload: { regretId: regretToDiscard.id }
+        },
+        confidence: 0.8,
+        reasoning: `Discarding regret to reduce madness (${regretCount} regrets)`
+      };
+    }
+  }
+
+  // Consider rerolling if dice values are poor
+  const avgDiceValue = player.freshDice.length > 0
+    ? player.freshDice.reduce((a, b) => a + b, 0) / player.freshDice.length
+    : 0;
+
+  // Reroll threshold based on difficulty
+  const rerollThreshold = difficulty === 'easy' ? 2.0 : difficulty === 'medium' ? 2.5 : 3.0;
+
+  if (avgDiceValue < rerollThreshold && player.freshDice.length > 0) {
+    // Only reroll sometimes based on difficulty
+    const rerollChance = difficulty === 'easy' ? 0.4 : difficulty === 'medium' ? 0.6 : 0.8;
+    if (Math.random() < rerollChance) {
+      return {
+        action: {
+          type: 'MAKE_PORT_REROLL',
+          playerId: player.id,
+          payload: {}
+        },
+        confidence: 0.7,
+        reasoning: `Rerolling poor dice (avg: ${avgDiceValue.toFixed(1)})`
+      };
+    }
+  }
+
+  // Consider flipping Can of Worms if not already face up
+  if (!player.canOfWormsFaceUp) {
+    // Harder difficulties flip more strategically
+    const flipChance = difficulty === 'easy' ? 0.2 : difficulty === 'medium' ? 0.4 : 0.6;
+    if (Math.random() < flipChance) {
+      return {
+        action: {
+          type: 'FLIP_CAN_OF_WORMS',
+          playerId: player.id,
+          payload: {}
+        },
+        confidence: 0.5,
+        reasoning: 'Flipping Can of Worms for future benefit'
+      };
+    }
+  }
+
+  return null;
 };
 
 /**

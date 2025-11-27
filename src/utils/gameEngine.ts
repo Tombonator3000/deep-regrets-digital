@@ -385,6 +385,46 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         player.hasPassed = false;
         if (player.location === 'port') {
           player.currentDepth = 1;
+          // Reset make port benefits for this visit
+          player.canOfWormsFaceUp = false;
+        }
+      }
+      break;
+
+    // Make Port benefits (rulebook p.17)
+    case 'MAKE_PORT_REROLL':
+      // Muster Your Courage again - reroll all dice when making port
+      if (player && player.location === 'port') {
+        const newDice = rollDice(player.maxDice);
+        const processedDice = player.rerollOnes
+          ? newDice.map(value => (value === 1 ? rollDice(1)[0] : value))
+          : newDice;
+        player.freshDice = processedDice;
+        player.spentDice = [];
+      }
+      break;
+
+    case 'FLIP_CAN_OF_WORMS':
+      // Flip Can of Worms face-up (can be used later for bonus)
+      if (player && player.location === 'port' && !player.canOfWormsFaceUp) {
+        player.canOfWormsFaceUp = true;
+      }
+      break;
+
+    case 'DISCARD_REGRET':
+      // Optionally discard one Regret card when making port
+      if (player && player.location === 'port' && player.regrets.length > 0) {
+        const { regretId } = action.payload;
+        const regretIndex = player.regrets.findIndex(r => r.id === regretId);
+        if (regretIndex >= 0) {
+          const previousRegretCount = player.regrets.length;
+          const removed = player.regrets[regretIndex];
+          player.regrets = [
+            ...player.regrets.slice(0, regretIndex),
+            ...player.regrets.slice(regretIndex + 1)
+          ];
+          newState.port.regretsDiscard = [...newState.port.regretsDiscard, removed];
+          recalculateMadness(player, { previousRegretCount, gameState: newState });
         }
       }
       break;
@@ -680,9 +720,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const passedCount = newState.players.filter(p => p.hasPassed).length;
         player.hasPassed = true;
 
-        // Grant passing rewards based on order
+        // Grant passing rewards based on order (rulebook p.9)
         if (passedCount === 0) {
-          // First to pass: 2 Fishbucks + becomes next start player (Fish Coin)
+          // First to pass: 2 Fishbucks + Fish Coin (becomes next first player)
           player.fishbucks += 2;
           newState.fishCoinOwner = player.id;
         } else if (passedCount === 1) {
@@ -696,13 +736,22 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
             player.fishbucks += 1;
           }
         } else {
-          // Later players: 1 Fishbuck (or heal madness if they have few regrets - simplified to just fishbuck)
+          // Later players: 1 Fishbuck
           player.fishbucks += 1;
+        }
+
+        // Check for last-to-pass rule (rulebook p.9)
+        const remainingPlayers = newState.players.filter(p => !p.hasPassed);
+        if (remainingPlayers.length === 1) {
+          // Last player gets limited turns: 2 at Sea, 4 at Port
+          const lastPlayer = remainingPlayers[0];
+          newState.lastPlayerTurnsRemaining = lastPlayer.location === 'sea' ? 2 : 4;
         }
       }
       // Check if all players passed
       if (newState.players.every(p => p.hasPassed)) {
         newState.phase = 'start';
+        newState.lastPlayerTurnsRemaining = undefined;
         advanceDay(newState);
       }
       break;
@@ -711,13 +760,31 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       advancePhase(newState);
       break;
 
-    case 'END_TURN':
+    case 'END_TURN': {
+      // Handle last-player turn limit (rulebook p.9)
+      if (newState.lastPlayerTurnsRemaining !== undefined) {
+        newState.lastPlayerTurnsRemaining -= 1;
+        if (newState.lastPlayerTurnsRemaining <= 0) {
+          // Force pass the last player
+          const lastPlayer = newState.players.find(p => !p.hasPassed);
+          if (lastPlayer) {
+            lastPlayer.hasPassed = true;
+          }
+          newState.lastPlayerTurnsRemaining = undefined;
+          // End the day
+          newState.phase = 'start';
+          advanceDay(newState);
+          break;
+        }
+      }
+
       // Move to next player
       do {
         newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
-      } while (newState.players[newState.currentPlayerIndex].hasPassed && 
+      } while (newState.players[newState.currentPlayerIndex].hasPassed &&
                newState.players.some(p => !p.hasPassed));
       break;
+    }
 
     default:
       console.warn('Unknown action type:', action.type);
@@ -735,9 +802,43 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 const getFishBaseValue = (fish: FishCard) => fish.baseValue ?? fish.value;
 const getFishCurrentValue = (fish: FishCard) => fish.value ?? getFishBaseValue(fish);
 
-export const calculateFishSaleValue = (fish: FishCard, madnessLevel: number) => {
+/**
+ * Calculate fish value with madness modifiers according to rulebook (p.16-17, p.21)
+ * Fair fish: value modified by Fair Value modifier from madness tracker
+ * Foul fish: value modified by Foul Value modifier from madness tracker
+ */
+export const calculateFishValueWithMadness = (fish: FishCard, regretCount: number): number => {
+  const baseValue = getFishCurrentValue(fish);
+  const isFoul = fish.quality === 'foul';
+
+  const modifier = isFoul
+    ? getFoulValueModifier(regretCount)
+    : getFairValueModifier(regretCount);
+
+  return Math.max(0, baseValue + modifier);
+};
+
+export const calculateFishSaleValue = (fish: FishCard, madnessLevel: number, regretCount?: number) => {
   const baseValue = getFishBaseValue(fish);
   const currentValue = fish.value ?? baseValue;
+
+  // Use new madness system if regret count is provided
+  if (regretCount !== undefined) {
+    const adjustedValue = calculateFishValueWithMadness(fish, regretCount);
+    const isFoul = fish.quality === 'foul';
+    const modifier = isFoul
+      ? getFoulValueModifier(regretCount)
+      : getFairValueModifier(regretCount);
+
+    return {
+      adjustedValue,
+      baseValue,
+      madnessPenalty: -modifier, // Negative because it's a modifier, not penalty
+      modifier: currentValue - baseValue,
+    };
+  }
+
+  // Legacy calculation for backwards compatibility
   const madnessPenalty = Math.min(Math.max(madnessLevel, 0), baseValue);
   const adjustedValue = Math.max(0, currentValue - madnessPenalty);
 
@@ -762,17 +863,28 @@ export const calculatePlayerRegretValue = (player: Player) => {
   return regretValue + (player.lifeboatFlipped ? 10 : 0);
 };
 
+/**
+ * Calculate hand fish score with proper madness modifiers (rulebook p.22)
+ * Fish in hand are scored by their Value modified by madness tracker
+ */
 export const calculateHandFishScore = (player: Player) => {
+  const regretCount = player.regrets.length;
   return player.handFish.reduce((sum, fish) => {
-    const { adjustedValue } = calculateFishSaleValue(fish, player.madnessLevel);
+    const adjustedValue = calculateFishValueWithMadness(fish, regretCount);
     return sum + adjustedValue;
   }, 0);
 };
 
+/**
+ * Calculate mounted fish score with proper madness modifiers (rulebook p.22)
+ * Mounted fish are first modified by madness, then multiplied by mount slot
+ */
 export const calculateMountedFishScore = (player: Player) => {
+  const regretCount = player.regrets.length;
   return player.mountedFish.reduce((sum, mount) => {
-    const modifiedValue = getFishCurrentValue(mount.fish) * mount.multiplier;
-    return sum + Math.max(0, modifiedValue);
+    const madnessAdjustedValue = calculateFishValueWithMadness(mount.fish, regretCount);
+    const finalValue = madnessAdjustedValue * mount.multiplier;
+    return sum + Math.max(0, finalValue);
   }, 0);
 };
 
@@ -787,7 +899,9 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
     handScore,
     mountedScore,
     fishbuckScore,
-    totalScore: handScore + mountedScore + fishbuckScore - regretValue,
+    // Note: Regret VALUE doesn't subtract from score directly
+    // Instead, highest regret value player loses a mounted fish (handled in endGame)
+    totalScore: handScore + mountedScore + fishbuckScore,
     regretValue
   };
 };
@@ -851,12 +965,70 @@ interface MadnessContext {
   gameState?: GameState;
 }
 
-const MADNESS_THRESHOLDS = [3, 5, 7];
+// Madness tracker from rulebook (p.20-21)
+// Regrets | Fair Value | Foul Value | Max Dice
+// 0       | +2         | -2         | 4
+// 1-3     | +1         | -1         | 4
+// 4-6     | +1         | =          | 5
+// 7-9     | =          | +1         | 6
+// 10-12   | -1         | +1         | 7
+// 13+     | -2         | +2         | 8 (+ port discount)
 
+interface MadnessTier {
+  minRegrets: number;
+  fairModifier: number;
+  foulModifier: number;
+  maxDice: number;
+  portDiscount: boolean;
+}
+
+const MADNESS_TIERS: MadnessTier[] = [
+  { minRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 4, portDiscount: false },
+  { minRegrets: 1, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false },
+  { minRegrets: 4, fairModifier: 1, foulModifier: 0, maxDice: 5, portDiscount: false },
+  { minRegrets: 7, fairModifier: 0, foulModifier: 1, maxDice: 6, portDiscount: false },
+  { minRegrets: 10, fairModifier: -1, foulModifier: 1, maxDice: 7, portDiscount: false },
+  { minRegrets: 13, fairModifier: -2, foulModifier: 2, maxDice: 8, portDiscount: true },
+];
+
+export const getMadnessTier = (regretCount: number): MadnessTier => {
+  for (let i = MADNESS_TIERS.length - 1; i >= 0; i--) {
+    if (regretCount >= MADNESS_TIERS[i].minRegrets) {
+      return MADNESS_TIERS[i];
+    }
+  }
+  return MADNESS_TIERS[0];
+};
+
+export const getFairValueModifier = (regretCount: number): number => {
+  return getMadnessTier(regretCount).fairModifier;
+};
+
+export const getFoulValueModifier = (regretCount: number): number => {
+  return getMadnessTier(regretCount).foulModifier;
+};
+
+export const getMaxDiceFromMadness = (regretCount: number, baseMaxDice: number = 3): number => {
+  const tier = getMadnessTier(regretCount);
+  // The rulebook shows max dice increases with madness, starting from 4
+  // Character bonuses (like Storm's +1) should add to this
+  const characterBonus = baseMaxDice - 3;
+  return tier.maxDice + characterBonus;
+};
+
+export const hasPortDiscount = (regretCount: number): boolean => {
+  return getMadnessTier(regretCount).portDiscount;
+};
+
+// Legacy function for compatibility
 const calculateMadnessLevelFromRegrets = (regretCount: number) => {
-  return MADNESS_THRESHOLDS.reduce((level, threshold) => (
-    regretCount >= threshold ? level + 2 : level
-  ), 0);
+  // Map regret count to a madness level (0-6+)
+  if (regretCount >= 13) return 6;
+  if (regretCount >= 10) return 5;
+  if (regretCount >= 7) return 4;
+  if (regretCount >= 4) return 3;
+  if (regretCount >= 1) return 1;
+  return 0;
 };
 
 const removeHighestFreshDie = (player: Player) => {
@@ -973,46 +1145,75 @@ const advanceDay = (gameState: GameState) => {
   gameState.currentPlayerIndex = gameState.firstPlayerIndex;
 };
 
+/**
+ * End game scoring according to rulebook (p.22)
+ * Highest Regret Penalty by player count:
+ * - 2 players: discard LOWEST value mounted fish
+ * - 3+ players: discard HIGHEST value mounted fish
+ */
 const endGame = (gameState: GameState) => {
   gameState.isGameOver = true;
   gameState.phase = 'endgame';
 
-  // Calculate scores and determine winner
+  const playerCount = gameState.players.length;
+
+  if (playerCount === 0) {
+    gameState.winner = undefined;
+    return;
+  }
+
+  // Find player(s) with highest total Regret Value
+  const playersWithRegretValue = gameState.players.map(player => ({
+    player,
+    regretValue: calculatePlayerRegretValue(player)
+  }));
+
+  const maxRegretValue = Math.max(...playersWithRegretValue.map(p => p.regretValue));
+
+  // Apply penalty to player(s) with highest regret value
+  playersWithRegretValue
+    .filter(p => p.regretValue === maxRegretValue && maxRegretValue > 0)
+    .forEach(({ player }) => {
+      if (player.mountedFish.length > 0) {
+        const regretCount = player.regrets.length;
+
+        // Calculate actual values with madness for comparison
+        const mountsWithValues = player.mountedFish.map((mount, index) => ({
+          mount,
+          index,
+          value: calculateFishValueWithMadness(mount.fish, regretCount) * mount.multiplier
+        }));
+
+        // Sort by value
+        mountsWithValues.sort((a, b) => a.value - b.value);
+
+        // 2 players: discard lowest value, 3+ players: discard highest value
+        const mountToDiscard = playerCount === 2
+          ? mountsWithValues[0] // Lowest
+          : mountsWithValues[mountsWithValues.length - 1]; // Highest
+
+        if (mountToDiscard) {
+          player.mountedFish.splice(mountToDiscard.index, 1);
+        }
+      }
+    });
+
+  // Calculate final scores after penalties
   const scores = gameState.players.map(player => ({
     player,
     ...calculatePlayerScoreBreakdown(player)
   }));
 
-  if (scores.length === 0) {
-    gameState.winner = undefined;
-    return;
-  }
-
-  // Apply regret penalty to highest regret value player
-  const highestRegretPlayer = scores.reduce((max, current) =>
-    current.regretValue > max.regretValue ? current : max
-  , scores[0]);
-
-  if (highestRegretPlayer.player.mountedFish.length > 0) {
-    // Remove highest value mounted fish
-    const highestMount = highestRegretPlayer.player.mountedFish.reduce((max, current) => {
-      const maxValue = getFishCurrentValue(max.fish) * max.multiplier;
-      const currentValue = getFishCurrentValue(current.fish) * current.multiplier;
-      return currentValue > maxValue ? current : max;
-    });
-    const penaltyValue = getFishCurrentValue(highestMount.fish) * highestMount.multiplier;
-    const mountIndex = highestRegretPlayer.player.mountedFish.indexOf(highestMount);
-    if (mountIndex >= 0) {
-      highestRegretPlayer.player.mountedFish.splice(mountIndex, 1);
+  // Determine winner (highest score, ties broken by lower regret value, then fewer regret cards)
+  const sortedScores = [...scores].sort((a, b) => {
+    if (b.totalScore !== a.totalScore) {
+      return b.totalScore - a.totalScore;
     }
-    highestRegretPlayer.mountedScore = Math.max(0, highestRegretPlayer.mountedScore - penaltyValue);
-    highestRegretPlayer.totalScore = Math.max(0, highestRegretPlayer.totalScore - penaltyValue);
-  }
+    if (a.regretValue !== b.regretValue) {
+      return a.regretValue - b.regretValue; // Lower regret value wins tie
+    }
+    return a.player.regrets.length - b.player.regrets.length; // Fewer cards wins tie
+  });
 
-  // Determine winner
-  const winner = scores.reduce((max, current) =>
-    current.totalScore > max.totalScore ? current : max
-  , scores[0]);
-
-  gameState.winner = winner.player.name;
+  gameState.winner = sortedScores[0]?.player.name;
 };
