@@ -16,15 +16,15 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { calculateFishSaleValue } from '@/utils/gameEngine';
+import { calculateFishSaleValue, hasPortDiscount } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
 import { TACKLE_DICE } from '@/data/tackleDice';
-import { GameState } from '@/types/game';
+import { GameState, GameAction } from '@/types/game';
 import { cn } from '@/lib/utils';
 
 interface PortBoardProps {
   gameState: GameState;
-  onAction: (action: any) => void;
+  onAction: (action: GameAction) => void;
   className?: string;
 }
 
@@ -37,59 +37,70 @@ interface UpgradeOptionProps {
   };
   canInteract: boolean;
   funds: number;
+  hasDiscount: boolean;
   onConfirm: (upgradeId: string, cost: number) => void;
 }
 
-const UpgradeOption = ({ item, canInteract, funds, onConfirm }: UpgradeOptionProps) => (
-  <Card className="card-game border border-border/60">
-    <CardHeader className="py-3">
-      <CardTitle className="text-sm font-semibold flex items-center justify-between">
-        <span>{item.name}</span>
-        <span className="text-primary-glow">${item.cost}</span>
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="pt-0 text-xs text-muted-foreground">
-      <p className="mb-3 leading-relaxed">{item.description}</p>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            size="sm"
-            className="btn-ocean w-full"
-            disabled={!canInteract || funds < item.cost}
-          >
-            Purchase Upgrade
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
-          <DialogHeader>
-            <DialogTitle>Confirm Purchase</DialogTitle>
-            <DialogDescription>
-              Spend <span className="text-primary-glow font-semibold">${item.cost}</span> to acquire the {item.name}.
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            You currently hold <span className="font-semibold text-primary-glow">${funds}</span>. After purchase you&apos;ll have{' '}
-            <span className="font-semibold text-primary-glow">${Math.max(funds - item.cost, 0)}</span> remaining.
-          </p>
-          <DialogFooter className="pt-4">
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button
-                className="btn-ocean"
-                disabled={!canInteract || funds < item.cost}
-                onClick={() => onConfirm(item.id, item.cost)}
-              >
-                Confirm Purchase
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </CardContent>
-  </Card>
-);
+const UpgradeOption = ({ item, canInteract, funds, hasDiscount, onConfirm }: UpgradeOptionProps) => {
+  const effectiveCost = hasDiscount ? Math.max(0, item.cost - 1) : item.cost;
+
+  return (
+    <Card className="card-game border border-border/60">
+      <CardHeader className="py-3">
+        <CardTitle className="text-sm font-semibold flex items-center justify-between">
+          <span>{item.name}</span>
+          <span className="flex items-center gap-1">
+            {hasDiscount && item.cost > 0 && (
+              <span className="text-muted-foreground line-through text-xs">${item.cost}</span>
+            )}
+            <span className={hasDiscount ? 'text-green-400' : 'text-primary-glow'}>${effectiveCost}</span>
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0 text-xs text-muted-foreground">
+        <p className="mb-3 leading-relaxed">{item.description}</p>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              size="sm"
+              className="btn-ocean w-full"
+              disabled={!canInteract || funds < effectiveCost}
+            >
+              Purchase Upgrade
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
+            <DialogHeader>
+              <DialogTitle>Confirm Purchase</DialogTitle>
+              <DialogDescription>
+                Spend <span className={hasDiscount ? 'text-green-400 font-semibold' : 'text-primary-glow font-semibold'}>${effectiveCost}</span>
+                {hasDiscount && <span className="text-green-400 text-xs ml-1">(rabatt!)</span>} to acquire the {item.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              You currently hold <span className="font-semibold text-primary-glow">${funds}</span>. After purchase you&apos;ll have{' '}
+              <span className="font-semibold text-primary-glow">${Math.max(funds - effectiveCost, 0)}</span> remaining.
+            </p>
+            <DialogFooter className="pt-4">
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <DialogClose asChild>
+                <Button
+                  className="btn-ocean"
+                  disabled={!canInteract || funds < effectiveCost}
+                  onClick={() => onConfirm(item.id, effectiveCost)}
+                >
+                  Confirm Purchase
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};
 
 export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
@@ -142,14 +153,24 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
     }
   };
 
+  const hasDiscount = hasPortDiscount(currentPlayer.regrets.length);
+
   const summaryHeader = (
     <div className="flex items-center justify-between rounded border border-border/60 bg-background/60 px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">
       <span>
         Funds: <span className="text-primary-glow font-semibold">${currentPlayer.fishbucks}</span>
       </span>
-      <span>
-        Madness: <span className="text-destructive font-semibold">{currentPlayer.madnessLevel}</span>
-      </span>
+      <div className="flex items-center gap-3">
+        {hasDiscount && (
+          <span className="flex items-center gap-1 rounded bg-green-500/20 px-2 py-0.5 text-green-400">
+            <CircleDollarSign className="h-3 w-3" />
+            -$1 rabatt
+          </span>
+        )}
+        <span>
+          Madness: <span className="text-destructive font-semibold">{currentPlayer.madnessLevel}</span>
+        </span>
+      </div>
     </div>
   );
 
@@ -502,7 +523,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.rods.length > 0 ? (
                   gameState.port.shops.rods.map((rod) => (
-                    <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
@@ -524,7 +545,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.reels.length > 0 ? (
                   gameState.port.shops.reels.map((reel) => (
-                    <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
@@ -546,7 +567,7 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.supplies.length > 0 ? (
                   gameState.port.shops.supplies.map((supply) => (
-                    <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>

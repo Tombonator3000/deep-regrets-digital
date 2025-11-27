@@ -125,11 +125,87 @@ export interface GameState {
   lastPlayerTurnsRemaining?: number; // For last-to-pass rule: 2 at sea, 4 at port
 }
 
-export interface GameAction {
-  type: string;
-  playerId: string;
-  payload: any;
+// Specific action payload types for type safety
+export interface InitGamePayload {
+  gameId: string;
+  players: Player[];
+  currentPlayerIndex: number;
+  firstPlayerIndex: number;
+  day: Day;
+  phase: GamePhase;
+  sea: GameState['sea'];
+  port: GameState['port'];
+  lifePreserverOwner?: string;
+  fishCoinOwner?: string;
+  omenDieValue: number;
+  isGameOver: boolean;
+  winner?: string;
 }
+
+export interface ChangeLocationPayload {
+  location: Location;
+}
+
+export interface RevealFishPayload {
+  depth: number;
+  shoal: number;
+}
+
+export interface DescendPayload {
+  targetDepth: number;
+}
+
+export interface CatchFishPayload {
+  fish: FishCard;
+  depth: number;
+  shoal: number;
+  diceIndices: number[];
+  tackleDiceIndices?: number[];
+}
+
+export interface SellFishPayload {
+  fishId: string;
+}
+
+export interface BuyUpgradePayload {
+  upgradeId: string;
+}
+
+export interface BuyTackleDicePayload {
+  dieId: string;
+  count: number;
+}
+
+export interface MountFishPayload {
+  fishId: string;
+  slot: number;
+}
+
+export interface MoveToDepthPayload {
+  newDepth: number;
+}
+
+// Union type for all game actions
+export type GameAction =
+  | { type: 'INIT_GAME'; playerId: string; payload: GameState }
+  | { type: 'RESET_GAME'; playerId: string; payload: Record<string, never> }
+  | { type: 'CHANGE_LOCATION'; playerId: string; payload: ChangeLocationPayload }
+  | { type: 'DECLARE_LOCATION'; playerId: string; payload: ChangeLocationPayload }
+  | { type: 'REVEAL_FISH'; playerId: string; payload: RevealFishPayload }
+  | { type: 'DESCEND'; playerId: string; payload: DescendPayload }
+  | { type: 'MOVE_DEEPER'; playerId: string; payload: MoveToDepthPayload }
+  | { type: 'CATCH_FISH'; playerId: string; payload: CatchFishPayload }
+  | { type: 'SELL_FISH'; playerId: string; payload: SellFishPayload }
+  | { type: 'BUY_UPGRADE'; playerId: string; payload: BuyUpgradePayload }
+  | { type: 'BUY_TACKLE_DICE'; playerId: string; payload: BuyTackleDicePayload }
+  | { type: 'USE_LIFE_PRESERVER'; playerId: string; payload: Record<string, never> }
+  | { type: 'DRAW_DINK'; playerId: string; payload: Record<string, never> }
+  | { type: 'DISCARD_REGRET'; playerId: string; payload: Record<string, never> }
+  | { type: 'MOUNT_FISH'; playerId: string; payload: MountFishPayload }
+  | { type: 'ROLL_DICE'; playerId: string; payload: Record<string, never> }
+  | { type: 'PASS'; playerId: string; payload: Record<string, never> }
+  | { type: 'NEXT_PHASE'; playerId: string; payload: Record<string, never> }
+  | { type: 'END_TURN'; playerId: string; payload: Record<string, never> };
 
 export interface CharacterOption {
   id: string;

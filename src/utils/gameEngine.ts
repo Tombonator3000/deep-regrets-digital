@@ -1,4 +1,4 @@
-import { GameState, Player, GameAction, CharacterOption, Depth, FishCard } from '@/types/game';
+import { GameState, Player, GameAction, CharacterOption, Depth, FishCard, GamePhase } from '@/types/game';
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
@@ -68,17 +68,16 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
   });
 
   // Create shoals for each depth
-  const createShoals = (fishList: typeof ALL_FISH) => {
+  const createShoals = (fishList: typeof ALL_FISH): FishCard[][] => {
     const shuffled = shuffle(fishList);
-    const shoals = [[], [], []] as any[];
-    
+    const shoals: FishCard[][] = [[], [], []];
+
     // Distribute 13 fish per shoal
     for (let i = 0; i < 39 && i < shuffled.length; i++) {
       const shoalIndex = i % 3;
-      if (!shoals[shoalIndex]) shoals[shoalIndex] = [];
       shoals[shoalIndex].push(shuffled[i]);
     }
-    
+
     return shoals;
   };
 
@@ -406,7 +405,26 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'REVEAL_FISH':
-      // Simple reveal logic - fish is already visible in this implementation
+      // Per rulebook: Revealing a fish costs 1 fresh die
+      if (player && player.location === 'sea' && player.freshDice.length > 0) {
+        const { depth, shoal } = action.payload;
+        const shoalArray = newState.sea.shoals[depth]?.[shoal];
+
+        // Only charge if there's a fish to reveal
+        if (shoalArray && shoalArray.length > 0) {
+          // Spend the lowest value die for reveal (player choice could be added later)
+          const lowestIndex = player.freshDice.reduce(
+            (minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx,
+            0
+          );
+          const spentDie = player.freshDice[lowestIndex];
+          player.freshDice = [
+            ...player.freshDice.slice(0, lowestIndex),
+            ...player.freshDice.slice(lowestIndex + 1)
+          ];
+          player.spentDice = [...player.spentDice, spentDie];
+        }
+      }
       break;
 
     case 'DESCEND':
@@ -486,25 +504,24 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const meetsDifficulty = isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty);
 
         if (meetsDifficulty) {
-          // Remove fresh dice
-          const removalOrder = [...uniqueValidIndices].sort((a, b) => b - a);
-          removalOrder.forEach(index => {
-            player.freshDice.splice(index, 1);
-          });
+          // Remove fresh dice (immutable)
+          const indexSetToRemove = new Set(uniqueValidIndices);
+          player.freshDice = player.freshDice.filter((_, idx) => !indexSetToRemove.has(idx));
           player.spentDice = [...player.spentDice, ...selectedDiceValues];
 
-          // Remove used tackle dice (they are consumed on use)
-          const tackleRemovalOrder = [...uniqueTackleIndices].sort((a, b) => b - a);
-          tackleRemovalOrder.forEach(index => {
-            player.tackleDice.splice(index, 1);
-          });
+          // Remove used tackle dice (immutable - they are consumed on use)
+          const tackleIndexSetToRemove = new Set(uniqueTackleIndices);
+          player.tackleDice = player.tackleDice.filter((_, idx) => !tackleIndexSetToRemove.has(idx));
 
-          player.handFish.push(fish);
+          player.handFish = [...player.handFish, fish];
 
           const shoalArray = newState.sea.shoals[depth][shoal];
           const fishIndex = shoalArray.findIndex((f: FishCard) => f.id === fish.id);
           if (fishIndex >= 0) {
-            shoalArray.splice(fishIndex, 1);
+            newState.sea.shoals[depth][shoal] = [
+              ...shoalArray.slice(0, fishIndex),
+              ...shoalArray.slice(fishIndex + 1)
+            ];
           }
 
           // Process fish abilities
@@ -534,7 +551,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
                 f.tags.includes('small') && f.id !== fish.id
               );
               if (smallFishIndex >= 0) {
-                player.handFish.splice(smallFishIndex, 1);
+                player.handFish = [
+                  ...player.handFish.slice(0, smallFishIndex),
+                  ...player.handFish.slice(smallFishIndex + 1)
+                ];
               }
             }
           }
@@ -564,10 +584,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 
           if (shouldTakeDink) {
             if (player.freshDice.length > 0) {
-              const penaltyDie = player.freshDice.shift();
-              if (typeof penaltyDie === 'number') {
-                player.spentDice = [...player.spentDice, penaltyDie];
-              }
+              const penaltyDie = player.freshDice[0];
+              player.freshDice = player.freshDice.slice(1);
+              player.spentDice = [...player.spentDice, penaltyDie];
             }
 
             const { card, deck } = drawCard(newState.port.dinksDeck);
@@ -589,7 +608,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           // Use regret count for madness-based value calculation per rulebook
           const { adjustedValue } = calculateFishSaleValue(fish, player.regrets.length);
           player.fishbucks += adjustedValue;
-          player.handFish.splice(fishIndex, 1);
+          player.handFish = [
+            ...player.handFish.slice(0, fishIndex),
+            ...player.handFish.slice(fishIndex + 1)
+          ];
           if (fish.quality === 'foul') {
             drawRegret(player, newState);
           }
@@ -689,12 +711,18 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const slotOccupied = player.mountedFish.some(mount => mount.slot === slot);
         if (fishIndex >= 0 && !slotOccupied) {
           const fish = player.handFish[fishIndex];
-          player.mountedFish.push({
-            slot,
-            multiplier: getSlotMultiplier(slot),
-            fish
-          });
-          player.handFish.splice(fishIndex, 1);
+          player.mountedFish = [
+            ...player.mountedFish,
+            {
+              slot,
+              multiplier: getSlotMultiplier(slot),
+              fish
+            }
+          ];
+          player.handFish = [
+            ...player.handFish.slice(0, fishIndex),
+            ...player.handFish.slice(fishIndex + 1)
+          ];
         }
       }
       break;
@@ -985,7 +1013,10 @@ const removeHighestFreshDie = (player: Player) => {
       highestIndex = i;
     }
   }
-  player.freshDice.splice(highestIndex, 1);
+  player.freshDice = [
+    ...player.freshDice.slice(0, highestIndex),
+    ...player.freshDice.slice(highestIndex + 1)
+  ];
 };
 
 const discardHighestValueMount = (player: Player) => {
@@ -1001,7 +1032,10 @@ const discardHighestValueMount = (player: Player) => {
       highestValue = value;
     }
   }
-  player.mountedFish.splice(highestIndex, 1);
+  player.mountedFish = [
+    ...player.mountedFish.slice(0, highestIndex),
+    ...player.mountedFish.slice(highestIndex + 1)
+  ];
 };
 
 const enforceFreshDiceLimit = (player: Player) => {
@@ -1036,11 +1070,11 @@ const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
 };
 
 const advancePhase = (gameState: GameState) => {
-  const phases = ['start', 'refresh', 'declaration', 'action'] as const;
-  const currentIndex = phases.indexOf(gameState.phase as any);
-  if (currentIndex < phases.length - 1) {
+  const phases: readonly GamePhase[] = ['start', 'refresh', 'declaration', 'action'];
+  const currentIndex = phases.indexOf(gameState.phase);
+  if (currentIndex >= 0 && currentIndex < phases.length - 1) {
     gameState.phase = phases[currentIndex + 1];
-  } else {
+  } else if (gameState.phase !== 'endgame') {
     gameState.phase = 'start';
     advanceDay(gameState);
   }
@@ -1087,11 +1121,9 @@ const advanceDay = (gameState: GameState) => {
   const { shops } = gameState.port;
   (['rods', 'reels', 'supplies'] as const).forEach(category => {
     if (shops[category].length > 1) {
-      // Move first item to the end (simulating market rotation)
-      const first = shops[category].shift();
-      if (first) {
-        shops[category].push(first);
-      }
+      // Move first item to the end (simulating market rotation) - immutable
+      const first = shops[category][0];
+      shops[category] = [...shops[category].slice(1), first];
     }
   });
 
@@ -1155,7 +1187,10 @@ const endGame = (gameState: GameState) => {
 
     if (mountToDiscard) {
       const penaltyValue = mountToDiscard.value;
-      highestRegretPlayer.player.mountedFish.splice(mountToDiscard.index, 1);
+      highestRegretPlayer.player.mountedFish = [
+        ...highestRegretPlayer.player.mountedFish.slice(0, mountToDiscard.index),
+        ...highestRegretPlayer.player.mountedFish.slice(mountToDiscard.index + 1)
+      ];
       highestRegretPlayer.mountedScore = Math.max(0, highestRegretPlayer.mountedScore - penaltyValue);
       highestRegretPlayer.totalScore = Math.max(0, highestRegretPlayer.totalScore - penaltyValue);
     }
