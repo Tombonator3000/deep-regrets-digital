@@ -14,10 +14,7 @@ const useBrinyDeepBackground = () => {
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try to dynamically import the background image
-    // This uses a variable to prevent Vite from bundling it statically
-    const imagePath = 'briny-deep-background.png';
-    import(`@/assets/${imagePath}`)
+    import('@/assets/briny-deep-background.png')
       .then((module) => {
         setBackgroundUrl(module.default);
       })
