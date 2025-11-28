@@ -166,59 +166,107 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                       const hasPlug = gameState.sea.plugActive &&
                         gameState.sea.plugCursor.depth === depth &&
                         gameState.sea.plugCursor.shoal === shoalIndex;
+                      const shoalKey = `${depth}-${shoalIndex}`;
+                      const isRevealed = gameState.sea.revealedShoals?.[shoalKey] ?? false;
+                      const fishCount = shoal.length;
 
                       return (
-                        <Card
+                        <div
                           key={`${depth}-${shoalIndex}`}
-                          role={canInteract && !shoalEmpty ? 'button' : undefined}
-                          tabIndex={canInteract && !shoalEmpty ? 0 : -1}
-                          aria-label={
-                            shoalEmpty
-                              ? `Shoal ${shoalIndex + 1} at depth ${depth} is empty`
-                              : `${topFish?.name ?? 'Unknown fish'} in shoal ${shoalIndex + 1} at depth ${depth}`
-                          }
-                          onClick={() => canInteract && !shoalEmpty && onShoalSelect({ depth, shoal: shoalIndex })}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' && canInteract && !shoalEmpty) {
-                              onShoalSelect({ depth, shoal: shoalIndex });
-                            }
-                          }}
-                          className={`shoal-card relative overflow-hidden rounded border bg-slate-950/70 p-1 text-white shadow backdrop-blur transition-all h-full flex flex-col ${
-                            isSelected ? 'border-primary ring-1 ring-primary/70' : 'border-transparent'
-                          } ${
-                            hasPlug ? 'border-destructive/70 ring-1 ring-destructive/50' : ''
-                          } ${
-                            shoalEmpty ? 'opacity-40' : ''
-                          } ${
-                            canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 active:scale-[0.98]' : 'cursor-not-allowed'
-                          }`}
+                          className="relative h-full"
                         >
-                          {hasPlug && (
-                            <div className="absolute -top-1 -right-1 z-10">
-                              <PlugMarker size="sm" animated />
-                            </div>
+                          {/* Stacked cards effect - show cards underneath */}
+                          {!shoalEmpty && fishCount > 1 && (
+                            <>
+                              {fishCount > 2 && (
+                                <div
+                                  className="absolute inset-0 rounded border border-white/10 bg-slate-900/60"
+                                  style={{ transform: 'translate(4px, 4px)', zIndex: 0 }}
+                                />
+                              )}
+                              <div
+                                className="absolute inset-0 rounded border border-white/15 bg-slate-900/70"
+                                style={{ transform: 'translate(2px, 2px)', zIndex: 1 }}
+                              />
+                            </>
                           )}
+                          <Card
+                            role={canInteract && !shoalEmpty ? 'button' : undefined}
+                            tabIndex={canInteract && !shoalEmpty ? 0 : -1}
+                            aria-label={
+                              shoalEmpty
+                                ? `Shoal ${shoalIndex + 1} at depth ${depth} is empty`
+                                : isRevealed
+                                  ? `${topFish?.name ?? 'Unknown fish'} in shoal ${shoalIndex + 1} at depth ${depth}`
+                                  : `Hidden fish in shoal ${shoalIndex + 1} at depth ${depth}. Click to reveal.`
+                            }
+                            onClick={() => canInteract && !shoalEmpty && onShoalSelect({ depth, shoal: shoalIndex })}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' && canInteract && !shoalEmpty) {
+                                onShoalSelect({ depth, shoal: shoalIndex });
+                              }
+                            }}
+                            className={`shoal-card relative overflow-hidden rounded border bg-slate-950/70 p-1 text-white shadow backdrop-blur transition-all h-full flex flex-col ${
+                              isSelected ? 'border-primary ring-1 ring-primary/70' : 'border-transparent'
+                            } ${
+                              hasPlug ? 'border-destructive/70 ring-1 ring-destructive/50' : ''
+                            } ${
+                              shoalEmpty ? 'opacity-40' : ''
+                            } ${
+                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 active:scale-[0.98]' : 'cursor-not-allowed'
+                            }`}
+                            style={{ position: 'relative', zIndex: 2 }}
+                          >
+                            {hasPlug && (
+                              <div className="absolute -top-1 -right-1 z-10">
+                                <PlugMarker size="sm" animated />
+                              </div>
+                            )}
 
-                          {shoalEmpty ? (
-                            <div className="flex flex-1 items-center justify-center text-center">
-                              <Waves className="h-4 w-4 text-white/30" />
-                            </div>
-                          ) : (
-                            <div className="flex flex-col flex-1 justify-between">
-                              <div className="text-xs font-medium text-white leading-tight line-clamp-2">
-                                {topFish?.name ?? '?'}
-                              </div>
-                              <div className="flex gap-1 mt-auto">
-                                <Badge className="bg-fishbuck/90 text-slate-900 text-[10px] px-1 py-0">
-                                  ${topFish?.value ?? '?'}
-                                </Badge>
-                                <Badge className="bg-destructive/90 text-white text-[10px] px-1 py-0">
-                                  {topFish?.difficulty ?? '?'}
+                            {/* Fish count indicator */}
+                            {!shoalEmpty && fishCount > 1 && (
+                              <div className="absolute top-0.5 right-0.5 z-10">
+                                <Badge className="bg-slate-700/90 text-white/80 text-[9px] px-1 py-0 min-w-[1rem] text-center">
+                                  {fishCount}
                                 </Badge>
                               </div>
-                            </div>
-                          )}
-                        </Card>
+                            )}
+
+                            {shoalEmpty ? (
+                              <div className="flex flex-1 items-center justify-center text-center">
+                                <Waves className="h-4 w-4 text-white/30" />
+                              </div>
+                            ) : isRevealed ? (
+                              <div className="flex flex-col flex-1 justify-between">
+                                <div className="text-xs font-medium text-white leading-tight line-clamp-2">
+                                  {topFish?.name ?? '?'}
+                                </div>
+                                <div className="flex gap-1 mt-auto">
+                                  <Badge className="bg-fishbuck/90 text-slate-900 text-[10px] px-1 py-0">
+                                    ${topFish?.value ?? '?'}
+                                  </Badge>
+                                  <Badge className="bg-destructive/90 text-white text-[10px] px-1 py-0">
+                                    {topFish?.difficulty ?? '?'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ) : (
+                              /* Hidden fish - face-down card */
+                              <div className="flex flex-1 flex-col items-center justify-center text-center">
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                  {/* Card back pattern */}
+                                  <div className="absolute inset-1 rounded bg-gradient-to-br from-cyan-900/40 via-blue-900/50 to-purple-900/40 border border-white/10">
+                                    <div className="absolute inset-0 opacity-30" style={{
+                                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)'
+                                    }} />
+                                  </div>
+                                  <Fish className="h-5 w-5 text-white/40 z-10" />
+                                </div>
+                                <span className="text-[9px] text-white/50 mt-auto">Tap to reveal</span>
+                              </div>
+                            )}
+                          </Card>
+                        </div>
                       );
                     })}
                   </div>

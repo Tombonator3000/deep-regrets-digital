@@ -101,6 +101,9 @@ export interface GameState {
     graveyards: {
       [depth: number]: FishCard[];
     };
+    revealedShoals: {
+      [key: string]: boolean; // key format: "depth-shoal" e.g. "1-0"
+    };
     plugActive: boolean;
     plugCursor: {
       depth: number;
