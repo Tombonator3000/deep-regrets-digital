@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
 import { getAbilityDescription } from '@/utils/abilityDescriptions';
 import { AlertTriangle, ArrowDown, Eye, Fish, HelpCircle, Lightbulb } from 'lucide-react';
+import { OverfishingWarning } from './OverfishingWarning';
 
 interface FishingActionsProps {
   gameState: GameState;
@@ -39,8 +40,13 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   // Check if selected shoal has fish and if it's revealed
   const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
   const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
-  const shoalHasFish = selectedShoal && gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length > 0;
+  const shoalFishCount = selectedShoal ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length : 0;
+  const shoalHasFish = shoalFishCount > 0;
   const canRevealFish = shoalHasFish && !isShoalRevealed && currentPlayer.freshDice.length > 0;
+
+  // Check for overfishing (last fish in shoal)
+  const isLastFishInShoal = shoalFishCount === 1;
+  const isAlmostEmpty = shoalFishCount === 2;
 
   // Only show fish info if the shoal has been revealed (player paid the reveal cost)
   const revealedFish = (selectedShoal && isShoalRevealed)
@@ -379,6 +385,15 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                   </p>
                 )}
               </div>
+
+              {/* Overfishing Warning */}
+              {(isLastFishInShoal || isAlmostEmpty) && (
+                <OverfishingWarning
+                  fishName={revealedFish.name}
+                  isLastFish={isLastFishInShoal}
+                  fishRemaining={shoalFishCount}
+                />
+              )}
 
               <div className="grid gap-2">
                 <Tooltip>
