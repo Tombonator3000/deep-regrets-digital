@@ -35,8 +35,17 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   }
 
   const canMoveDeeper = currentPlayer.currentDepth < 3;
-  const canRevealFish = selectedShoal && gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length > 0;
-  const revealedFish = selectedShoal ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal][0] : null;
+
+  // Check if selected shoal has fish and if it's revealed
+  const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
+  const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
+  const shoalHasFish = selectedShoal && gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal].length > 0;
+  const canRevealFish = shoalHasFish && !isShoalRevealed && currentPlayer.freshDice.length > 0;
+
+  // Only show fish info if the shoal has been revealed (player paid the reveal cost)
+  const revealedFish = (selectedShoal && isShoalRevealed)
+    ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal][0]
+    : null;
   const handleMoveDeeper = () => {
     if (canMoveDeeper) {
       onAction({
@@ -182,7 +191,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
         </Tooltip>
 
         {/* Reveal Fish */}
-        {selectedShoal && (
+        {selectedShoal && shoalHasFish && !isShoalRevealed && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -192,10 +201,14 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
               >
                 <Eye className="h-4 w-4" />
                 Avslør Fisk i Shoal {selectedShoal.shoal + 1}
+                {currentPlayer.freshDice.length === 0 && ' (Ingen terninger)'}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Koster 1 frisk terning. Se hva som gjemmer seg i denne shoalen.</p>
+              {currentPlayer.freshDice.length > 0
+                ? <p>Koster 1 frisk terning. Se hva som gjemmer seg i denne shoalen.</p>
+                : <p>Du trenger minst 1 frisk terning for å avsløre fisken.</p>
+              }
             </TooltipContent>
           </Tooltip>
         )}

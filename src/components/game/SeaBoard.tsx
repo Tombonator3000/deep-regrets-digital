@@ -71,22 +71,26 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
 
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-1 overflow-hidden">
-      {/* Compact Header */}
-      <div className="flex shrink-0 items-center justify-between rounded-lg border border-border/40 bg-slate-950/60 px-2 py-1">
-        <div className="flex items-center gap-2 text-xs">
-          <Waves className="h-4 w-4 text-primary" />
-          <span className="font-bold text-primary-glow">THE BRINY DEEP</span>
-          <span className="text-slate-200/80">
+      {/* Briny Deep Header Image */}
+      <div className="shrink-0 relative">
+        <img
+          src={brinyDeepHeader}
+          alt="The Briny Deep"
+          className="w-full h-auto rounded-lg border border-border/40"
+        />
+        {/* Overlay with depth info and plug status */}
+        <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
+          <span className="text-xs text-slate-200/90 bg-slate-950/70 px-2 py-0.5 rounded">
             Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
             {currentPlayer.location === 'port' && ' (In Port)'}
           </span>
+          {gameState.sea.plugActive && (
+            <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
+              <Skull className="mr-1 h-3 w-3" />
+              Plug Active!
+            </Badge>
+          )}
         </div>
-        {gameState.sea.plugActive && (
-          <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
-            <Skull className="mr-1 h-3 w-3" />
-            Plug Active!
-          </Badge>
-        )}
       </div>
 
       {/* Compact Depth Navigation */}
