@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull } from 'lucide-react';
+import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull, Ship } from 'lucide-react';
 import { RegretDeck } from './RegretCard';
+import { AnchorToken } from './GameTokens';
 
 import harborPortBoard from '@/assets/harbor-port-board.jpg';
 
@@ -186,6 +187,16 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
           className="h-48 w-full object-cover object-center sm:h-56"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
+        {/* Show anchor/ship when player is at port */}
+        {currentPlayer.location === 'port' && (
+          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2 rounded-lg bg-slate-900/80 px-3 py-2 backdrop-blur-sm border border-primary/30">
+            <AnchorToken size="sm" animated highlight />
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-primary">{currentPlayer.name}</span>
+              <span className="text-[10px] text-muted-foreground">I havnen</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="catch" className="space-y-4">

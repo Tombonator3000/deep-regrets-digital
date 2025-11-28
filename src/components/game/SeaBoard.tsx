@@ -2,9 +2,9 @@ import { GameState, DinkCard } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles, Ship } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
-import { PlugMarker, DepthMarker, LighthouseToken } from './GameTokens';
+import { PlugMarker, DepthMarker, LighthouseToken, BoatToken } from './GameTokens';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -274,6 +274,17 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                     <div className="flex items-center gap-1">
                       <span className="text-sm">{depthInfo.icon}</span>
                       <span className="text-xs font-medium text-white/80">D{depth}</span>
+                      {/* Ship icon showing player position */}
+                      {isCurrentDepth && currentPlayer.location === 'sea' && (
+                        <div className="relative z-20 ml-1">
+                          <BoatToken
+                            size="sm"
+                            animated
+                            highlight
+                            color="primary"
+                          />
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs text-white/50">
                       {shoals.reduce((acc, s) => acc + s.length, 0)} fish

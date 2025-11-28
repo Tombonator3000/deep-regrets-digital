@@ -4,7 +4,9 @@ import { StartScreen, GameSetup } from '@/components/StartScreen';
 import { CharacterSelection, SelectedCharacter } from '@/components/CharacterSelection';
 import { GameBoard } from '@/components/GameBoard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AITurnIndicator } from '@/components/game/AITurnIndicator';
 import { CharacterOption, GameState, GameAction } from '@/types/game';
+import { AIDecision } from '@/types/ai';
 import { initializeGame, gameReducer } from '@/utils/gameEngine';
 import { useToast } from '@/hooks/use-toast';
 import { useAudio } from '@/context/AudioContext';
@@ -21,6 +23,10 @@ const Index = () => {
   const { play, pause, isMusicEnabled, playBubbleSfx } = useAudio();
   const [hasStartedMusic, setHasStartedMusic] = useState(false);
   const aiActionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // AI turn state
+  const [isAIThinking, setIsAIThinking] = useState(false);
+  const [currentAIAction, setCurrentAIAction] = useState<AIDecision | null>(null);
 
   useEffect(() => {
     if (!isMusicEnabled) {
@@ -102,29 +108,51 @@ const Index = () => {
       clearTimeout(aiActionTimeoutRef.current);
     }
 
-    // Delay for visual feedback
-    const delay = currentPlayer.aiDifficulty === 'hard' ? 1000 :
-                  currentPlayer.aiDifficulty === 'medium' ? 800 : 500;
+    // Start thinking phase
+    setIsAIThinking(true);
+    setCurrentAIAction(null);
+
+    // Thinking delay based on difficulty
+    const thinkingDelay = currentPlayer.aiDifficulty === 'hard' ? 1200 :
+                          currentPlayer.aiDifficulty === 'medium' ? 900 : 600;
+
+    // Action display delay after thinking
+    const actionDisplayDelay = 800;
 
     aiActionTimeoutRef.current = setTimeout(() => {
+      // Generate the AI decision
       const aiDecision = generateAIAction(
         gameState,
         currentPlayer,
         currentPlayer.aiDifficulty || 'medium'
       );
 
-      dispatch(aiDecision.action);
+      // Show the decision (stop thinking, show action)
+      setIsAIThinking(false);
+      setCurrentAIAction(aiDecision);
 
-      // After AI action, move to next player
-      if (aiDecision.action.type !== 'PASS') {
-        dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
-      }
-    }, delay);
+      // Execute the action after displaying it
+      setTimeout(() => {
+        dispatch(aiDecision.action);
+
+        // After AI action, move to next player
+        if (aiDecision.action.type !== 'PASS') {
+          dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
+        }
+
+        // Clear the action display after a brief moment
+        setTimeout(() => {
+          setCurrentAIAction(null);
+        }, 300);
+      }, actionDisplayDelay);
+    }, thinkingDelay);
 
     return () => {
       if (aiActionTimeoutRef.current) {
         clearTimeout(aiActionTimeoutRef.current);
       }
+      setIsAIThinking(false);
+      setCurrentAIAction(null);
     };
   }, [gameState?.currentPlayerIndex, gameState?.phase, gameState?.players, gameState?.isGameOver]);
 
@@ -163,7 +191,10 @@ const Index = () => {
           </div>
         );
       }
-      
+
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      const showAIIndicator = currentPlayer?.isAI && (isAIThinking || currentAIAction);
+
       return (
         <ErrorBoundary onReset={handleNewGame}>
           <GameBoard
@@ -171,6 +202,14 @@ const Index = () => {
             onAction={handleGameAction}
             onNewGame={handleNewGame}
           />
+          {showAIIndicator && (
+            <AITurnIndicator
+              player={currentPlayer}
+              gameState={gameState}
+              currentAction={currentAIAction}
+              isThinking={isAIThinking}
+            />
+          )}
         </ErrorBoundary>
       );
     
