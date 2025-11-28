@@ -23,6 +23,8 @@ const Index = () => {
   const { play, pause, isMusicEnabled, playBubbleSfx, playRandomTrack } = useAudio();
   const [hasStartedMusic, setHasStartedMusic] = useState(false);
   const aiActionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastCharacters, setLastCharacters] = useState<SelectedCharacter[] | null>(null);
+  const [aiSpeedSetting, setAiSpeedSetting] = useState<GameSetup['aiSpeed']>('normal');
 
   // AI turn state
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -58,6 +60,7 @@ const Index = () => {
   const handleStartGame = (players: number, setup?: GameSetup) => {
     setPlayerCount(players);
     setGameSetup(setup);
+    setAiSpeedSetting(setup?.aiSpeed ?? 'normal');
     setCurrentScreen('character-selection');
     toast({
       title: "Welcome to Deep Regrets!",
@@ -67,8 +70,9 @@ const Index = () => {
     });
   };
 
-  const handleCharactersSelected = (characters: SelectedCharacter[]) => {
+  const startGameWithCharacters = (characters: SelectedCharacter[]) => {
     const newGameState = initializeGame(characters);
+    setPlayerCount(characters.length);
 
     // Mark AI players in the game state
     characters.forEach((char, index) => {
@@ -80,6 +84,7 @@ const Index = () => {
 
     dispatch({ type: 'INIT_GAME', playerId: 'system', payload: newGameState });
     setCurrentScreen('game');
+    setLastCharacters(characters);
 
     const aiCount = characters.filter(c => c.isAI).length;
     toast({
@@ -92,8 +97,32 @@ const Index = () => {
     playBubbleSfx();
   };
 
+  const handleCharactersSelected = (characters: SelectedCharacter[]) => {
+    startGameWithCharacters(characters);
+  };
+
   const handleBackToStart = () => {
+    if (aiActionTimeoutRef.current) {
+      clearTimeout(aiActionTimeoutRef.current);
+    }
+    setIsAIThinking(false);
+    setCurrentAIAction(null);
     setCurrentScreen('start');
+    setGameSetup(undefined);
+    dispatch({ type: 'RESET_GAME', playerId: 'system', payload: {} });
+  };
+
+  const handleRestartWithSameSetup = () => {
+    if (!lastCharacters) {
+      handleBackToStart();
+      return;
+    }
+
+    if (aiActionTimeoutRef.current) {
+      clearTimeout(aiActionTimeoutRef.current);
+    }
+
+    startGameWithCharacters(lastCharacters);
   };
 
   const handleGameAction = useCallback((action: GameAction) => {
@@ -119,12 +148,17 @@ const Index = () => {
     setIsAIThinking(true);
     setCurrentAIAction(null);
 
-    // Thinking delay based on difficulty
-    const thinkingDelay = currentPlayer.aiDifficulty === 'hard' ? 1200 :
-                          currentPlayer.aiDifficulty === 'medium' ? 900 : 600;
-
-    // Action display delay after thinking
-    const actionDisplayDelay = 800;
+    // Thinking delay based on difficulty and chosen AI speed
+    const baseThinkingDelay = currentPlayer.aiDifficulty === 'hard' ? 1200 :
+                              currentPlayer.aiDifficulty === 'medium' ? 900 : 600;
+    const aiSpeedPresets = {
+      slow: { thinkingMultiplier: 1.25, actionDisplayDelay: 1000 },
+      normal: { thinkingMultiplier: 1, actionDisplayDelay: 800 },
+      fast: { thinkingMultiplier: 0.6, actionDisplayDelay: 300 },
+    } as const;
+    const selectedSpeed = aiSpeedPresets[aiSpeedSetting] ?? aiSpeedPresets.normal;
+    const thinkingDelay = baseThinkingDelay * selectedSpeed.thinkingMultiplier;
+    const actionDisplayDelay = selectedSpeed.actionDisplayDelay;
 
     aiActionTimeoutRef.current = setTimeout(() => {
       // Generate the AI decision
@@ -161,12 +195,10 @@ const Index = () => {
       setIsAIThinking(false);
       setCurrentAIAction(null);
     };
-  }, [gameState?.currentPlayerIndex, gameState?.phase, gameState?.players, gameState?.isGameOver]);
+  }, [gameState?.currentPlayerIndex, gameState?.phase, gameState?.players, gameState?.isGameOver, aiSpeedSetting]);
 
-  const handleNewGame = () => {
-    setCurrentScreen('start');
-    setGameSetup(undefined);
-    dispatch({ type: 'RESET_GAME', playerId: 'system', payload: {} });
+  const handleErrorReset = () => {
+    handleBackToStart();
   };
 
   // Render current screen
@@ -203,11 +235,12 @@ const Index = () => {
       const showAIIndicator = currentPlayer?.isAI && (isAIThinking || currentAIAction);
 
       return (
-        <ErrorBoundary onReset={handleNewGame}>
+        <ErrorBoundary onReset={handleErrorReset}>
           <GameBoard
             gameState={gameState}
             onAction={handleGameAction}
-            onNewGame={handleNewGame}
+            onRestartGame={handleRestartWithSameSetup}
+            onBackToStart={handleBackToStart}
           />
           {showAIIndicator && (
             <AITurnIndicator

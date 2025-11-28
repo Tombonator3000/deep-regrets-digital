@@ -19,6 +19,7 @@ export interface GameSetup {
   humanPlayers: number;
   aiPlayers: number;
   aiDifficulty: 'easy' | 'medium' | 'hard';
+  aiSpeed: 'slow' | 'normal' | 'fast';
 }
 
 interface StartScreenProps {
@@ -26,11 +27,41 @@ interface StartScreenProps {
 }
 
 const FIRST_TIME_KEY = 'deep-regrets-first-time';
+const GAME_SETUP_STORAGE_KEY = 'deep-regrets-game-setup';
+
+const getStoredSetup = (): GameSetup | null => {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(GAME_SETUP_STORAGE_KEY);
+  if (!stored) return null;
+
+  try {
+    const parsed = JSON.parse(stored) as Partial<GameSetup>;
+    if (
+      typeof parsed.humanPlayers === 'number' &&
+      typeof parsed.aiPlayers === 'number' &&
+      (parsed.aiDifficulty === 'easy' || parsed.aiDifficulty === 'medium' || parsed.aiDifficulty === 'hard') &&
+      (parsed.aiSpeed === 'slow' || parsed.aiSpeed === 'normal' || parsed.aiSpeed === 'fast')
+    ) {
+      return {
+        humanPlayers: parsed.humanPlayers,
+        aiPlayers: parsed.aiPlayers,
+        aiDifficulty: parsed.aiDifficulty,
+        aiSpeed: parsed.aiSpeed,
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to parse stored game setup', error);
+  }
+
+  return null;
+};
 
 export const StartScreen = ({ onStartGame }: StartScreenProps) => {
-  const [humanPlayers, setHumanPlayers] = useState(1);
-  const [aiPlayers, setAiPlayers] = useState(1);
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const storedSetup = getStoredSetup();
+  const [humanPlayers, setHumanPlayers] = useState(storedSetup?.humanPlayers ?? 1);
+  const [aiPlayers, setAiPlayers] = useState(storedSetup?.aiPlayers ?? 1);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>(storedSetup?.aiDifficulty ?? 'medium');
+  const [aiSpeed, setAiSpeed] = useState<GameSetup['aiSpeed']>(storedSetup?.aiSpeed ?? 'normal');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
@@ -43,6 +74,23 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       setShowFirstTimeBanner(true);
     }
   }, []);
+
+  useEffect(() => {
+    const clampedAiPlayers = Math.min(aiPlayers, Math.max(0, 5 - humanPlayers));
+    if (clampedAiPlayers !== aiPlayers) {
+      setAiPlayers(clampedAiPlayers);
+    }
+  }, [aiPlayers, humanPlayers]);
+
+  useEffect(() => {
+    const setupToStore: GameSetup = {
+      humanPlayers,
+      aiPlayers,
+      aiDifficulty,
+      aiSpeed,
+    };
+    localStorage.setItem(GAME_SETUP_STORAGE_KEY, JSON.stringify(setupToStore));
+  }, [aiDifficulty, aiPlayers, aiSpeed, humanPlayers]);
 
   const dismissFirstTimeBanner = () => {
     localStorage.setItem(FIRST_TIME_KEY, 'true');
@@ -178,7 +226,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     type="button"
                     size="lg"
                     className="btn-ocean w-full justify-center text-lg font-semibold"
-                    onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty })}
+                    onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty, aiSpeed })}
                   >
                     {t('startScreen.newGame')}
                   </Button>
@@ -288,6 +336,41 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                       </Button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* AI Speed */}
+              {aiPlayers > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiSpeed')}</label>
+                  <div className="flex justify-center gap-2">
+                    {(['slow', 'normal', 'fast'] as const).map((speed) => (
+                      <Button
+                        key={speed}
+                        variant={aiSpeed === speed ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAiSpeed(speed)}
+                        className={`px-4 h-9 ${
+                          aiSpeed === speed
+                            ? speed === 'fast'
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : speed === 'normal'
+                                ? 'bg-primary hover:bg-primary/90'
+                                : 'bg-slate-600 hover:bg-slate-700'
+                            : 'border-primary/30 hover:border-primary'
+                        }`}
+                      >
+                        {t(`startScreen.${speed}`)}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">
+                    {aiSpeed === 'fast'
+                      ? t('startScreen.aiSpeedFast')
+                      : aiSpeed === 'slow'
+                        ? t('startScreen.aiSpeedSlow')
+                        : t('startScreen.aiSpeedNormal')}
+                  </p>
                 </div>
               )}
 
