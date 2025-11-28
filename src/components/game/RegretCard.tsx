@@ -8,6 +8,7 @@ interface RegretCardProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   onClick?: () => void;
+  rotation?: number;
 }
 
 const sizeClasses = {
@@ -72,17 +73,21 @@ export const RegretCard = ({
   faceUp = false,
   size = 'md',
   className = '',
-  onClick
+  onClick,
+  rotation = 0
 }: RegretCardProps) => {
   const sizeClass = sizeClasses[size];
   const [imageError, setImageError] = useState(false);
   const cardBackImage = useCardBackImage();
+
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
 
   // Show card back (the anchor/heart design)
   if (!faceUp || !regret) {
     return (
       <div
         className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-slate-600/50 cursor-pointer hover:scale-105 transition-transform ${className}`}
+        style={rotationStyle}
         onClick={onClick}
       >
         {cardBackImage && !imageError ? (
@@ -103,6 +108,7 @@ export const RegretCard = ({
   return (
     <div
       className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-destructive/50 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center p-1 cursor-pointer hover:scale-105 transition-transform ${className}`}
+      style={rotationStyle}
       onClick={onClick}
     >
       <div className="text-destructive text-[8px] font-bold mb-0.5">REGRET</div>

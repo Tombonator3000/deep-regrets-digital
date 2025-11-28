@@ -50,6 +50,7 @@ interface MiniCardProps {
   draggable?: boolean;
   onDragStart?: (e: DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: DragEvent<HTMLDivElement>) => void;
+  rotation?: number;
 }
 
 const MiniCard = ({
@@ -62,6 +63,7 @@ const MiniCard = ({
   draggable = false,
   onDragStart,
   onDragEnd,
+  rotation = 0,
 }: MiniCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -76,10 +78,15 @@ const MiniCard = ({
     onDragEnd?.(e);
   };
 
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? {
+    transform: `rotate(${rotation}deg)`,
+    ...style,
+  } : style || {};
+
   const card = (
     <div
       className={`group relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer shadow-lg select-none ${className} ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}`}
-      style={style}
+      style={rotationStyle}
       onClick={onClick}
       draggable={draggable}
       onDragStart={handleDragStart}
@@ -130,9 +137,10 @@ interface FishMiniCardProps {
   onClick?: () => void;
   onEnlarge?: () => void;
   draggable?: boolean;
+  rotation?: number;
 }
 
-const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false }: FishMiniCardProps) => {
+const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false, rotation = 0 }: FishMiniCardProps) => {
   const qualityClass = fish.quality === 'foul'
     ? 'border-purple-500/60 bg-gradient-to-b from-purple-900/80 to-purple-950/90'
     : 'border-cyan-500/60 bg-gradient-to-b from-cyan-900/80 to-cyan-950/90';
@@ -154,6 +162,7 @@ const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false }: Fi
       onEnlarge={onEnlarge}
       draggable={draggable}
       onDragStart={handleDragStart}
+      rotation={rotation}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-primary">{fish.name}</div>
@@ -195,9 +204,10 @@ interface DinkMiniCardProps {
   onEnlarge?: () => void;
   draggable?: boolean;
   cardBackUrl?: string | null;
+  rotation?: number;
 }
 
-const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false, cardBackUrl }: DinkMiniCardProps) => {
+const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false, cardBackUrl, rotation = 0 }: DinkMiniCardProps) => {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     const dragData: CardDragData = {
       type: 'dink',
@@ -220,6 +230,7 @@ const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false, card
       onEnlarge={onEnlarge}
       draggable={draggable}
       onDragStart={handleDragStart}
+      rotation={rotation}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-amber-400">{dink.name}</div>
@@ -255,9 +266,10 @@ interface SupplyMiniCardProps {
   onClick?: () => void;
   onEnlarge?: () => void;
   draggable?: boolean;
+  rotation?: number;
 }
 
-const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false }: SupplyMiniCardProps) => {
+const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false, rotation = 0 }: SupplyMiniCardProps) => {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     const dragData: CardDragData = {
       type: 'supply',
@@ -275,6 +287,7 @@ const SupplyMiniCard = ({ supply, index, onClick, onEnlarge, draggable = false }
       onEnlarge={onEnlarge}
       draggable={draggable}
       onDragStart={handleDragStart}
+      rotation={rotation}
       tooltip={
         <div className="space-y-1">
           <div className="font-semibold text-emerald-400">{supply.name}</div>

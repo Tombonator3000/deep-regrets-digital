@@ -15,7 +15,7 @@ type CardType = 'fish' | 'dink' | 'supply';
 type AnyCard = FishCard | DinkCard | UpgradeCard;
 
 interface CardModalContextType {
-  openCard: (card: AnyCard, type: CardType) => void;
+  openCard: (card: AnyCard, type: CardType, rotation?: number) => void;
   closeCard: () => void;
   isOpen: boolean;
 }
@@ -38,10 +38,12 @@ export const CardModalProvider = ({ children }: CardModalProviderProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<AnyCard | null>(null);
   const [cardType, setCardType] = useState<CardType>('fish');
+  const [cardRotation, setCardRotation] = useState(0);
 
-  const openCard = useCallback((card: AnyCard, type: CardType) => {
+  const openCard = useCallback((card: AnyCard, type: CardType, rotation: number = 0) => {
     setSelectedCard(card);
     setCardType(type);
+    setCardRotation(rotation);
     setIsOpen(true);
   }, []);
 
@@ -56,7 +58,7 @@ export const CardModalProvider = ({ children }: CardModalProviderProps) => {
       <Dialog open={isOpen} onOpenChange={(open) => !open && closeCard()}>
         <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none">
           {selectedCard && (
-            <EnlargedCard card={selectedCard} type={cardType} onClose={closeCard} />
+            <EnlargedCard card={selectedCard} type={cardType} onClose={closeCard} rotation={cardRotation} />
           )}
         </DialogContent>
       </Dialog>
@@ -68,19 +70,20 @@ interface EnlargedCardProps {
   card: AnyCard;
   type: CardType;
   onClose: () => void;
+  rotation?: number;
 }
 
-const EnlargedCard = ({ card, type, onClose }: EnlargedCardProps) => {
+const EnlargedCard = ({ card, type, onClose, rotation = 0 }: EnlargedCardProps) => {
   if (type === 'fish') {
-    return <EnlargedFishCard fish={card as FishCard} onClose={onClose} />;
+    return <EnlargedFishCard fish={card as FishCard} onClose={onClose} rotation={rotation} />;
   }
   if (type === 'dink') {
-    return <EnlargedDinkCard dink={card as DinkCard} onClose={onClose} />;
+    return <EnlargedDinkCard dink={card as DinkCard} onClose={onClose} rotation={rotation} />;
   }
-  return <EnlargedSupplyCard supply={card as UpgradeCard} onClose={onClose} />;
+  return <EnlargedSupplyCard supply={card as UpgradeCard} onClose={onClose} rotation={rotation} />;
 };
 
-const EnlargedFishCard = ({ fish, onClose }: { fish: FishCard; onClose: () => void }) => {
+const EnlargedFishCard = ({ fish, onClose, rotation = 0 }: { fish: FishCard; onClose: () => void; rotation?: number }) => {
   const isFoul = fish.quality === 'foul';
   const bgGradient = isFoul
     ? 'from-purple-900 via-purple-800 to-purple-950'
@@ -88,8 +91,10 @@ const EnlargedFishCard = ({ fish, onClose }: { fish: FishCard; onClose: () => vo
   const borderColor = isFoul ? 'border-purple-400' : 'border-cyan-400';
   const accentColor = isFoul ? 'text-purple-300' : 'text-cyan-300';
 
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+
   return (
-    <div className={`relative w-80 rounded-2xl border-4 ${borderColor} bg-gradient-to-br ${bgGradient} shadow-2xl overflow-hidden`}>
+    <div className={`relative w-80 rounded-2xl border-4 ${borderColor} bg-gradient-to-br ${bgGradient} shadow-2xl overflow-hidden transition-transform`} style={rotationStyle}>
       {/* Close button */}
       <Button
         variant="ghost"
@@ -190,9 +195,11 @@ const EnlargedFishCard = ({ fish, onClose }: { fish: FishCard; onClose: () => vo
   );
 };
 
-const EnlargedDinkCard = ({ dink, onClose }: { dink: DinkCard; onClose: () => void }) => {
+const EnlargedDinkCard = ({ dink, onClose, rotation = 0 }: { dink: DinkCard; onClose: () => void; rotation?: number }) => {
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+
   return (
-    <div className="relative w-80 rounded-2xl border-4 border-amber-400 bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 shadow-2xl overflow-hidden">
+    <div className="relative w-80 rounded-2xl border-4 border-amber-400 bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 shadow-2xl overflow-hidden transition-transform" style={rotationStyle}>
       {/* Close button */}
       <Button
         variant="ghost"
@@ -281,7 +288,7 @@ const EnlargedDinkCard = ({ dink, onClose }: { dink: DinkCard; onClose: () => vo
   );
 };
 
-const EnlargedSupplyCard = ({ supply, onClose }: { supply: UpgradeCard; onClose: () => void }) => {
+const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: UpgradeCard; onClose: () => void; rotation?: number }) => {
   const typeColors = {
     rod: { border: 'border-blue-400', bg: 'from-blue-900 via-blue-800 to-blue-950', accent: 'text-blue-300' },
     reel: { border: 'border-indigo-400', bg: 'from-indigo-900 via-indigo-800 to-indigo-950', accent: 'text-indigo-300' },
@@ -289,8 +296,10 @@ const EnlargedSupplyCard = ({ supply, onClose }: { supply: UpgradeCard; onClose:
   };
   const colors = typeColors[supply.type] || typeColors.supply;
 
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+
   return (
-    <div className={`relative w-80 rounded-2xl border-4 ${colors.border} bg-gradient-to-br ${colors.bg} shadow-2xl overflow-hidden`}>
+    <div className={`relative w-80 rounded-2xl border-4 ${colors.border} bg-gradient-to-br ${colors.bg} shadow-2xl overflow-hidden transition-transform`} style={rotationStyle}>
       {/* Close button */}
       <Button
         variant="ghost"
