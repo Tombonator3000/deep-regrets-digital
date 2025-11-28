@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/context/FullscreenContext";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -10,7 +11,18 @@ const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+// Custom portal that uses fullscreen container when in fullscreen mode
+const DropdownMenuPortal = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Portal>) => {
+  const { containerRef, isFullscreen } = useFullscreenContainer();
+  return (
+    <DropdownMenuPrimitive.Portal
+      container={isFullscreen && containerRef?.current ? containerRef.current : undefined}
+      {...props}
+    >
+      {children}
+    </DropdownMenuPrimitive.Portal>
+  );
+};
 
 const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
@@ -56,7 +68,7 @@ const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+  <DropdownMenuPortal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
@@ -66,7 +78,7 @@ const DropdownMenuContent = React.forwardRef<
       )}
       {...props}
     />
-  </DropdownMenuPrimitive.Portal>
+  </DropdownMenuPortal>
 ));
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 

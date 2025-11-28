@@ -3,12 +3,24 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/context/FullscreenContext";
 
 const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal;
+// Custom portal that uses fullscreen container when in fullscreen mode
+const DialogPortal = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>) => {
+  const { containerRef, isFullscreen } = useFullscreenContainer();
+  return (
+    <DialogPrimitive.Portal
+      container={isFullscreen && containerRef?.current ? containerRef.current : undefined}
+      {...props}
+    >
+      {children}
+    </DialogPrimitive.Portal>
+  );
+};
 
 const DialogClose = DialogPrimitive.Close;
 

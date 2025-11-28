@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/context/FullscreenContext";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -11,7 +12,18 @@ const SheetTrigger = SheetPrimitive.Trigger;
 
 const SheetClose = SheetPrimitive.Close;
 
-const SheetPortal = SheetPrimitive.Portal;
+// Custom portal that uses fullscreen container when in fullscreen mode
+const SheetPortal = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof SheetPrimitive.Portal>) => {
+  const { containerRef, isFullscreen } = useFullscreenContainer();
+  return (
+    <SheetPrimitive.Portal
+      container={isFullscreen && containerRef?.current ? containerRef.current : undefined}
+      {...props}
+    >
+      {children}
+    </SheetPrimitive.Portal>
+  );
+};
 
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
