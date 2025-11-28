@@ -70,101 +70,68 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   });
 
   return (
-    <div className="briny-deep-board flex h-full min-h-0 flex-col gap-4">
-      {/* Board Header - The Briny Deep with artwork and gradient */}
-      <div className="relative shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-slate-950/60">
-        <img
-          src={brinyDeepHeader}
-          alt="The Briny Deep"
-          className="h-48 w-full object-cover object-top sm:h-56"
-        />
-        {/* Dark gradient overlay fading downward for readability */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/20 to-slate-950/90" />
-        {/* Status info overlaid on gradient */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 pb-4">
-          <div className="text-sm text-slate-200/90">
-            Current Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
+    <div className="briny-deep-board flex h-full min-h-0 flex-col gap-1 overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex shrink-0 items-center justify-between rounded-lg border border-border/40 bg-slate-950/60 px-2 py-1">
+        <div className="flex items-center gap-2 text-xs">
+          <Waves className="h-4 w-4 text-primary" />
+          <span className="font-bold text-primary-glow">THE BRINY DEEP</span>
+          <span className="text-slate-200/80">
+            Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
             {currentPlayer.location === 'port' && ' (In Port)'}
-          </div>
-          {gameState.sea.plugActive && (
-            <div className="flex items-center gap-2">
-              <PlugMarker size="sm" animated />
-              <Badge className="bg-destructive/20 text-destructive animate-pulse">
-                <Skull className="mr-1 h-3 w-3" />
-                The Plug is Active!
-              </Badge>
-            </div>
-          )}
+          </span>
         </div>
+        {gameState.sea.plugActive && (
+          <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
+            <Skull className="mr-1 h-3 w-3" />
+            Plug Active!
+          </Badge>
+        )}
       </div>
 
-      {/* Depth Navigation - Touch-friendly with swipe hint */}
+      {/* Compact Depth Navigation */}
       {currentPlayer.location === 'sea' && (
-        <div className="space-y-2">
-          {/* Swipe hint for mobile */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground md:hidden">
-            <ChevronUp className="h-4 w-4 animate-bounce" />
-            <span>Swipe to navigate depths</span>
-            <ChevronDown className="h-4 w-4 animate-bounce" />
-          </div>
-          
-          <div className="flex items-center justify-center gap-2">
-            {[1, 2, 3].map((depth) => {
-              const isCurrentDepth = currentPlayer.currentDepth === depth;
-              const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
-              const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed;
-              const stepsNeeded = Math.abs(depth - currentPlayer.currentDepth);
+        <div className="shrink-0 flex items-center justify-center gap-1">
+          {[1, 2, 3].map((depth) => {
+            const isCurrentDepth = currentPlayer.currentDepth === depth;
+            const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
+            const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed;
 
-              return (
-                <Button
-                  key={depth}
-                  variant="outline"
-                  onClick={() => {
-                    if (canDescend) handleDescend(depth);
-                    else if (canAscend) handleAscend(depth);
-                  }}
-                  disabled={currentPlayer.hasPassed || isCurrentDepth}
-                  className={`relative flex-1 max-w-[140px] h-14 sm:h-12 touch-manipulation ${
-                    isCurrentDepth
-                      ? 'btn-ocean ring-2 ring-primary/50'
-                      : canDescend || canAscend
-                        ? 'border-primary/50 hover:border-primary hover:bg-primary/10 active:scale-95'
-                        : 'opacity-40'
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-bold">Depth {depth}</span>
-                    {canDescend && (
-                      <span className="flex items-center gap-1 text-xs opacity-80">
-                        <ArrowDown className="h-3 w-3" />
-                        {stepsNeeded} step{stepsNeeded > 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {canAscend && (
-                      <span className="flex items-center gap-1 text-xs opacity-80">
-                        <ArrowUp className="h-3 w-3" />
-                        {stepsNeeded} step{stepsNeeded > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                  {isCurrentDepth && (
-                    <div className="absolute -bottom-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-primary" />
-                  )}
-                </Button>
-              );
-            })}
-          </div>
+            return (
+              <Button
+                key={depth}
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (canDescend) handleDescend(depth);
+                  else if (canAscend) handleAscend(depth);
+                }}
+                disabled={currentPlayer.hasPassed || isCurrentDepth}
+                className={`h-8 px-3 touch-manipulation ${
+                  isCurrentDepth
+                    ? 'btn-ocean ring-1 ring-primary/50'
+                    : canDescend || canAscend
+                      ? 'border-primary/50 hover:border-primary hover:bg-primary/10 active:scale-95'
+                      : 'opacity-40'
+                }`}
+              >
+                <span className="text-xs font-bold">D{depth}</span>
+                {canDescend && <ArrowDown className="ml-1 h-3 w-3" />}
+                {canAscend && <ArrowUp className="ml-1 h-3 w-3" />}
+              </Button>
+            );
+          })}
         </div>
       )}
 
-      {/* The Deep Sea Board - Organized by Depth Rows with touch gestures */}
+      {/* The Deep Sea Board - NO SCROLLING */}
       <div 
-        className="flex-1 min-h-0 overflow-auto touch-pan-y"
+        className="flex-1 min-h-0 overflow-hidden touch-pan-y"
         {...touchHandlers}
       >
-        <div className={`relative mx-auto w-full max-w-4xl rounded-2xl border-2 border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-4 shadow-2xl transition-opacity ${isSwiping ? 'opacity-80' : ''}`}>
-          {/* Depth Rows - Like the physical board's 3 depth sections */}
-          <div className="space-y-4">
+        <div className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-1 shadow-xl transition-opacity flex flex-col ${isSwiping ? 'opacity-80' : ''}`}>
+          {/* Depth Rows - Compact */}
+          <div className="flex-1 flex flex-col gap-1 min-h-0">
             {[1, 2, 3].map((depth) => {
               const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
               const shoals = gameState.sea.shoals[depth] ?? [];
@@ -174,27 +141,23 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
               return (
                 <div
                   key={depth}
-                  className={`depth-row rounded-xl border-2 ${depthInfo.border} bg-gradient-to-r ${depthInfo.color} p-4 transition-all ${
-                    isCurrentDepth ? 'ring-2 ring-primary/50 ring-offset-2 ring-offset-slate-950' : ''
+                  className={`depth-row flex-1 min-h-0 rounded-lg border ${depthInfo.border} bg-gradient-to-r ${depthInfo.color} p-1 transition-all ${
+                    isCurrentDepth ? 'ring-1 ring-primary/50' : ''
                   } ${!isAccessible ? 'opacity-50' : ''}`}
                 >
-                  {/* Depth Header */}
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{depthInfo.icon}</span>
-                      <Badge className="bg-black/40 text-white">
-                        Depth {depth}
-                      </Badge>
-                      <span className="text-sm font-medium text-white/80">{depthInfo.label}</span>
+                  {/* Compact Depth Header */}
+                  <div className="mb-1 flex items-center justify-between px-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">{depthInfo.icon}</span>
+                      <span className="text-xs font-medium text-white/80">D{depth}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-white/60">
-                      <Fish className="h-3 w-3" />
-                      {shoals.reduce((acc, s) => acc + s.length, 0)} fish remaining
-                    </div>
+                    <span className="text-xs text-white/50">
+                      {shoals.reduce((acc, s) => acc + s.length, 0)} fish
+                    </span>
                   </div>
 
-                  {/* Shoals Row - 3 shoals per depth */}
-                  <div className="grid grid-cols-3 gap-3">
+                  {/* Shoals Row - Compact */}
+                  <div className="grid grid-cols-3 gap-1 h-[calc(100%-1.25rem)]">
                     {shoals.map((shoal, shoalIndex) => {
                       const isSelected = selectedShoal?.depth === depth && selectedShoal?.shoal === shoalIndex;
                       const topFish = shoal[0];
@@ -212,7 +175,7 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                           aria-label={
                             shoalEmpty
                               ? `Shoal ${shoalIndex + 1} at depth ${depth} is empty`
-                              : `${topFish?.name ?? 'Unknown fish'} in shoal ${shoalIndex + 1} at depth ${depth}. Difficulty ${topFish?.difficulty ?? 'unknown'}, value ${topFish?.value ?? 'unknown'}`
+                              : `${topFish?.name ?? 'Unknown fish'} in shoal ${shoalIndex + 1} at depth ${depth}`
                           }
                           onClick={() => canInteract && !shoalEmpty && onShoalSelect({ depth, shoal: shoalIndex })}
                           onKeyDown={(event) => {
@@ -220,76 +183,39 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                               onShoalSelect({ depth, shoal: shoalIndex });
                             }
                           }}
-                          className={`shoal-card relative overflow-hidden rounded-lg border-2 bg-slate-950/70 p-3 text-white shadow-lg backdrop-blur transition-all ${
-                            isSelected ? 'border-primary ring-2 ring-primary/70' : 'border-transparent'
+                          className={`shoal-card relative overflow-hidden rounded border bg-slate-950/70 p-1 text-white shadow backdrop-blur transition-all h-full flex flex-col ${
+                            isSelected ? 'border-primary ring-1 ring-primary/70' : 'border-transparent'
                           } ${
-                            hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50' : ''
+                            hasPlug ? 'border-destructive/70 ring-1 ring-destructive/50' : ''
                           } ${
                             shoalEmpty ? 'opacity-40' : ''
                           } ${
-                            canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-950/90 hover:scale-[1.02]' : 'cursor-not-allowed'
+                            canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 active:scale-[0.98]' : 'cursor-not-allowed'
                           }`}
                         >
-                          {/* Plug Marker Indicator */}
                           {hasPlug && (
-                            <div className="absolute -top-2 -right-2 z-10 animate-bounce-in">
+                            <div className="absolute -top-1 -right-1 z-10">
                               <PlugMarker size="sm" animated />
                             </div>
                           )}
 
-                          {/* Shoal Header */}
-                          <div className="mb-2 flex items-center justify-between text-xs">
-                            <span className="rounded bg-black/30 px-2 py-0.5 font-medium text-white/70">
-                              Shoal {shoalIndex + 1}
-                            </span>
-                            <span className="text-white/50">{shoal.length} fish</span>
-                          </div>
-
                           {shoalEmpty ? (
-                            <div className="flex h-20 items-center justify-center text-center">
-                              <div className="text-white/40">
-                                <Waves className="mx-auto mb-1 h-6 w-6 opacity-50" />
-                                <span className="text-xs">Empty Waters</span>
-                              </div>
+                            <div className="flex flex-1 items-center justify-center text-center">
+                              <Waves className="h-4 w-4 text-white/30" />
                             </div>
                           ) : (
-                            <div className="space-y-2">
-                              {/* Fish Name */}
-                              <div className="font-semibold text-white leading-tight">
-                                {topFish?.name ?? 'Unknown Catch'}
+                            <div className="flex flex-col flex-1 justify-between">
+                              <div className="text-xs font-medium text-white leading-tight line-clamp-2">
+                                {topFish?.name ?? '?'}
                               </div>
-
-                              {/* Stats Badges */}
-                              <div className="flex flex-wrap gap-1">
-                                <Badge className="bg-fishbuck/90 text-slate-900 text-xs px-2 py-0">
+                              <div className="flex gap-1 mt-auto">
+                                <Badge className="bg-fishbuck/90 text-slate-900 text-[10px] px-1 py-0">
                                   ${topFish?.value ?? '?'}
                                 </Badge>
-                                <Badge className="bg-destructive/90 text-white text-xs px-2 py-0">
+                                <Badge className="bg-destructive/90 text-white text-[10px] px-1 py-0">
                                   {topFish?.difficulty ?? '?'}
                                 </Badge>
-                                {topFish?.quality === 'foul' && (
-                                  <Badge className="bg-purple-600/90 text-white text-xs px-2 py-0">
-                                    Foul
-                                  </Badge>
-                                )}
                               </div>
-
-                              {/* Inspect Button */}
-                              <Button
-                                size="sm"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onShoalSelect({ depth, shoal: shoalIndex });
-                                  onInspectShoal?.({ depth, shoal: shoalIndex });
-                                }}
-                                disabled={!canInteract || shoalEmpty}
-                                className={`w-full text-xs h-7 ${
-                                  canInteract && !shoalEmpty ? 'btn-ocean' : 'bg-white/10 text-white/50'
-                                }`}
-                              >
-                                <Eye className="mr-1 h-3 w-3" />
-                                Inspect
-                              </Button>
                             </div>
                           )}
                         </Card>
@@ -303,30 +229,15 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
         </div>
       </div>
 
-      {/* Graveyards - Bottom section like physical board */}
-      <div className="shrink-0 rounded-xl border-2 border-destructive/20 bg-gradient-to-r from-slate-950/80 to-destructive/10 p-3 shadow-lg">
-        <div className="mb-2 flex items-center justify-center gap-2 text-xs uppercase tracking-wide text-destructive/80">
-          <Skull className="h-3 w-3" />
-          <span>The Graveyards</span>
-          <Skull className="h-3 w-3" />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3].map((depth) => {
-            const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
-            const graveyardCount = gameState.sea.graveyards[depth]?.length || 0;
-
-            return (
-              <div
-                key={`graveyard-${depth}`}
-                className={`rounded-lg border ${depthInfo.border} bg-black/40 p-3 text-center`}
-              >
-                <div className="text-xs text-white/60">Depth {depth}</div>
-                <div className="text-xl font-bold text-destructive/80">{graveyardCount}</div>
-                <div className="text-xs text-white/40">lost to the deep</div>
-              </div>
-            );
-          })}
-        </div>
+      {/* Compact Graveyards */}
+      <div className="shrink-0 flex items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-slate-950/60 px-2 py-1">
+        <Skull className="h-3 w-3 text-destructive/60" />
+        <span className="text-xs text-destructive/60">Graveyard:</span>
+        {[1, 2, 3].map((depth) => (
+          <span key={depth} className="text-xs text-white/60">
+            D{depth}: {gameState.sea.graveyards[depth]?.length || 0}
+          </span>
+        ))}
       </div>
     </div>
   );

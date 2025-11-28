@@ -241,10 +241,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         </div>
       )}
       
-      {/* Main Game Layout - Board Game Style */}
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-2 px-2 py-2 min-h-0 sm:gap-4 sm:px-4 sm:py-4">
+      {/* Main Game Layout - Board Game Style - NO SCROLLING */}
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-1 px-1 py-1 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2">
         {/* Compact Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-background/70 px-3 py-2 backdrop-blur sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/10 bg-background/70 px-2 py-1 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-base font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
             <Badge
@@ -357,10 +357,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
         </div>
 
-        {/* Responsive Board Game Layout */}
-        <div className="grid h-full min-h-0 gap-2 sm:gap-4 grid-cols-1 md:grid-cols-[minmax(240px,280px),1fr] lg:grid-cols-[minmax(260px,300px),1fr,minmax(260px,320px)] xl:grid-cols-[minmax(280px,320px),1fr,minmax(280px,340px)]">
+        {/* Responsive Board Game Layout - NO SCROLLING */}
+        <div className="grid h-full min-h-0 gap-1 sm:gap-2 grid-cols-1 md:grid-cols-[minmax(200px,240px),1fr] lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
-          <div className="hidden min-h-0 flex-col gap-2 overflow-y-auto sm:gap-4 md:flex">
+          <div className="hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
             <AnglerBoard
               player={currentPlayer}
               isCurrentPlayer={isPlayerTurn}
@@ -374,8 +374,8 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
 
           {/* Center Column - The Briny Deep (Sea Board) */}
-          <div className="min-h-0 overflow-hidden rounded-xl border border-white/10 bg-background/60 backdrop-blur sm:rounded-2xl">
-            <div className="h-full min-h-0 overflow-auto p-2 sm:p-4">
+          <div className="min-h-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 backdrop-blur sm:rounded-xl">
+            <div className="h-full min-h-0 overflow-hidden p-1 sm:p-2">
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
@@ -393,7 +393,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
 
           {/* Right Column - Actions Panel */}
-          <div className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-xl border border-white/10 bg-background/50 p-2 backdrop-blur sm:gap-4 sm:rounded-2xl sm:p-4 lg:flex">
+          <div className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-white/10 bg-background/50 p-1 backdrop-blur sm:gap-2 sm:rounded-xl sm:p-2 lg:flex">
             {/* Show compact player info on mobile/tablet */}
             <div className="md:hidden">
               <AnglerBoard
