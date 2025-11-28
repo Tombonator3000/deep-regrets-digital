@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { FishingActions } from './FishingActions';
@@ -19,6 +20,10 @@ import {
   Sunrise,
   Waves
 } from 'lucide-react';
+import { FishingWizard, getFishingStep } from './FishingWizard';
+import { LastToPassWarning } from './LastToPassWarning';
+import { DeclarationChoice } from './DeclarationChoice';
+import { CanOfWormsStatus } from './CanOfWormsPeek';
 
 interface ActionPanelProps {
   gameState: GameState;
@@ -80,6 +85,32 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
 
+  // Calculate if this player is the last active (all others have passed)
+  const activePlayers = gameState.players.filter(p => !p.hasPassed);
+  const isLastActive = activePlayers.length === 1 && activePlayers[0].id === currentPlayer.id;
+  const turnsRemaining = currentPlayer.location === 'sea' ? 2 : 4; // Sea=2, Port=4 turns
+
+  // Calculate fishing step for the wizard
+  const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
+  const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
+  const revealedFish = useMemo(() => {
+    if (!selectedShoal || !isShoalRevealed) return null;
+    const shoalFish = gameState.sea.shoals[selectedShoal.depth]?.[selectedShoal.shoal];
+    return shoalFish?.[0] || null;
+  }, [selectedShoal, isShoalRevealed, gameState.sea.shoals]);
+
+  const fishingStep = getFishingStep(
+    selectedShoal,
+    isShoalRevealed,
+    revealedFish,
+    currentPlayer.currentDepth,
+    revealedFish?.depth
+  );
+
+  // Check Can of Worms status
+  const hasCanOfWorms = currentPlayer.canOfWorms?.isActive ?? false;
+  const canOfWormsUsed = currentPlayer.canOfWorms?.isUsed ?? false;
+
   const handleNextPhase = () => {
     onAction({
       type: 'NEXT_PHASE',
@@ -129,11 +160,23 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         <Card className="card-game p-1.5 sm:p-2 shrink-0 hidden sm:block">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-primary-glow">{currentPlayer.name}</span>
-            <Badge className={`text-[10px] ${currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}`}>
-              {currentPlayer.location === 'sea' ? `Sea D${currentPlayer.currentDepth}` : 'Port'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <CanOfWormsStatus isAvailable={hasCanOfWorms} isUsed={canOfWormsUsed} />
+              <Badge className={`text-[10px] ${currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}`}>
+                {currentPlayer.location === 'sea' ? `Sea D${currentPlayer.currentDepth}` : 'Port'}
+              </Badge>
+            </div>
           </div>
         </Card>
+
+        {/* Last to Pass Warning */}
+        {isLastActive && gameState.phase === 'action' && (
+          <LastToPassWarning
+            location={currentPlayer.location}
+            turnsRemaining={turnsRemaining}
+            isUrgent={turnsRemaining <= 1}
+          />
+        )}
 
         {/* Action Buttons */}
         <Card className="card-game p-1.5 sm:p-2 shrink-0">
@@ -175,7 +218,15 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
 
         {/* Location-specific actions - scrollable if needed */}
         {gameState.phase === 'action' && isPlayerTurn && (
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div className="flex-1 min-h-0 overflow-auto space-y-2">
+            {/* Fishing Wizard - shows step progress when at sea */}
+            {currentPlayer.location === 'sea' && selectedShoal && (
+              <FishingWizard
+                currentStep={fishingStep}
+                canDescend={revealedFish ? revealedFish.depth > currentPlayer.currentDepth : false}
+                hasTriggerAbility={revealedFish?.abilities?.some(a => a.includes('reveal')) || false}
+              />
+            )}
             <FishingActions
               gameState={gameState}
               currentPlayer={currentPlayer}
