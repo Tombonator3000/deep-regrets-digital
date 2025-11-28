@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Player } from '@/types/game';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 import { RegretHand } from './RegretCard';
+import { CharacterCardModal } from './CharacterCardModal';
 
 interface PlayerPanelProps {
   player: Player;
@@ -12,6 +14,8 @@ interface PlayerPanelProps {
 }
 
 export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelProps) => {
+  const [showCharacterCard, setShowCharacterCard] = useState(false);
+
   const handleRollDice = () => {
     onAction({
       type: 'ROLL_DICE',
@@ -41,7 +45,12 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
       {/* Player Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-lg text-primary">{player.name}</h3>
+          <button
+            onClick={() => setShowCharacterCard(true)}
+            className="font-bold text-lg text-primary hover:text-primary/80 hover:underline cursor-pointer transition-colors text-left"
+          >
+            {player.name}
+          </button>
           <p className="text-sm text-muted-foreground">{player.character}</p>
         </div>
         <div className="text-right">
@@ -181,15 +190,15 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
       {/* Action Buttons */}
       {isCurrentPlayer && !player.hasPassed && (
         <div className="space-y-2">
-          <Button 
-            className="w-full btn-ocean" 
+          <Button
+            className="w-full btn-ocean"
             onClick={handleToggleLocation}
             size="sm"
           >
             Go to {player.location === 'sea' ? 'Port' : 'Sea'}
           </Button>
-          <Button 
-            className="w-full" 
+          <Button
+            className="w-full"
             variant="outline"
             onClick={handlePass}
             size="sm"
@@ -198,6 +207,12 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
           </Button>
         </div>
       )}
+
+      <CharacterCardModal
+        characterId={player.character}
+        open={showCharacterCard}
+        onOpenChange={setShowCharacterCard}
+      />
     </div>
   );
 };
