@@ -1,13 +1,36 @@
-import { GameState } from '@/types/game';
+import { GameState, DinkCard } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
 import { PlugMarker, DepthMarker, LighthouseToken } from './GameTokens';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+// Hook to load dink card back image
+const useDinkCardBack = () => {
+  const [cardBackUrl, setCardBackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    import('@/assets/dink-card-back.png')
+      .then((module) => {
+        setCardBackUrl(module.default);
+      })
+      .catch(() => {
+        setCardBackUrl(null);
+      });
+  }, []);
+
+  return cardBackUrl;
+};
 
 // Hook to load depth-specific card back images
 const useDepthCardBacks = () => {
@@ -66,6 +89,10 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const { toast } = useToast();
   const depthCardBacks = useDepthCardBacks();
+  const dinkCardBackUrl = useDinkCardBack();
+
+  // Get the dinks deck for display
+  const dinksDeck = gameState.port.dinksDeck;
 
   const handleDescend = (targetDepth: number) => {
     if (targetDepth > currentPlayer.currentDepth && targetDepth <= 3 && !currentPlayer.hasPassed) {
@@ -113,26 +140,78 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-1 overflow-hidden">
       {/* Briny Deep Header Image */}
-      <div className="shrink-0 relative">
-        <img
-          src={brinyDeepHeader}
-          alt="The Briny Deep"
-          className="w-full h-auto rounded-lg border border-border/40"
-        />
-        {/* Overlay with depth info and plug status */}
-        <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
-          <span className="text-xs text-slate-200/90 bg-slate-950/70 px-2 py-0.5 rounded">
-            Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
-            {currentPlayer.location === 'port' && ' (In Port)'}
-          </span>
-          {gameState.sea.plugActive && (
-            <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
-              <Skull className="mr-1 h-3 w-3" />
-              Plug Active!
-            </Badge>
-          )}
+      <TooltipProvider delayDuration={200}>
+        <div className="shrink-0 relative">
+          <img
+            src={brinyDeepHeader}
+            alt="The Briny Deep"
+            className="w-full h-auto rounded-lg border border-border/40"
+          />
+          {/* Dink Cards overlay - positioned where DINKS label is in header */}
+          <div className="absolute top-1 right-2 flex items-center gap-1">
+            {dinksDeck.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-0.5 cursor-pointer">
+                    {/* Show up to 3 stacked dink card backs */}
+                    <div className="relative">
+                      {dinksDeck.slice(0, Math.min(3, dinksDeck.length)).map((_, index) => (
+                        <div
+                          key={index}
+                          className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-10 w-7 rounded border border-amber-500/60 shadow-md overflow-hidden`}
+                          style={{
+                            transform: `translateX(${index * 3}px) translateY(${index * 2}px)`,
+                            zIndex: 3 - index,
+                          }}
+                        >
+                          {dinkCardBackUrl ? (
+                            <img
+                              src={dinkCardBackUrl}
+                              alt="Dink card"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-b from-amber-900/80 to-amber-950/90 flex items-center justify-center">
+                              <Sparkles className="h-3 w-3 text-amber-300" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Badge className="bg-amber-500/80 text-slate-900 text-[10px] px-1.5 py-0 ml-2">
+                      {dinksDeck.length}
+                    </Badge>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="space-y-1">
+                    <div className="font-semibold text-amber-400 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Dink Deck
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {dinksDeck.length} trinkets remaining in deck
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          {/* Overlay with depth info and plug status */}
+          <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
+            <span className="text-xs text-slate-200/90 bg-slate-950/70 px-2 py-0.5 rounded">
+              Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
+              {currentPlayer.location === 'port' && ' (In Port)'}
+            </span>
+            {gameState.sea.plugActive && (
+              <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
+                <Skull className="mr-1 h-3 w-3" />
+                Plug Active!
+              </Badge>
+            )}
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
 
       {/* Compact Depth Navigation */}
       {currentPlayer.location === 'sea' && (
