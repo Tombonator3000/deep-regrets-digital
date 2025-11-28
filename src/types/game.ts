@@ -126,6 +126,10 @@ export interface GameState {
   isGameOver: boolean;
   winner?: string;
   lastPlayerTurnsRemaining?: number; // For last-to-pass rule: 2 at sea, 4 at port
+  pendingDiceRemoval?: {
+    playerId: string;
+    count: number; // Number of dice that need to be removed
+  };
 }
 
 // Specific action payload types for type safety
@@ -188,6 +192,10 @@ export interface MoveToDepthPayload {
   newDepth: number;
 }
 
+export interface RemoveDiePayload {
+  dieIndex: number; // Index of the die to remove from freshDice
+}
+
 // Union type for all game actions
 export type GameAction =
   | { type: 'INIT_GAME'; playerId: string; payload: GameState }
@@ -208,7 +216,8 @@ export type GameAction =
   | { type: 'ROLL_DICE'; playerId: string; payload: Record<string, never> }
   | { type: 'PASS'; playerId: string; payload: Record<string, never> }
   | { type: 'NEXT_PHASE'; playerId: string; payload: Record<string, never> }
-  | { type: 'END_TURN'; playerId: string; payload: Record<string, never> };
+  | { type: 'END_TURN'; playerId: string; payload: Record<string, never> }
+  | { type: 'REMOVE_DIE'; playerId: string; payload: RemoveDiePayload };
 
 export interface CharacterOption {
   id: string;

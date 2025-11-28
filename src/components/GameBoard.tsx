@@ -8,6 +8,7 @@ import { AnglerBoard } from './game/AnglerBoard';
 import { DayTracker } from './game/DayTracker';
 import { MadnessTracker } from './game/MadnessTracker';
 import { CardModalProvider } from './game/CardModal';
+import { DiceRemovalModal } from './game/DiceRemovalModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FullscreenContext } from '@/context/FullscreenContext';
@@ -657,6 +658,12 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dice Removal Modal - shown when player needs to choose dice to remove */}
+      <DiceRemovalModal
+        gameState={gameState}
+        onAction={onAction}
+      />
     </div>
     </CardModalProvider>
     </FullscreenContext.Provider>

@@ -830,6 +830,30 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
                newState.players.some(p => !p.hasPassed));
       break;
 
+    case 'REMOVE_DIE':
+      // Player chooses which die to remove when dice limit is exceeded
+      if (player && newState.pendingDiceRemoval?.playerId === player.id) {
+        const { dieIndex } = action.payload;
+
+        // Validate the index
+        if (dieIndex >= 0 && dieIndex < player.freshDice.length) {
+          // Remove the selected die
+          player.freshDice = [
+            ...player.freshDice.slice(0, dieIndex),
+            ...player.freshDice.slice(dieIndex + 1)
+          ];
+
+          // Decrement the count of dice to remove
+          newState.pendingDiceRemoval.count -= 1;
+
+          // If all dice have been removed, clear the pending state
+          if (newState.pendingDiceRemoval.count <= 0) {
+            newState.pendingDiceRemoval = undefined;
+          }
+        }
+      }
+      break;
+
     default:
       console.warn('Unknown action type:', (action as { type: string }).type);
   }
@@ -1070,9 +1094,29 @@ const discardHighestValueMount = (player: Player) => {
   ];
 };
 
-const enforceFreshDiceLimit = (player: Player) => {
-  while (player.freshDice.length > player.maxDice) {
-    removeHighestFreshDie(player);
+const enforceFreshDiceLimit = (player: Player, gameState?: GameState) => {
+  const excessDice = player.freshDice.length - player.maxDice;
+  if (excessDice <= 0) return;
+
+  // For AI players, auto-remove highest dice
+  if (player.isAI) {
+    while (player.freshDice.length > player.maxDice) {
+      removeHighestFreshDie(player);
+    }
+    return;
+  }
+
+  // For human players, set pending state so they can choose which dice to remove
+  if (gameState) {
+    gameState.pendingDiceRemoval = {
+      playerId: player.id,
+      count: excessDice,
+    };
+  } else {
+    // Fallback to auto-remove if no gameState available
+    while (player.freshDice.length > player.maxDice) {
+      removeHighestFreshDie(player);
+    }
   }
 };
 
@@ -1098,7 +1142,7 @@ const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
   // 2. Max dice (which increases, not decreases)
   // 3. Port discount at 13+ regrets
 
-  enforceFreshDiceLimit(player);
+  enforceFreshDiceLimit(player, gameState);
 };
 
 const advancePhase = (gameState: GameState) => {
