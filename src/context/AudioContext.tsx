@@ -288,15 +288,9 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
       const nextTrackId = getRandomTrackId(currentTrackId);
       if (nextTrackId) {
+        // Only update state - let the consolidated playback effect handle
+        // the actual source change and play() call to avoid race conditions
         setCurrentTrackId(nextTrackId);
-        const nextTrack = tracks.find(t => t.id === nextTrackId);
-        if (nextTrack) {
-          element.src = nextTrack.url;
-          musicSourceRef.current = nextTrack.url;
-          void element.play().catch(() => {
-            // Ignore playback errors on auto-advance
-          });
-        }
       }
     };
 
