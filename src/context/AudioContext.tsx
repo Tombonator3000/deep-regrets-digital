@@ -31,6 +31,7 @@ interface AudioContextValue {
   toggle: () => Promise<void>;
   retryPlayback: () => Promise<void>;
   setCurrentTrackId: (trackId: string | null) => void;
+  playRandomTrack: () => Promise<void>;
   setMusicEnabled: (enabled: boolean) => void;
   setSfxEnabled: (enabled: boolean) => void;
   setMasterVolume: (value: number) => void;
@@ -149,6 +150,19 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     return tracks.find((track) => track.id === currentTrackId) ?? null;
   }, [tracks, currentTrackId]);
 
+  // Helper to get a random track, preferring one different from current
+  const getRandomTrackId = useCallback((excludeId?: string | null): string | null => {
+    if (tracks.length === 0) return null;
+    if (tracks.length === 1) return tracks[0].id;
+
+    const availableTracks = excludeId
+      ? tracks.filter(t => t.id !== excludeId)
+      : tracks;
+
+    const randomIndex = Math.floor(Math.random() * availableTracks.length);
+    return availableTracks[randomIndex]?.id ?? tracks[0].id;
+  }, [tracks]);
+
   const ensureMusicElement = useCallback(() => {
     if (typeof Audio === 'undefined') {
       return null;
@@ -156,7 +170,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
     if (!musicRef.current) {
       musicRef.current = new Audio();
-      musicRef.current.loop = true;
+      musicRef.current.loop = false;
     }
 
     return musicRef.current;
@@ -272,6 +286,34 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  // Handle track ended - play next random track
+  useEffect(() => {
+    const element = ensureMusicElement();
+    if (!element) return;
+
+    const handleTrackEnded = () => {
+      if (!isMusicEnabled || tracks.length === 0) return;
+
+      const nextTrackId = getRandomTrackId(currentTrackId);
+      if (nextTrackId) {
+        setCurrentTrackId(nextTrackId);
+        const nextTrack = tracks.find(t => t.id === nextTrackId);
+        if (nextTrack) {
+          element.src = nextTrack.url;
+          musicSourceRef.current = nextTrack.url;
+          void element.play().catch(() => {
+            // Ignore playback errors on auto-advance
+          });
+        }
+      }
+    };
+
+    element.addEventListener('ended', handleTrackEnded);
+    return () => {
+      element.removeEventListener('ended', handleTrackEnded);
+    };
+  }, [ensureMusicElement, isMusicEnabled, tracks, currentTrackId, getRandomTrackId]);
+
   const play = useCallback(async () => {
     if (!isMusicEnabled) {
       return;
@@ -336,6 +378,56 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     setRequiresUserActivation(false);
     await play();
   }, [play]);
+
+  const playRandomTrack = useCallback(async () => {
+    if (!isMusicEnabled) {
+      return;
+    }
+
+    const element = ensureMusicElement();
+    if (!element) {
+      return;
+    }
+
+    if (tracks.length === 0) {
+      return;
+    }
+
+    const randomTrackId = getRandomTrackId(currentTrackId);
+    if (!randomTrackId) {
+      return;
+    }
+
+    const randomTrack = tracks.find(t => t.id === randomTrackId);
+    if (!randomTrack) {
+      return;
+    }
+
+    setCurrentTrackId(randomTrackId);
+
+    if (musicSourceRef.current !== randomTrack.url) {
+      element.src = randomTrack.url;
+      musicSourceRef.current = randomTrack.url;
+    }
+
+    try {
+      const promise = element.play();
+      if (promise) {
+        await promise;
+      }
+      setIsPlaying(true);
+      setRequiresUserActivation(false);
+    } catch (error) {
+      handlePlaybackRejection(error);
+    }
+  }, [
+    currentTrackId,
+    ensureMusicElement,
+    getRandomTrackId,
+    handlePlaybackRejection,
+    isMusicEnabled,
+    tracks,
+  ]);
 
   useEffect(() => {
     if (!requiresUserActivation || typeof window === 'undefined') {
@@ -479,6 +571,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       toggle,
       retryPlayback,
       setCurrentTrackId: setTrack,
+      playRandomTrack,
       setMusicEnabled,
       setSfxEnabled,
       setMasterVolume: setMaster,
@@ -501,6 +594,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       play,
       toggle,
       retryPlayback,
+      playRandomTrack,
       setMusicEnabled,
       setSfxEnabled,
       setMaster,
