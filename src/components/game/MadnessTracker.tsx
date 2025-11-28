@@ -1,5 +1,23 @@
 import { Player } from '@/types/game';
 import { Brain, Skull, Dice6, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+// Hook to load ocean madness background image
+const useOceanMadnessBackground = () => {
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    import('@/assets/ocean-madness.png')
+      .then((module) => {
+        setBackgroundUrl(module.default);
+      })
+      .catch(() => {
+        setBackgroundUrl(null);
+      });
+  }, []);
+
+  return backgroundUrl;
+};
 
 interface MadnessTrackerProps {
   player: Player;
@@ -34,6 +52,7 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
   const regretCount = player.regrets.length;
   const tier = getTierFromRegrets(regretCount);
   const effectiveMadness = Math.min(5, Math.max(0, tier.level + player.madnessOffset));
+  const oceanMadnessBackground = useOceanMadnessBackground();
 
   // Calculate progress to next tier
   const progressToNext = tier.level < 5
@@ -44,10 +63,12 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
     return (
       <div className="madness-tracker-compact relative overflow-hidden rounded-lg border border-madness/40 bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60">
         {/* Background image */}
-        <div
-          className="absolute inset-0 opacity-30 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/ocean-madness.png)' }}
-        />
+        {oceanMadnessBackground && (
+          <div
+            className="absolute inset-0 opacity-30 bg-cover bg-center"
+            style={{ backgroundImage: `url(${oceanMadnessBackground})` }}
+          />
+        )}
         <div className="relative z-10 flex items-center gap-2 p-2">
           <Brain className="h-4 w-4 text-madness animate-pulse" />
           <div className="flex-1">
@@ -68,10 +89,12 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
   return (
     <div className="madness-tracker relative overflow-hidden rounded-xl border border-madness/30 bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20">
       {/* Background image with swirling eyes effect */}
-      <div
-        className="absolute inset-0 opacity-40 bg-cover bg-center"
-        style={{ backgroundImage: 'url(/ocean-madness.png)' }}
-      />
+      {oceanMadnessBackground && (
+        <div
+          className="absolute inset-0 opacity-40 bg-cover bg-center"
+          style={{ backgroundImage: `url(${oceanMadnessBackground})` }}
+        />
+      )}
 
       {/* Animated overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
