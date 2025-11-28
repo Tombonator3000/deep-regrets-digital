@@ -138,14 +138,14 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   });
 
   return (
-    <div className="briny-deep-board flex h-full min-h-0 flex-col gap-1 overflow-hidden">
-      {/* Briny Deep Header Image */}
+    <div className="briny-deep-board flex h-full min-h-0 flex-col gap-0.5 sm:gap-1 overflow-hidden">
+      {/* Briny Deep Header Image - Smaller on mobile */}
       <TooltipProvider delayDuration={200}>
         <div className="shrink-0 relative">
           <img
             src={brinyDeepHeader}
             alt="The Briny Deep"
-            className="w-full h-auto rounded-lg border border-border/40"
+            className="w-full h-auto max-h-[80px] sm:max-h-none object-cover object-top rounded-lg border border-border/40"
           />
           {/* Dink Cards overlay - positioned where DINKS label is in header */}
           <div className="absolute top-1 right-2 flex items-center gap-1">
@@ -213,9 +213,9 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
         </div>
       </TooltipProvider>
 
-      {/* Compact Depth Navigation */}
+      {/* Compact Depth Navigation - Hidden on mobile, using depth rows directly */}
       {currentPlayer.location === 'sea' && (
-        <div className="shrink-0 flex items-center justify-center gap-1">
+        <div className="shrink-0 hidden sm:flex items-center justify-center gap-1">
           {[1, 2, 3].map((depth) => {
             const isCurrentDepth = currentPlayer.currentDepth === depth;
             const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
@@ -249,34 +249,45 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
       )}
 
       {/* The Deep Sea Board - NO SCROLLING */}
-      <div 
+      <div
         className="flex-1 min-h-0 overflow-hidden touch-pan-y"
         {...touchHandlers}
       >
-        <div className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-1 shadow-xl transition-opacity flex flex-col ${isSwiping ? 'opacity-80' : ''}`}>
+        <div className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-0.5 sm:p-1 shadow-xl transition-opacity flex flex-col ${isSwiping ? 'opacity-80' : ''}`}>
           {/* Depth Rows - Compact */}
-          <div className="flex-1 flex flex-col gap-1 min-h-0">
+          <div className="flex-1 flex flex-col gap-0.5 sm:gap-1 min-h-0">
             {[1, 2, 3].map((depth) => {
               const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
               const shoals = gameState.sea.shoals[depth] ?? [];
               const isAccessible = currentPlayer.currentDepth >= depth && currentPlayer.location === 'sea';
               const isCurrentDepth = currentPlayer.currentDepth === depth;
+              const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed && currentPlayer.location === 'sea';
+              const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed && currentPlayer.location === 'sea';
 
               return (
                 <div
                   key={depth}
-                  className={`depth-row flex-1 min-h-0 rounded-lg border ${depthInfo.border} bg-gradient-to-r ${depthInfo.color} p-1 transition-all ${
+                  role={canDescend || canAscend ? 'button' : undefined}
+                  tabIndex={canDescend || canAscend ? 0 : -1}
+                  onClick={() => {
+                    if (canDescend) handleDescend(depth);
+                    else if (canAscend) handleAscend(depth);
+                  }}
+                  className={`depth-row flex-1 min-h-0 rounded-lg border ${depthInfo.border} bg-gradient-to-r ${depthInfo.color} p-0.5 sm:p-1 transition-all ${
                     isCurrentDepth ? 'ring-1 ring-primary/50' : ''
-                  } ${!isAccessible ? 'opacity-50' : ''}`}
+                  } ${!isAccessible ? 'opacity-50' : ''} ${canDescend || canAscend ? 'cursor-pointer sm:cursor-default active:scale-[0.99]' : ''}`}
                 >
                   {/* Compact Depth Header */}
-                  <div className="mb-1 flex items-center justify-between px-1">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm">{depthInfo.icon}</span>
-                      <span className="text-xs font-medium text-white/80">D{depth}</span>
+                  <div className="mb-0.5 sm:mb-1 flex items-center justify-between px-0.5 sm:px-1">
+                    <div className="flex items-center gap-0.5 sm:gap-1">
+                      <span className="text-xs sm:text-sm">{depthInfo.icon}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-white/80">D{depth}</span>
+                      {/* Mobile depth navigation indicators */}
+                      {canDescend && <ArrowDown className="h-3 w-3 text-primary sm:hidden" />}
+                      {canAscend && <ArrowUp className="h-3 w-3 text-primary sm:hidden" />}
                       {/* Ship icon showing player position */}
                       {isCurrentDepth && currentPlayer.location === 'sea' && (
-                        <div className="relative z-20 ml-1">
+                        <div className="relative z-20 ml-0.5 sm:ml-1">
                           <BoatToken
                             size="sm"
                             animated
@@ -286,13 +297,13 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-white/50">
+                    <span className="text-[10px] sm:text-xs text-white/50">
                       {shoals.reduce((acc, s) => acc + s.length, 0)} fish
                     </span>
                   </div>
 
                   {/* Shoals Row - Compact */}
-                  <div className="grid grid-cols-3 gap-1 h-[calc(100%-1.25rem)]">
+                  <div className="grid grid-cols-3 gap-0.5 sm:gap-1 h-[calc(100%-1rem)] sm:h-[calc(100%-1.25rem)]">
                     {shoals.map((shoal, shoalIndex) => {
                       const isSelected = selectedShoal?.depth === depth && selectedShoal?.shoal === shoalIndex;
                       const topFish = shoal[0];
@@ -423,11 +434,11 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
       </div>
 
       {/* Compact Graveyards */}
-      <div className="shrink-0 flex items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-slate-950/60 px-2 py-1">
+      <div className="shrink-0 flex items-center justify-center gap-1 sm:gap-2 rounded-lg border border-destructive/20 bg-slate-950/60 px-1.5 sm:px-2 py-0.5 sm:py-1">
         <Skull className="h-3 w-3 text-destructive/60" />
-        <span className="text-xs text-destructive/60">Graveyard:</span>
+        <span className="text-[10px] sm:text-xs text-destructive/60">Graveyard:</span>
         {[1, 2, 3].map((depth) => (
-          <span key={depth} className="text-xs text-white/60">
+          <span key={depth} className="text-[10px] sm:text-xs text-white/60">
             D{depth}: {gameState.sea.graveyards[depth]?.length || 0}
           </span>
         ))}

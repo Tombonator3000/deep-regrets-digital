@@ -249,35 +249,35 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       )}
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-1 px-1 py-1 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2">
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2">
         {/* Compact Header */}
-        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/10 bg-background/70 px-2 py-1 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <h1 className="text-base font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
+        <div className="flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
+          <div className="flex items-center gap-1 sm:gap-4">
+            <h1 className="text-sm font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
             <Badge
-              className={`rounded-full px-2 py-0.5 text-xs sm:px-3 ${
+              className={`rounded-full px-1.5 py-0 text-[10px] sm:px-3 sm:py-0.5 sm:text-xs ${
                 currentPlayer.isAI
                   ? 'border-purple-400/40 bg-purple-600/20 text-purple-300'
                   : 'border-primary/40 bg-primary/10 text-primary'
               }`}
             >
               {currentPlayer.isAI && (
-                <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-purple-400 sm:mr-1.5" />
+                <span className="mr-0.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400 sm:mr-1.5 sm:h-2 sm:w-2" />
               )}
               <span className="hidden xs:inline">{currentPlayer.name}'s Turn</span>
               <span className="xs:hidden">{currentPlayer.name}</span>
               {currentPlayer.isAI && ' (AI)'}
             </Badge>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2">
             <Sheet open={isPortOpen} onOpenChange={setIsPortOpen}>
               <SheetTrigger asChild>
                 <Button
                   ref={portButtonRef}
                   size="sm"
-                  className="btn-ocean flex items-center gap-1 px-2 min-h-[44px] touch-manipulation active:scale-95 sm:gap-2 sm:px-3"
+                  className="btn-ocean flex items-center gap-0.5 px-1.5 min-h-[36px] text-[10px] touch-manipulation active:scale-95 sm:gap-2 sm:px-3 sm:min-h-[44px] sm:text-sm"
                 >
-                  <Anchor className="h-4 w-4" />
+                  <Anchor className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Harbor Port</span>
                   <span className="sm:hidden">Port</span>
                 </Button>
@@ -321,10 +321,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               size="sm"
               type="button"
               variant="ghost"
-              className="min-h-[44px] min-w-[44px] p-2 text-white/80 hover:text-white touch-manipulation active:scale-95 sm:h-auto sm:w-auto sm:px-3"
+              className="min-h-[36px] min-w-[36px] p-1.5 text-white/80 hover:text-white touch-manipulation active:scale-95 sm:min-h-[44px] sm:min-w-[44px] sm:p-2 sm:h-auto sm:w-auto sm:px-3"
               onClick={toggleFullscreen}
             >
-              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -332,9 +332,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                   size="sm"
                   type="button"
                   variant="outline"
-                  className="min-h-[44px] min-w-[44px] border-white/30 bg-white/5 p-2 text-white hover:bg-white/10 touch-manipulation active:scale-95 sm:h-auto sm:w-auto sm:px-3"
+                  className="min-h-[36px] min-w-[36px] border-white/30 bg-white/5 p-1.5 text-white hover:bg-white/10 touch-manipulation active:scale-95 sm:min-h-[44px] sm:min-w-[44px] sm:p-2 sm:h-auto sm:w-auto sm:px-3"
                 >
-                  <MoreHorizontal className="h-5 w-5" />
+                  <MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -365,7 +365,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         </div>
 
         {/* Responsive Board Game Layout - NO SCROLLING */}
-        <div className="grid h-full min-h-0 gap-1 sm:gap-2 grid-cols-1 md:grid-cols-[minmax(200px,240px),1fr] lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
+        <div className="grid h-full min-h-0 gap-0.5 sm:gap-2 grid-cols-1 md:grid-cols-[minmax(200px,240px),1fr] lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
           <div className="hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
             <AnglerBoard
@@ -382,7 +382,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
 
           {/* Center Column - The Briny Deep (Sea Board) */}
           <div className="min-h-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 backdrop-blur sm:rounded-xl">
-            <div className="h-full min-h-0 overflow-hidden p-1 sm:p-2">
+            <div className="h-full min-h-0 overflow-hidden p-0.5 sm:p-2">
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
@@ -400,7 +400,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </div>
 
           {/* Right Column - Actions Panel */}
-          <div className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-white/10 bg-background/50 p-1 backdrop-blur sm:gap-2 sm:rounded-xl sm:p-2 lg:flex">
+          <div className="flex min-h-0 flex-col gap-0.5 overflow-hidden rounded-lg border border-white/10 bg-background/50 p-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:p-2 lg:flex">
             {/* Show compact player info on mobile/tablet */}
             <div className="md:hidden">
               <AnglerBoard

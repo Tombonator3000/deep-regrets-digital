@@ -60,39 +60,39 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
   // Compact mode for mobile
   if (compact) {
     return (
-      <div className="angler-board relative rounded-lg border border-primary/30 bg-gradient-to-b from-slate-900/90 to-slate-950 p-2 shadow-lg">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2">
-            <Anchor className="h-4 w-4 text-primary" />
+      <div className="angler-board relative rounded-lg border border-primary/30 bg-gradient-to-b from-slate-900/90 to-slate-950 p-1.5 shadow-lg">
+        <div className="flex items-center justify-between gap-1 mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Anchor className="h-3.5 w-3.5 text-primary" />
             <button
               onClick={() => setShowCharacterCard(true)}
-              className="text-sm font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors"
+              className="text-xs font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors"
             >
               {player.name}
             </button>
           </div>
           {isCurrentPlayer && (
-            <Badge className="bg-primary/20 text-primary-glow text-xs px-1.5 py-0">
+            <Badge className="bg-primary/20 text-primary-glow text-[10px] px-1 py-0">
               Your Turn
             </Badge>
           )}
         </div>
-        <div className="grid grid-cols-4 gap-1">
-          <div className="flex items-center justify-center gap-1 rounded border border-fishbuck/30 bg-fishbuck/10 p-1">
+        <div className="grid grid-cols-4 gap-0.5">
+          <div className="flex items-center justify-center gap-0.5 rounded border border-fishbuck/30 bg-fishbuck/10 p-0.5 py-1">
             <Coins className="h-3 w-3 text-fishbuck" />
-            <span className="text-xs font-bold text-fishbuck">${player.fishbucks}</span>
+            <span className="text-[10px] font-bold text-fishbuck">${player.fishbucks}</span>
           </div>
-          <div className="flex items-center justify-center gap-1 rounded border border-destructive/30 bg-destructive/10 p-1">
+          <div className="flex items-center justify-center gap-0.5 rounded border border-destructive/30 bg-destructive/10 p-0.5 py-1">
             <Skull className="h-3 w-3 text-destructive" />
-            <span className="text-xs font-bold text-destructive">{player.regrets.length}</span>
+            <span className="text-[10px] font-bold text-destructive">{player.regrets.length}</span>
           </div>
-          <div className="flex items-center justify-center gap-1 rounded border border-purple-500/30 bg-purple-500/10 p-1">
+          <div className="flex items-center justify-center gap-0.5 rounded border border-purple-500/30 bg-purple-500/10 p-0.5 py-1">
             <Brain className="h-3 w-3 text-purple-400" />
-            <span className="text-xs font-bold text-purple-400">{player.madnessLevel}</span>
+            <span className="text-[10px] font-bold text-purple-400">{player.madnessLevel}</span>
           </div>
-          <div className="flex items-center justify-center gap-1 rounded border border-primary/30 bg-primary/10 p-1">
+          <div className="flex items-center justify-center gap-0.5 rounded border border-primary/30 bg-primary/10 p-0.5 py-1">
             <Dice6 className="h-3 w-3 text-primary" />
-            <span className="text-xs font-bold text-primary">{player.freshDice.length}</span>
+            <span className="text-[10px] font-bold text-primary">{player.freshDice.length}</span>
           </div>
         </div>
         <CharacterCardModal
