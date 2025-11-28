@@ -20,7 +20,7 @@ const Index = () => {
   const [gameSetup, setGameSetup] = useState<GameSetup | undefined>();
   const [gameState, dispatch] = useReducer<Reducer<GameState | null, GameAction>>(gameReducer, null);
   const { toast } = useToast();
-  const { play, pause, isMusicEnabled, playBubbleSfx } = useAudio();
+  const { play, pause, isMusicEnabled, playBubbleSfx, playRandomTrack } = useAudio();
   const [hasStartedMusic, setHasStartedMusic] = useState(false);
   const aiActionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -38,6 +38,13 @@ const Index = () => {
       void play();
     }
   }, [hasStartedMusic, isMusicEnabled, pause, play]);
+
+  // Start random music when entering the game screen
+  useEffect(() => {
+    if (currentScreen === 'game' && isMusicEnabled && hasStartedMusic) {
+      void playRandomTrack();
+    }
+  }, [currentScreen, isMusicEnabled, hasStartedMusic, playRandomTrack]);
 
   const handleIntroContinue = () => {
     if (isMusicEnabled) {
