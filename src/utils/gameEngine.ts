@@ -463,6 +463,24 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
     case 'CATCH_FISH':
       if (player && player.location === 'sea') {
         const { fish, depth, shoal, diceIndices, tackleDiceIndices } = action.payload;
+
+        // Validate that the shoal has been revealed before allowing catch
+        const catchShoalKey = `${depth}-${shoal}`;
+        const isShoalRevealed = newState.sea.revealedShoals?.[catchShoalKey] ?? false;
+        if (!isShoalRevealed) {
+          // Cannot catch fish from unrevealed shoal - must reveal first
+          console.warn('CATCH_FISH blocked: Shoal not revealed. Must use REVEAL_FISH action first.');
+          break;
+        }
+
+        // Validate the fish being caught matches the top fish in the shoal
+        const shoalArray = newState.sea.shoals[depth]?.[shoal];
+        const topFish = shoalArray?.[0];
+        if (!topFish || topFish.id !== fish.id) {
+          console.warn('CATCH_FISH blocked: Fish does not match top of revealed shoal.');
+          break;
+        }
+
         const fishDifficulty = fish.difficulty;
         const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
 
@@ -523,7 +541,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 
           player.handFish = [...player.handFish, fish];
 
-          const shoalArray = newState.sea.shoals[depth][shoal];
+          // Remove caught fish from shoal
           const fishIndex = shoalArray.findIndex((f: FishCard) => f.id === fish.id);
           if (fishIndex >= 0) {
             newState.sea.shoals[depth][shoal] = [
@@ -533,7 +551,6 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           }
 
           // Reset revealed state for this shoal - new top fish is hidden
-          const catchShoalKey = `${depth}-${shoal}`;
           if (newState.sea.revealedShoals[catchShoalKey]) {
             const { [catchShoalKey]: _, ...rest } = newState.sea.revealedShoals;
             newState.sea.revealedShoals = rest;
