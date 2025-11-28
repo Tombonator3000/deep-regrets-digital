@@ -138,36 +138,36 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         {/* Action Buttons */}
         <Card className="card-game p-2 shrink-0">
           {gameState.phase === 'declaration' && (
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 size="sm"
                 onClick={() => handleDeclareLocation('sea')}
                 variant={currentPlayer.location === 'sea' ? "default" : "outline"}
-                className={`h-8 text-xs ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
+                className={`min-h-[44px] text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
               >
-                <Waves className="h-3 w-3 mr-1" />
+                <Waves className="h-4 w-4 mr-1" />
                 Sea
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleDeclareLocation('port')}
                 variant={currentPlayer.location === 'port' ? "default" : "outline"}
-                className={`h-8 text-xs ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
+                className={`min-h-[44px] text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
               >
-                <Anchor className="h-3 w-3 mr-1" />
+                <Anchor className="h-4 w-4 mr-1" />
                 Port
               </Button>
             </div>
           )}
 
           {gameState.phase === 'action' && isPlayerTurn && (
-            <Button size="sm" onClick={handlePass} variant="outline" className="w-full h-8 border-primary/30 text-xs">
+            <Button size="sm" onClick={handlePass} variant="outline" className="w-full min-h-[44px] border-primary/30 text-xs touch-manipulation active:scale-95">
               Pass (End Day)
             </Button>
           )}
 
           {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
-            <Button size="sm" onClick={handleNextPhase} className="w-full h-8 btn-ocean text-xs">
+            <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[44px] btn-ocean text-xs touch-manipulation active:scale-95">
               Next Phase →
             </Button>
           )}

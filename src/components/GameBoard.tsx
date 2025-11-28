@@ -9,6 +9,7 @@ import { DayTracker } from './game/DayTracker';
 import { CardModalProvider } from './game/CardModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { FullscreenContext } from '@/context/FullscreenContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,6 +160,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   }, [currentPlayer.id, onAction]);
 
   return (
+    <FullscreenContext.Provider value={{ containerRef: boardRef, isFullscreen }}>
     <CardModalProvider>
     <div ref={boardRef} className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
@@ -184,13 +186,13 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         <div className="tentacle-shadow" />
       </div>
       
-      {/* Game Over Overlay */}
+      {/* Game Over Overlay - uses absolute positioning to work in fullscreen */}
       {gameState.isGameOver && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="card-game p-8 text-center space-y-6 max-w-md">
-            <h2 className="text-3xl font-bold text-primary-glow">Game Over</h2>
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100]">
+          <div className="card-game p-6 sm:p-8 text-center space-y-4 sm:space-y-6 max-w-md mx-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-primary-glow">Game Over</h2>
             {gameState.winner && (
-              <p className="text-xl">
+              <p className="text-lg sm:text-xl">
                 🏆 <span className="text-primary-glow font-bold">{gameState.winner}</span> wins!
               </p>
             )}
@@ -234,12 +236,14 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                 );
               })}
             </div>
-            <Button onClick={onNewGame} className="btn-ocean">
-              New Game
-            </Button>
-            <Button onClick={onNewGame} variant="outline" className="border-primary/30 hover:border-primary">
-              Back to Start
-            </Button>
+            <div className="flex flex-col gap-3">
+              <Button onClick={onNewGame} className="btn-ocean min-h-[44px] touch-manipulation active:scale-95">
+                New Game
+              </Button>
+              <Button onClick={onNewGame} variant="outline" className="border-primary/30 hover:border-primary min-h-[44px] touch-manipulation active:scale-95">
+                Back to Start
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -271,7 +275,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                 <Button
                   ref={portButtonRef}
                   size="sm"
-                  className="btn-ocean flex items-center gap-1 px-2 sm:gap-2 sm:px-3"
+                  className="btn-ocean flex items-center gap-1 px-2 min-h-[44px] touch-manipulation active:scale-95 sm:gap-2 sm:px-3"
                 >
                   <Anchor className="h-4 w-4" />
                   <span className="hidden sm:inline">Harbor Port</span>
@@ -317,10 +321,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               size="sm"
               type="button"
               variant="ghost"
-              className="h-8 w-8 p-0 text-white/80 hover:text-white sm:h-auto sm:w-auto sm:px-3"
+              className="min-h-[44px] min-w-[44px] p-2 text-white/80 hover:text-white touch-manipulation active:scale-95 sm:h-auto sm:w-auto sm:px-3"
               onClick={toggleFullscreen}
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -328,9 +332,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                   size="sm"
                   type="button"
                   variant="outline"
-                  className="h-8 w-8 border-white/30 bg-white/5 p-0 text-white hover:bg-white/10 sm:h-auto sm:w-auto sm:px-3"
+                  className="min-h-[44px] min-w-[44px] border-white/30 bg-white/5 p-2 text-white hover:bg-white/10 touch-manipulation active:scale-95 sm:h-auto sm:w-auto sm:px-3"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -651,5 +655,6 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
       </Dialog>
     </div>
     </CardModalProvider>
+    </FullscreenContext.Provider>
   );
 };

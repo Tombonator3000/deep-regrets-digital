@@ -173,7 +173,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
             <Button
               onClick={handleMoveDeeper}
               disabled={!canMoveDeeper}
-              className="w-full btn-ocean flex items-center gap-2"
+              className="w-full min-h-[44px] btn-ocean flex items-center gap-2 touch-manipulation active:scale-95"
             >
               <ArrowDown className="h-4 w-4" />
               {canMoveDeeper
@@ -197,7 +197,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
               <Button
                 onClick={handleRevealFish}
                 disabled={!canRevealFish}
-                className="w-full btn-ocean flex items-center gap-2"
+                className="w-full min-h-[44px] btn-ocean flex items-center gap-2 touch-manipulation active:scale-95"
               >
                 <Eye className="h-4 w-4" />
                 Avslør Fisk i Shoal {selectedShoal.shoal + 1}
@@ -386,7 +386,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                     <Button
                       onClick={handleCatchFish}
                       disabled={selectedDiceIndices.length === 0}
-                      className={`w-full ${selectedDiceTotal >= revealedFish.difficulty ? 'bg-green-600 hover:bg-green-700' : 'btn-ocean'}`}
+                      className={`w-full min-h-[44px] touch-manipulation active:scale-95 ${selectedDiceTotal >= revealedFish.difficulty ? 'bg-green-600 hover:bg-green-700' : 'btn-ocean'}`}
                     >
                       <Fish className="h-4 w-4 mr-2" />
                       Fang Fisken
@@ -406,7 +406,7 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                     <Button
                       onClick={handlePassOnFish}
                       variant="outline"
-                      className="w-full border-dashed border-destructive/40 text-destructive text-xs"
+                      className="w-full min-h-[44px] border-dashed border-destructive/40 text-destructive text-xs touch-manipulation active:scale-95"
                     >
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       Pass på Fisken (Mist 1 terning + trekk Dink)
