@@ -177,6 +177,8 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
 
   return (
     <div className={cn('flex h-full flex-col space-y-6', className)}>
+      {summaryHeader}
+
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-slate-950/60">
         <img
           src={harborPortBoard}
@@ -184,10 +186,6 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
           className="h-48 w-full object-cover object-center sm:h-56"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
-        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 px-6 pb-6 text-center text-slate-100">
-          <h2 className="text-2xl font-bold text-primary-glow drop-shadow-sm">Harbor Port</h2>
-          <p className="text-sm text-slate-200/90">Safe waters for commerce and rest</p>
-        </div>
       </div>
 
       <Tabs defaultValue="catch" className="space-y-4">
@@ -207,8 +205,6 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
         </TabsList>
 
         <TabsContent value="catch" className="space-y-4">
-          {summaryHeader}
-
           {/* Trophy Wall - Mounted Fish Display */}
           <div className="rounded-xl border-2 border-fishbuck/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -445,8 +441,6 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
         </TabsContent>
 
         <TabsContent value="upgrades" className="space-y-4">
-          {summaryHeader}
-
           {/* Tackle Dice Shop */}
           <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -573,8 +567,6 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
         </TabsContent>
 
         <TabsContent value="services" className="space-y-4">
-          {summaryHeader}
-
           {/* Regrets Deck Display */}
           <div className="rounded-xl border-2 border-destructive/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
             <div className="flex items-center justify-between">
