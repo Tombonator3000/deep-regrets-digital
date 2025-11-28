@@ -145,6 +145,13 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const musicSourceRef = useRef<string | null>(null);
   const sfxContextRef = useRef<globalThis.AudioContext | null>(null);
+  // Ref to read currentTrackId without causing callback identity changes
+  const currentTrackIdRef = useRef<string | null>(currentTrackId);
+
+  // Keep the ref in sync with state
+  useEffect(() => {
+    currentTrackIdRef.current = currentTrackId;
+  }, [currentTrackId]);
 
   const currentTrack = useMemo(() => {
     return tracks.find((track) => track.id === currentTrackId) ?? null;
@@ -379,7 +386,10 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const randomTrackId = getRandomTrackId(currentTrackId);
+    // Use ref to avoid dependency on currentTrackId state, which would cause
+    // this callback to change identity on every track change, leading to
+    // infinite loops when used in useEffect dependencies
+    const randomTrackId = getRandomTrackId(currentTrackIdRef.current);
     if (!randomTrackId) {
       return;
     }
@@ -407,7 +417,6 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       handlePlaybackRejection(error);
     }
   }, [
-    currentTrackId,
     ensureMusicElement,
     getRandomTrackId,
     handlePlaybackRejection,
