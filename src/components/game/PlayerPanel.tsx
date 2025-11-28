@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
+import { RegretHand } from './RegretCard';
 
 interface PlayerPanelProps {
   player: Player;
@@ -162,23 +163,18 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
       <Card className="card-game">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center">
-            Regrets 
+            Regrets
             <Badge variant="destructive" className="ml-2 text-xs">
               {player.regrets.length}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
-            {player.regrets.map((regret, index) => (
-              <div key={index} className="text-xs p-1 border border-destructive/30 rounded">
-                {regret.frontText}
-              </div>
-            ))}
-            {player.regrets.length === 0 && (
-              <div className="text-xs text-muted-foreground italic">No regrets yet...</div>
-            )}
-          </div>
+          <RegretHand
+            regrets={player.regrets}
+            isOwner={isCurrentPlayer}
+            size="sm"
+          />
         </CardContent>
       </Card>
 
