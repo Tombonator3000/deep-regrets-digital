@@ -4,6 +4,7 @@ import { getSlotMultiplier } from '@/utils/mounting';
 import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
 import { PlayerHand, CardDragData } from './PlayerHand';
 import { LifebuoyToken, FishCoinToken, BoatToken } from './GameTokens';
+import { CharacterCardModal } from './CharacterCardModal';
 import { DragEvent, useState } from 'react';
 
 interface AnglerBoardProps {
@@ -19,6 +20,7 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
   const hasFishCoin = gameState?.fishCoinOwner === player.id;
   const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+  const [showCharacterCard, setShowCharacterCard] = useState(false);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>, slotIndex: number) => {
     e.preventDefault();
@@ -62,7 +64,12 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <Anchor className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-primary-glow">{player.name}</span>
+            <button
+              onClick={() => setShowCharacterCard(true)}
+              className="text-sm font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors"
+            >
+              {player.name}
+            </button>
           </div>
           {isCurrentPlayer && (
             <Badge className="bg-primary/20 text-primary-glow text-xs px-1.5 py-0">
@@ -88,6 +95,11 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
             <span className="text-xs font-bold text-primary">{player.freshDice.length}</span>
           </div>
         </div>
+        <CharacterCardModal
+          characterId={player.character}
+          open={showCharacterCard}
+          onOpenChange={setShowCharacterCard}
+        />
       </div>
     );
   }
@@ -99,7 +111,12 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
         <div className="flex items-center gap-2">
           <Anchor className="h-4 w-4 text-primary" />
           <div>
-            <h3 className="text-sm font-bold text-primary-glow">{player.name}</h3>
+            <button
+              onClick={() => setShowCharacterCard(true)}
+              className="text-sm font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+            >
+              {player.name}
+            </button>
             <p className="text-xs text-muted-foreground">{player.character}</p>
           </div>
         </div>
@@ -241,6 +258,12 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
       <div className="flex-1 min-h-0 overflow-hidden">
         <PlayerHand player={player} isCurrentPlayer={isCurrentPlayer} />
       </div>
+
+      <CharacterCardModal
+        characterId={player.character}
+        open={showCharacterCard}
+        onOpenChange={setShowCharacterCard}
+      />
     </div>
   );
 };
