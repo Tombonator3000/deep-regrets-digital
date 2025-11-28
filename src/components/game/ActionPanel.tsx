@@ -108,137 +108,74 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
 
   return (
     <TooltipProvider>
-      <div className="space-y-4">
-        {/* Phase Guidance Banner */}
-        <Card className="card-game border-primary/40 bg-primary/5 p-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary">
-                {guidance.icon}
-              </div>
-              <div>
-                <h3 className="font-semibold text-primary-glow">{guidance.title}</h3>
-                <Badge variant="outline" className="text-xs">
-                  Dag: {gameState.day}
-                </Badge>
-              </div>
+      <div className="flex flex-col gap-2 min-h-0 overflow-hidden">
+        {/* Compact Phase Banner */}
+        <Card className="card-game border-primary/40 bg-primary/5 p-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/20 text-primary">
+              {guidance.icon}
             </div>
-            <p className="text-sm text-foreground/90">{guidance.description}</p>
-            {guidance.tips.length > 0 && (
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="flex items-center gap-1 text-xs font-medium text-primary mb-1">
-                  <Lightbulb className="h-3 w-3" />
-                  Tips
-                </div>
-                <ul className="space-y-0.5 text-xs text-muted-foreground">
-                  {guidance.tips.map((tip, i) => (
-                    <li key={i}>• {tip}</li>
-                  ))}
-                </ul>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-primary-glow">{guidance.title}</span>
+                <Badge variant="outline" className="text-[10px] px-1 py-0">{gameState.day}</Badge>
               </div>
-            )}
+              <p className="text-xs text-foreground/70 truncate">{guidance.description}</p>
+            </div>
           </div>
         </Card>
 
-        {/* Player Status */}
-        <Card className="card-game p-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-semibold text-primary-glow">
-                {currentPlayer.name}
-              </div>
-              <Badge className={currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}>
-                {currentPlayer.location === 'sea' ? (
-                  <><Waves className="h-3 w-3 mr-1" /> Hav (Dybde {currentPlayer.currentDepth})</>
-                ) : (
-                  <><Anchor className="h-3 w-3 mr-1" /> Havn</>
-                )}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded bg-black/20 p-2">
-                <span className="text-muted-foreground">Fishbucks:</span>
-                <span className="ml-1 font-semibold text-fishbuck">{currentPlayer.fishbucks}</span>
-              </div>
-              <div className="rounded bg-black/20 p-2">
-                <span className="text-muted-foreground">Terninger:</span>
-                <span className="ml-1 font-semibold text-primary">{currentPlayer.freshDice.length}</span>
-              </div>
-            </div>
+        {/* Compact Player Status */}
+        <Card className="card-game p-2 shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-primary-glow">{currentPlayer.name}</span>
+            <Badge className={`text-[10px] ${currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}`}>
+              {currentPlayer.location === 'sea' ? `Sea D${currentPlayer.currentDepth}` : 'Port'}
+            </Badge>
           </div>
         </Card>
 
         {/* Action Buttons */}
-        <Card className="card-game p-4">
-          <div className="space-y-3">
-            {gameState.phase === 'declaration' && (
-              <>
-                <p className="text-sm font-medium text-foreground">Velg din destinasjon for dagen:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => handleDeclareLocation('sea')}
-                        variant={currentPlayer.location === 'sea' ? "default" : "outline"}
-                        className={`flex flex-col h-auto py-3 ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
-                      >
-                        <Waves className="h-5 w-5 mb-1" />
-                        <span className="font-semibold">Gå til Havet</span>
-                        <span className="text-xs opacity-80">Fisk og ta risiko</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="font-semibold">Havet</p>
-                      <p className="text-xs">Fang fisk ved å bruke terninger. Dypere fisk gir mer poeng men er vanskeligere. Pass på Regrets!</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => handleDeclareLocation('port')}
-                        variant={currentPlayer.location === 'port' ? "default" : "outline"}
-                        className={`flex flex-col h-auto py-3 ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
-                      >
-                        <Anchor className="h-5 w-5 mb-1" />
-                        <span className="font-semibold">Gå til Havnen</span>
-                        <span className="text-xs opacity-80">Handle trygt</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="font-semibold">Havnen</p>
-                      <p className="text-xs">Selg fisk, monter trofeer, kjøp oppgraderinger. Ingen risiko for Regrets her!</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </>
-            )}
-
-            {gameState.phase === 'action' && isPlayerTurn && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handlePass} variant="outline" className="w-full border-primary/30">
-                    Pass (Avslutt Dagen)
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Avslutt din tur for dagen. Første som passer får Fish Coin!</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
-            {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
-              <Button onClick={handleNextPhase} className="w-full btn-ocean">
-                Neste Fase →
+        <Card className="card-game p-2 shrink-0">
+          {gameState.phase === 'declaration' && (
+            <div className="grid grid-cols-2 gap-1">
+              <Button
+                size="sm"
+                onClick={() => handleDeclareLocation('sea')}
+                variant={currentPlayer.location === 'sea' ? "default" : "outline"}
+                className={`h-8 text-xs ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
+              >
+                <Waves className="h-3 w-3 mr-1" />
+                Sea
               </Button>
-            )}
-          </div>
+              <Button
+                size="sm"
+                onClick={() => handleDeclareLocation('port')}
+                variant={currentPlayer.location === 'port' ? "default" : "outline"}
+                className={`h-8 text-xs ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
+              >
+                <Anchor className="h-3 w-3 mr-1" />
+                Port
+              </Button>
+            </div>
+          )}
+
+          {gameState.phase === 'action' && isPlayerTurn && (
+            <Button size="sm" onClick={handlePass} variant="outline" className="w-full h-8 border-primary/30 text-xs">
+              Pass (End Day)
+            </Button>
+          )}
+
+          {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
+            <Button size="sm" onClick={handleNextPhase} className="w-full h-8 btn-ocean text-xs">
+              Next Phase →
+            </Button>
+          )}
         </Card>
 
-        {/* Location-specific actions */}
+        {/* Location-specific actions - scrollable if needed */}
         {gameState.phase === 'action' && isPlayerTurn && (
-          <>
+          <div className="flex-1 min-h-0 overflow-auto">
             <FishingActions
               gameState={gameState}
               currentPlayer={currentPlayer}
@@ -250,15 +187,7 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
               currentPlayer={currentPlayer}
               onAction={onAction}
             />
-          </>
-        )}
-
-        {selectedShoal && (
-          <Card className="card-game p-3">
-            <p className="text-sm">
-              <strong>Valgt:</strong> Dybde {selectedShoal.depth}, Shoal {selectedShoal.shoal + 1}
-            </p>
-          </Card>
+          </div>
         )}
       </div>
     </TooltipProvider>
