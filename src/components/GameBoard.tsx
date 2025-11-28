@@ -368,7 +368,7 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
         </div>
 
         {/* Responsive Board Game Layout - NO SCROLLING */}
-        <div className="grid h-full min-h-0 gap-0.5 sm:gap-2 grid-cols-1 md:grid-cols-[minmax(200px,240px),1fr] lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
+        <div className="grid h-full min-h-0 gap-0.5 sm:gap-2 grid-cols-1 grid-rows-[1fr,auto] md:grid-cols-[minmax(200px,240px),1fr] md:grid-rows-1 lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
           <div className="hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
             <AnglerBoard
