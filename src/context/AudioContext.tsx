@@ -225,32 +225,22 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     element.volume = Math.min(1, Math.max(0, masterVolume * musicVolume));
   }, [ensureMusicElement, masterVolume, musicVolume]);
 
+  // Single consolidated effect to handle music playback state
+  // Prevents duplicate play() calls that cause stuttering
   useEffect(() => {
     const element = ensureMusicElement();
     if (!element) {
       return;
     }
 
+    // Handle music disabled
     if (!isMusicEnabled) {
       element.pause();
       setIsPlaying(false);
       return;
     }
 
-    if (isPlaying && currentTrack) {
-      const playPromise = element.play();
-      if (playPromise) {
-        playPromise.catch(handlePlaybackRejection);
-      }
-    }
-  }, [currentTrack, ensureMusicElement, handlePlaybackRejection, isMusicEnabled, isPlaying]);
-
-  useEffect(() => {
-    const element = ensureMusicElement();
-    if (!element) {
-      return;
-    }
-
+    // Handle no track selected
     if (!currentTrack) {
       element.pause();
       musicSourceRef.current = null;
@@ -258,12 +248,14 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Update source if track changed
     if (musicSourceRef.current !== currentTrack.url) {
       element.src = currentTrack.url;
       musicSourceRef.current = currentTrack.url;
     }
 
-    if (isPlaying && isMusicEnabled) {
+    // Only attempt to play if we should be playing
+    if (isPlaying) {
       const playPromise = element.play();
       if (playPromise) {
         playPromise.catch(handlePlaybackRejection);
