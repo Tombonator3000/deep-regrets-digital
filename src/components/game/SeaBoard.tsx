@@ -8,6 +8,27 @@ import { PlugMarker, DepthMarker, LighthouseToken, BoatToken } from './GameToken
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+
+// Hook to load briny deep background image
+const useBrinyDeepBackground = () => {
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Try to dynamically import the background image
+    // This uses a variable to prevent Vite from bundling it statically
+    const imagePath = 'briny-deep-background.png';
+    import(`@/assets/${imagePath}`)
+      .then((module) => {
+        setBackgroundUrl(module.default);
+      })
+      .catch(() => {
+        // Image doesn't exist, that's okay - fallback will be used
+        setBackgroundUrl(null);
+      });
+  }, []);
+
+  return backgroundUrl;
+};
 import {
   Tooltip,
   TooltipContent,
@@ -90,6 +111,7 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
   const { toast } = useToast();
   const depthCardBacks = useDepthCardBacks();
   const dinkCardBackUrl = useDinkCardBack();
+  const brinyDeepBackground = useBrinyDeepBackground();
 
   // Get the dinks deck for display
   const dinksDeck = gameState.port.dinksDeck;
@@ -248,14 +270,27 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
         </div>
       )}
 
-      {/* The Deep Sea Board - NO SCROLLING */}
+      {/* The Deep Sea Board with Background Image */}
       <div
         className="flex-1 min-h-0 overflow-hidden touch-pan-y"
         {...touchHandlers}
       >
-        <div className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 bg-gradient-to-b from-slate-900/50 to-slate-950/80 p-0.5 sm:p-1 shadow-xl transition-opacity flex flex-col ${isSwiping ? 'opacity-80' : ''}`}>
-          {/* Depth Rows - Compact */}
-          <div className="flex-1 flex flex-col gap-0.5 sm:gap-1 min-h-0">
+        <div
+          className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 shadow-xl transition-opacity ${isSwiping ? 'opacity-80' : ''}`}
+          style={{
+            backgroundImage: brinyDeepBackground ? `url(${brinyDeepBackground})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: brinyDeepBackground ? undefined : 'rgb(15, 23, 42)',
+          }}
+        >
+          {/* Fallback gradient overlay when no background image */}
+          {!brinyDeepBackground && (
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950/80 rounded-lg" />
+          )}
+
+          {/* 3x3 Grid of Cards positioned over background */}
+          <div className="absolute inset-0 grid grid-rows-3 gap-0 p-[3%]" style={{ paddingTop: '2%', paddingBottom: '2%' }}>
             {[1, 2, 3].map((depth) => {
               const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
               const shoals = gameState.sea.shoals[depth] ?? [];
@@ -267,43 +302,37 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
               return (
                 <div
                   key={depth}
-                  role={canDescend || canAscend ? 'button' : undefined}
-                  tabIndex={canDescend || canAscend ? 0 : -1}
-                  onClick={() => {
-                    if (canDescend) handleDescend(depth);
-                    else if (canAscend) handleAscend(depth);
-                  }}
-                  className={`depth-row flex-1 min-h-0 rounded-lg border ${depthInfo.border} bg-gradient-to-r ${depthInfo.color} p-0.5 sm:p-1 transition-all ${
-                    isCurrentDepth ? 'ring-1 ring-primary/50' : ''
-                  } ${!isAccessible ? 'opacity-50' : ''} ${canDescend || canAscend ? 'cursor-pointer sm:cursor-default active:scale-[0.99]' : ''}`}
+                  className="relative flex flex-col"
                 >
-                  {/* Compact Depth Header */}
-                  <div className="mb-0.5 sm:mb-1 flex items-center justify-between px-0.5 sm:px-1">
-                    <div className="flex items-center gap-0.5 sm:gap-1">
-                      <span className="text-xs sm:text-sm">{depthInfo.icon}</span>
-                      <span className="text-[10px] sm:text-xs font-medium text-white/80">D{depth}</span>
-                      {/* Mobile depth navigation indicators */}
-                      {canDescend && <ArrowDown className="h-3 w-3 text-primary sm:hidden" />}
-                      {canAscend && <ArrowUp className="h-3 w-3 text-primary sm:hidden" />}
-                      {/* Ship icon showing player position */}
-                      {isCurrentDepth && currentPlayer.location === 'sea' && (
-                        <div className="relative z-20 ml-0.5 sm:ml-1">
-                          <BoatToken
-                            size="sm"
-                            animated
-                            highlight
-                            color="primary"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-[10px] sm:text-xs text-white/50">
+                  {/* Depth indicator overlay */}
+                  <div className="absolute top-0 left-0 z-20 flex items-center gap-1 bg-black/40 rounded px-1 py-0.5">
+                    {isCurrentDepth && currentPlayer.location === 'sea' && (
+                      <BoatToken size="sm" animated highlight color="primary" />
+                    )}
+                    <span className="text-[10px] sm:text-xs font-bold text-white/90">D{depth}</span>
+                    {canDescend && <ArrowDown className="h-3 w-3 text-primary" />}
+                    {canAscend && <ArrowUp className="h-3 w-3 text-primary" />}
+                  </div>
+
+                  {/* Fish count indicator */}
+                  <div className="absolute top-0 right-0 z-20 bg-black/40 rounded px-1 py-0.5">
+                    <span className="text-[9px] sm:text-xs text-white/70">
                       {shoals.reduce((acc, s) => acc + s.length, 0)} fish
                     </span>
                   </div>
 
-                  {/* Shoals Row - Compact */}
-                  <div className="grid grid-cols-3 gap-0.5 sm:gap-1 h-[calc(100%-1rem)] sm:h-[calc(100%-1.25rem)]">
+                  {/* Cards Row - 3 cards per depth */}
+                  <div
+                    className="flex-1 grid grid-cols-3 gap-[2%] px-[1%] py-[2%]"
+                    role={canDescend || canAscend ? 'button' : undefined}
+                    onClick={(e) => {
+                      // Only handle clicks on the row itself, not on cards
+                      if (e.target === e.currentTarget) {
+                        if (canDescend) handleDescend(depth);
+                        else if (canAscend) handleAscend(depth);
+                      }
+                    }}
+                  >
                     {shoals.map((shoal, shoalIndex) => {
                       const isSelected = selectedShoal?.depth === depth && selectedShoal?.shoal === shoalIndex;
                       const topFish = shoal[0];
@@ -321,18 +350,18 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                           key={`${depth}-${shoalIndex}`}
                           className="relative h-full"
                         >
-                          {/* Stacked cards effect - show cards underneath */}
+                          {/* Stacked cards effect */}
                           {!shoalEmpty && fishCount > 1 && (
                             <>
                               {fishCount > 2 && (
                                 <div
-                                  className="absolute inset-0 rounded border border-white/10 bg-slate-900/60"
-                                  style={{ transform: 'translate(4px, 4px)', zIndex: 0 }}
+                                  className="absolute inset-0 rounded border border-white/10 bg-slate-900/40"
+                                  style={{ transform: 'translate(3px, 3px)', zIndex: 0 }}
                                 />
                               )}
                               <div
-                                className="absolute inset-0 rounded border border-white/15 bg-slate-900/70"
-                                style={{ transform: 'translate(2px, 2px)', zIndex: 1 }}
+                                className="absolute inset-0 rounded border border-white/15 bg-slate-900/50"
+                                style={{ transform: 'translate(1.5px, 1.5px)', zIndex: 1 }}
                               />
                             </>
                           )}
@@ -346,20 +375,27 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                                   ? `${topFish?.name ?? 'Unknown fish'} in shoal ${shoalIndex + 1} at depth ${depth}`
                                   : `Hidden fish in shoal ${shoalIndex + 1} at depth ${depth}. Click to reveal.`
                             }
-                            onClick={() => canInteract && !shoalEmpty && onShoalSelect({ depth, shoal: shoalIndex })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (canInteract && !shoalEmpty) {
+                                onShoalSelect({ depth, shoal: shoalIndex });
+                              }
+                            }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' && canInteract && !shoalEmpty) {
                                 onShoalSelect({ depth, shoal: shoalIndex });
                               }
                             }}
-                            className={`shoal-card relative overflow-hidden rounded border bg-slate-950/70 p-1 text-white shadow backdrop-blur transition-all h-full flex flex-col ${
-                              isSelected ? 'border-primary ring-1 ring-primary/70' : 'border-transparent'
+                            className={`shoal-card relative overflow-hidden rounded-lg border-2 bg-slate-950/60 backdrop-blur-sm p-1 sm:p-1.5 text-white shadow-lg transition-all h-full flex flex-col ${
+                              isSelected ? 'border-primary ring-2 ring-primary/70' : 'border-white/20'
                             } ${
-                              hasPlug ? 'border-destructive/70 ring-1 ring-destructive/50' : ''
+                              hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50' : ''
                             } ${
-                              shoalEmpty ? 'opacity-40' : ''
+                              shoalEmpty ? 'opacity-30 bg-transparent border-dashed' : ''
                             } ${
-                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 active:scale-[0.98]' : 'cursor-not-allowed'
+                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-900/70 active:scale-[0.97]' : ''
+                            } ${
+                              !isAccessible ? 'opacity-40' : ''
                             }`}
                             style={{ position: 'relative', zIndex: 2 }}
                           >
@@ -369,10 +405,10 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                               </div>
                             )}
 
-                            {/* Fish count indicator */}
+                            {/* Fish count badge */}
                             {!shoalEmpty && fishCount > 1 && (
                               <div className="absolute top-0.5 right-0.5 z-10">
-                                <Badge className="bg-slate-700/90 text-white/80 text-[9px] px-1 py-0 min-w-[1rem] text-center">
+                                <Badge className="bg-slate-700/90 text-white/90 text-[9px] px-1 py-0 min-w-[1rem] text-center font-bold">
                                   {fishCount}
                                 </Badge>
                               </div>
@@ -380,18 +416,18 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
 
                             {shoalEmpty ? (
                               <div className="flex flex-1 items-center justify-center text-center">
-                                <Waves className="h-4 w-4 text-white/30" />
+                                <Waves className="h-4 w-4 sm:h-5 sm:w-5 text-white/20" />
                               </div>
                             ) : isRevealed ? (
                               <div className="flex flex-col flex-1 justify-between">
-                                <div className="text-xs font-medium text-white leading-tight line-clamp-2">
+                                <div className="text-[10px] sm:text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow">
                                   {topFish?.name ?? '?'}
                                 </div>
-                                <div className="flex gap-1 mt-auto">
-                                  <Badge className="bg-fishbuck/90 text-slate-900 text-[10px] px-1 py-0">
+                                <div className="flex gap-0.5 sm:gap-1 mt-auto flex-wrap">
+                                  <Badge className="bg-fishbuck/90 text-slate-900 text-[9px] sm:text-[10px] px-1 py-0 font-bold">
                                     ${topFish?.value ?? '?'}
                                   </Badge>
-                                  <Badge className="bg-destructive/90 text-white text-[10px] px-1 py-0">
+                                  <Badge className="bg-destructive/90 text-white text-[9px] sm:text-[10px] px-1 py-0 font-bold">
                                     {topFish?.difficulty ?? '?'}
                                   </Badge>
                                 </div>
@@ -400,7 +436,6 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                               /* Hidden fish - face-down card */
                               <div className="flex flex-1 flex-col items-center justify-center text-center">
                                 <div className="relative w-full h-full flex items-center justify-center">
-                                  {/* Depth-specific card back image or fallback pattern */}
                                   {depthCardBacks[depth] ? (
                                     <img
                                       src={depthCardBacks[depth]!}
@@ -409,16 +444,16 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                                     />
                                   ) : (
                                     <>
-                                      <div className="absolute inset-1 rounded bg-gradient-to-br from-cyan-900/40 via-blue-900/50 to-purple-900/40 border border-white/10">
-                                        <div className="absolute inset-0 opacity-30" style={{
-                                          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)'
+                                      <div className="absolute inset-0.5 rounded bg-gradient-to-br from-cyan-900/50 via-blue-900/60 to-purple-900/50 border border-white/20">
+                                        <div className="absolute inset-0 opacity-40" style={{
+                                          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.08) 3px, rgba(255,255,255,0.08) 6px)'
                                         }} />
                                       </div>
-                                      <Fish className="h-5 w-5 text-white/40 z-10" />
+                                      <Fish className="h-4 w-4 sm:h-5 sm:w-5 text-white/50 z-10" />
                                     </>
                                   )}
                                 </div>
-                                <span className="text-[9px] text-white/50 mt-auto">Tap to reveal</span>
+                                <span className="text-[8px] sm:text-[9px] text-white/60 mt-auto font-medium">Tap</span>
                               </div>
                             )}
                           </Card>
