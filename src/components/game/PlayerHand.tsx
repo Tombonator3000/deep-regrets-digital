@@ -1,6 +1,23 @@
 import { Player, FishCard, DinkCard, UpgradeCard } from '@/types/game';
 import { Fish, Sparkles, Package, Eye, EyeOff, GripVertical } from 'lucide-react';
-import { useState, DragEvent, useCallback } from 'react';
+import { useState, useEffect, DragEvent, useCallback } from 'react';
+
+// Hook to load dink card back image
+const useDinkCardBack = () => {
+  const [cardBackUrl, setCardBackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    import('@/assets/dink-card-back.png')
+      .then((module) => {
+        setCardBackUrl(module.default);
+      })
+      .catch(() => {
+        setCardBackUrl(null);
+      });
+  }, []);
+
+  return cardBackUrl;
+};
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +43,7 @@ interface PlayerHandProps {
 interface MiniCardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   tooltip?: React.ReactNode;
   onClick?: () => void;
   onEnlarge?: () => void;
@@ -37,6 +55,7 @@ interface MiniCardProps {
 const MiniCard = ({
   children,
   className = '',
+  style,
   tooltip,
   onClick,
   onEnlarge,
@@ -60,6 +79,7 @@ const MiniCard = ({
   const card = (
     <div
       className={`group relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer shadow-lg select-none ${className} ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}`}
+      style={style}
       onClick={onClick}
       draggable={draggable}
       onDragStart={handleDragStart}
@@ -174,9 +194,10 @@ interface DinkMiniCardProps {
   onClick?: () => void;
   onEnlarge?: () => void;
   draggable?: boolean;
+  cardBackUrl?: string | null;
 }
 
-const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false }: DinkMiniCardProps) => {
+const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false, cardBackUrl }: DinkMiniCardProps) => {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     const dragData: CardDragData = {
       type: 'dink',
@@ -187,9 +208,14 @@ const DinkMiniCard = ({ dink, index, onClick, onEnlarge, draggable = false }: Di
     e.dataTransfer.setData('text/plain', `dink:${dink.id}`);
   };
 
+  const backgroundStyle = cardBackUrl
+    ? { backgroundImage: `url(${cardBackUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : {};
+
   return (
     <MiniCard
-      className="border-amber-500/60 bg-gradient-to-b from-amber-900/80 to-amber-950/90"
+      className={`border-amber-500/60 ${!cardBackUrl ? 'bg-gradient-to-b from-amber-900/80 to-amber-950/90' : ''}`}
+      style={backgroundStyle}
       onClick={onClick}
       onEnlarge={onEnlarge}
       draggable={draggable}
@@ -278,6 +304,7 @@ export const PlayerHand = ({ player, isCurrentPlayer }: PlayerHandProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const totalCards = player.handFish.length + player.dinks.length + player.supplies.length;
   const { openCard } = useCardModal();
+  const dinkCardBackUrl = useDinkCardBack();
 
   const handleEnlargeFish = useCallback((fish: FishCard) => {
     openCard(fish, 'fish');
@@ -359,6 +386,7 @@ export const PlayerHand = ({ player, isCurrentPlayer }: PlayerHandProps) => {
                       draggable={isCurrentPlayer}
                       onClick={() => handleEnlargeDink(dink)}
                       onEnlarge={() => handleEnlargeDink(dink)}
+                      cardBackUrl={dinkCardBackUrl}
                     />
                   ))}
                 </div>
