@@ -7,6 +7,26 @@ import brinyDeepHeader from '@/assets/briny-deep-header.png';
 import { PlugMarker, DepthMarker, LighthouseToken } from './GameTokens';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+
+// Hook to load depth-specific card back images
+const useDepthCardBacks = () => {
+  const [cardBacks, setCardBacks] = useState<Record<number, string | null>>({});
+
+  useEffect(() => {
+    // Try to load depth 1 card back
+    import('@/assets/depth-1-card-back.png')
+      .then((module) => {
+        setCardBacks(prev => ({ ...prev, 1: module.default }));
+      })
+      .catch(() => {
+        // Image doesn't exist, use CSS fallback
+        setCardBacks(prev => ({ ...prev, 1: null }));
+      });
+  }, []);
+
+  return cardBacks;
+};
 
 interface SeaBoardProps {
   gameState: GameState;
@@ -25,6 +45,7 @@ const DEPTH_INFO = {
 export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectShoal, onAction }: SeaBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const { toast } = useToast();
+  const depthCardBacks = useDepthCardBacks();
 
   const handleDescend = (targetDepth: number) => {
     if (targetDepth > currentPlayer.currentDepth && targetDepth <= 3 && !currentPlayer.hasPassed) {
@@ -258,13 +279,23 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                               /* Hidden fish - face-down card */
                               <div className="flex flex-1 flex-col items-center justify-center text-center">
                                 <div className="relative w-full h-full flex items-center justify-center">
-                                  {/* Card back pattern */}
-                                  <div className="absolute inset-1 rounded bg-gradient-to-br from-cyan-900/40 via-blue-900/50 to-purple-900/40 border border-white/10">
-                                    <div className="absolute inset-0 opacity-30" style={{
-                                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)'
-                                    }} />
-                                  </div>
-                                  <Fish className="h-5 w-5 text-white/40 z-10" />
+                                  {/* Depth-specific card back image or fallback pattern */}
+                                  {depthCardBacks[depth] ? (
+                                    <img
+                                      src={depthCardBacks[depth]!}
+                                      alt={`Depth ${depth} card back`}
+                                      className="absolute inset-0 w-full h-full object-cover rounded"
+                                    />
+                                  ) : (
+                                    <>
+                                      <div className="absolute inset-1 rounded bg-gradient-to-br from-cyan-900/40 via-blue-900/50 to-purple-900/40 border border-white/10">
+                                        <div className="absolute inset-0 opacity-30" style={{
+                                          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)'
+                                        }} />
+                                      </div>
+                                      <Fish className="h-5 w-5 text-white/40 z-10" />
+                                    </>
+                                  )}
                                 </div>
                                 <span className="text-[9px] text-white/50 mt-auto">Tap to reveal</span>
                               </div>
