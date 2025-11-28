@@ -108,25 +108,25 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-2 min-h-0 overflow-hidden">
+      <div className="flex flex-col gap-1 sm:gap-2 min-h-0 overflow-hidden">
         {/* Compact Phase Banner */}
-        <Card className="card-game border-primary/40 bg-primary/5 p-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/20 text-primary">
+        <Card className="card-game border-primary/40 bg-primary/5 p-1.5 sm:p-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded bg-primary/20 text-primary">
               {guidance.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-primary-glow">{guidance.title}</span>
-                <Badge variant="outline" className="text-[10px] px-1 py-0">{gameState.day}</Badge>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="text-xs sm:text-sm font-semibold text-primary-glow">{guidance.title}</span>
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 py-0">{gameState.day}</Badge>
               </div>
-              <p className="text-xs text-foreground/70 truncate">{guidance.description}</p>
+              <p className="text-[10px] sm:text-xs text-foreground/70 truncate">{guidance.description}</p>
             </div>
           </div>
         </Card>
 
-        {/* Compact Player Status */}
-        <Card className="card-game p-2 shrink-0">
+        {/* Compact Player Status - Hidden on mobile as it's in AnglerBoard compact */}
+        <Card className="card-game p-1.5 sm:p-2 shrink-0 hidden sm:block">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-primary-glow">{currentPlayer.name}</span>
             <Badge className={`text-[10px] ${currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}`}>
@@ -136,38 +136,38 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         </Card>
 
         {/* Action Buttons */}
-        <Card className="card-game p-2 shrink-0">
+        <Card className="card-game p-1.5 sm:p-2 shrink-0">
           {gameState.phase === 'declaration' && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1 sm:gap-2">
               <Button
                 size="sm"
                 onClick={() => handleDeclareLocation('sea')}
                 variant={currentPlayer.location === 'sea' ? "default" : "outline"}
-                className={`min-h-[44px] text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
+                className={`min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
               >
-                <Waves className="h-4 w-4 mr-1" />
+                <Waves className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                 Sea
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleDeclareLocation('port')}
                 variant={currentPlayer.location === 'port' ? "default" : "outline"}
-                className={`min-h-[44px] text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
+                className={`min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
               >
-                <Anchor className="h-4 w-4 mr-1" />
+                <Anchor className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                 Port
               </Button>
             </div>
           )}
 
           {gameState.phase === 'action' && isPlayerTurn && (
-            <Button size="sm" onClick={handlePass} variant="outline" className="w-full min-h-[44px] border-primary/30 text-xs touch-manipulation active:scale-95">
+            <Button size="sm" onClick={handlePass} variant="outline" className="w-full min-h-[40px] sm:min-h-[44px] border-primary/30 text-[10px] sm:text-xs touch-manipulation active:scale-95">
               Pass (End Day)
             </Button>
           )}
 
           {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
-            <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[44px] btn-ocean text-xs touch-manipulation active:scale-95">
+            <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[40px] sm:min-h-[44px] btn-ocean text-[10px] sm:text-xs touch-manipulation active:scale-95">
               Next Phase →
             </Button>
           )}
