@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap } from 'lucide-react';
+import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull } from 'lucide-react';
+import { RegretDeck } from './RegretCard';
 
 import harborPortBoard from '@/assets/harbor-port-board.jpg';
 
@@ -573,6 +574,32 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
 
         <TabsContent value="services" className="space-y-4">
           {summaryHeader}
+
+          {/* Regrets Deck Display */}
+          <div className="rounded-xl border-2 border-destructive/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <RegretDeck count={gameState.port.regretsDeck.length} size="md" />
+                <div>
+                  <h3 className="font-bold text-destructive flex items-center gap-2">
+                    <Skull className="h-4 w-4" />
+                    Regrets Deck
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {gameState.port.regretsDeck.length} cards remaining
+                  </p>
+                  <p className="text-xs text-destructive/60 mt-1">
+                    Discard: {gameState.port.regretsDiscard.length} cards
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Your Regrets</div>
+                <div className="text-2xl font-bold text-destructive">{currentPlayer.regrets.length}</div>
+              </div>
+            </div>
+          </div>
+
           <Card className="card-game">
             <CardHeader>
               <CardTitle className="text-lg">Port Services</CardTitle>
