@@ -6,6 +6,7 @@ import { PlayerPanel } from './game/PlayerPanel';
 import { ActionPanel } from './game/ActionPanel';
 import { AnglerBoard } from './game/AnglerBoard';
 import { DayTracker } from './game/DayTracker';
+import { MadnessTracker } from './game/MadnessTracker';
 import { CardModalProvider } from './game/CardModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -374,6 +375,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               gameState={gameState}
               onMountFish={handleMountFish}
             />
+            <MadnessTracker player={currentPlayer} />
             <DayTracker
               day={gameState.day}
               phase={gameState.phase}
@@ -416,8 +418,9 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               selectedShoal={selectedShoal}
               onAction={onAction}
             />
-            {/* Show day tracker on mobile */}
-            <div className="md:hidden">
+            {/* Show madness tracker and day tracker on mobile */}
+            <div className="md:hidden space-y-1">
+              <MadnessTracker player={currentPlayer} compact />
               <DayTracker
                 day={gameState.day}
                 phase={gameState.phase}
