@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Anchor,
+  Fish,
   HelpCircle,
   Maximize2,
   Minimize2,
@@ -90,6 +91,8 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
   );
   const topFish = selectedShoalFish[0];
   const shoalIsEmpty = selectedShoal ? selectedShoalFish.length === 0 : true;
+  const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
+  const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
   const phaseDisplay: Record<GameState['phase'], string> = {
     start: 'Start',
     refresh: 'Refresh',
@@ -435,7 +438,7 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
         >
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-2xl font-bold text-primary-glow">
-              {topFish ? topFish.name : 'Empty Shoal'}
+              {shoalIsEmpty ? 'Empty Shoal' : isShoalRevealed ? topFish?.name : 'Hidden Fish'}
             </DialogTitle>
             {selectedShoal && (
               <DialogDescription className="text-xs uppercase tracking-wide text-slate-200/80">
@@ -445,12 +448,42 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
           </DialogHeader>
 
           <p id="shoal-detail-description" className="sr-only" aria-live="polite">
-            {topFish
-              ? `Difficulty ${topFish.difficulty}. Value ${topFish.value}. Requires dice totalling at least ${topFish.difficulty}.`
-              : 'This shoal is empty.'}
+            {shoalIsEmpty
+              ? 'This shoal is empty.'
+              : isShoalRevealed && topFish
+                ? `Difficulty ${topFish.difficulty}. Value ${topFish.value}. Requires dice totalling at least ${topFish.difficulty}.`
+                : 'Fish is hidden. Use Reveal Top Fish to see it.'}
           </p>
 
-          {topFish ? (
+          {shoalIsEmpty ? (
+            <div className="rounded-lg border border-white/10 bg-black/40 p-4 text-center text-sm text-slate-200">
+              The waters are calm. There are no fish remaining in this shoal.
+            </div>
+          ) : !isShoalRevealed ? (
+            /* Hidden fish state - show mystery card */
+            <div className="space-y-4">
+              <div className="flex items-center justify-center py-6">
+                <div className="relative w-32 h-44 rounded-lg bg-gradient-to-br from-cyan-900/50 via-blue-900/60 to-purple-900/50 border-2 border-white/20 flex items-center justify-center shadow-xl">
+                  {/* Card back pattern */}
+                  <div className="absolute inset-2 rounded opacity-30" style={{
+                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.08) 6px, rgba(255,255,255,0.08) 12px)'
+                  }} />
+                  <div className="text-center z-10">
+                    <Fish className="h-10 w-10 text-white/50 mx-auto mb-2" />
+                    <span className="text-sm text-white/60">???</span>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-black/40 p-4 text-center text-sm text-slate-200">
+                This fish is hidden. Spend a die to reveal it before catching.
+              </div>
+              {currentPlayer.freshDice.length === 0 && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+                  No dice available to reveal fish!
+                </div>
+              )}
+            </div>
+          ) : topFish ? (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 <Badge className="bg-fishbuck/20 text-fishbuck">Value {topFish.value}</Badge>
@@ -504,18 +537,14 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="rounded-lg border border-white/10 bg-black/40 p-4 text-center text-sm text-slate-200">
-              The waters are calm. There are no fish remaining in this shoal.
-            </div>
-          )}
+          ) : null}
 
           <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-            <div className="flex flex-col gap-2 sm:flex-row">
+            {!isShoalRevealed && !shoalIsEmpty ? (
+              /* Only show Reveal button when fish is hidden */
               <Button
-                variant="outline"
-                className="border-white/40 bg-white/10 text-white hover:bg-white/20"
-                disabled={!selectedShoal || shoalIsEmpty}
+                className="btn-ocean w-full"
+                disabled={!selectedShoal || shoalIsEmpty || currentPlayer.freshDice.length === 0}
                 onClick={() => {
                   if (!selectedShoal || shoalIsEmpty) return;
                   onAction({
@@ -523,56 +552,60 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
                     playerId: currentPlayer.id,
                     payload: { depth: selectedShoal.depth, shoal: selectedShoal.shoal },
                   });
-                  setShoalDialogOpen(false);
-                  resetDiceSelection();
                 }}
               >
                 Reveal Top Fish
               </Button>
-              <Button
-                className="btn-ocean"
-                disabled={!topFish || selectedDiceIndices.length === 0}
-                onClick={() => {
-                  if (!selectedShoal || !topFish || selectedDiceIndices.length === 0) return;
-                  onAction({
-                    type: 'CATCH_FISH',
-                    playerId: currentPlayer.id,
-                    payload: {
-                      fish: topFish,
-                      depth: selectedShoal.depth,
-                      shoal: selectedShoal.shoal,
-                      diceIndices: selectedDiceIndices,
-                    },
-                  });
-                  setShoalDialogOpen(false);
-                  resetDiceSelection();
-                }}
-              >
-                Catch with Selected Dice
-              </Button>
-            </div>
-            <Button
-              variant="secondary"
-              className="bg-slate-800/70 text-slate-200 hover:bg-slate-700"
-              disabled={!topFish}
-              onClick={() => {
-                if (!selectedShoal || !topFish) return;
-                onAction({
-                  type: 'CATCH_FISH',
-                  playerId: currentPlayer.id,
-                  payload: {
-                    fish: topFish,
-                    depth: selectedShoal.depth,
-                    shoal: selectedShoal.shoal,
-                    diceIndices: [],
-                  },
-                });
-                setShoalDialogOpen(false);
-                resetDiceSelection();
-              }}
-            >
-              Pass on Catch
-            </Button>
+            ) : (
+              /* Show full actions when fish is revealed */
+              <>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    className="btn-ocean"
+                    disabled={!topFish || selectedDiceIndices.length === 0}
+                    onClick={() => {
+                      if (!selectedShoal || !topFish || selectedDiceIndices.length === 0) return;
+                      onAction({
+                        type: 'CATCH_FISH',
+                        playerId: currentPlayer.id,
+                        payload: {
+                          fish: topFish,
+                          depth: selectedShoal.depth,
+                          shoal: selectedShoal.shoal,
+                          diceIndices: selectedDiceIndices,
+                        },
+                      });
+                      setShoalDialogOpen(false);
+                      resetDiceSelection();
+                    }}
+                  >
+                    Catch with Selected Dice
+                  </Button>
+                </div>
+                <Button
+                  variant="secondary"
+                  className="bg-slate-800/70 text-slate-200 hover:bg-slate-700"
+                  disabled={!topFish}
+                  onClick={() => {
+                    if (!selectedShoal || !topFish) return;
+                    onAction({
+                      type: 'CATCH_FISH',
+                      playerId: currentPlayer.id,
+                      payload: {
+                        fish: topFish,
+                        depth: selectedShoal.depth,
+                        shoal: selectedShoal.shoal,
+                        diceIndices: [],
+                      },
+                    });
+                    setShoalDialogOpen(false);
+                    resetDiceSelection();
+                  }}
+                >
+                  Pass on Catch
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

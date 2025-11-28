@@ -99,6 +99,7 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
         2: [],
         3: []
       },
+      revealedShoals: {},
       plugActive: false,
       plugCursor: { depth: 1, shoal: 0 }
     },
@@ -409,9 +410,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       if (player && player.location === 'sea' && player.freshDice.length > 0) {
         const { depth, shoal } = action.payload;
         const shoalArray = newState.sea.shoals[depth]?.[shoal];
+        const shoalKey = `${depth}-${shoal}`;
 
-        // Only charge if there's a fish to reveal
-        if (shoalArray && shoalArray.length > 0) {
+        // Only charge if there's a fish to reveal and it's not already revealed
+        if (shoalArray && shoalArray.length > 0 && !newState.sea.revealedShoals[shoalKey]) {
           // Spend the lowest value die for reveal (player choice could be added later)
           const lowestIndex = player.freshDice.reduce(
             (minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx,
@@ -423,6 +425,12 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
             ...player.freshDice.slice(lowestIndex + 1)
           ];
           player.spentDice = [...player.spentDice, spentDie];
+
+          // Mark the shoal as revealed
+          newState.sea.revealedShoals = {
+            ...newState.sea.revealedShoals,
+            [shoalKey]: true
+          };
         }
       }
       break;
@@ -522,6 +530,13 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
               ...shoalArray.slice(0, fishIndex),
               ...shoalArray.slice(fishIndex + 1)
             ];
+          }
+
+          // Reset revealed state for this shoal - new top fish is hidden
+          const catchShoalKey = `${depth}-${shoal}`;
+          if (newState.sea.revealedShoals[catchShoalKey]) {
+            const { [catchShoalKey]: _, ...rest } = newState.sea.revealedShoals;
+            newState.sea.revealedShoals = rest;
           }
 
           // Process fish abilities
@@ -1093,6 +1108,9 @@ const advanceDay = (gameState: GameState) => {
     endGame(gameState);
     return;
   }
+
+  // Reset revealed shoals at day change - fish "swim away" and new ones appear
+  gameState.sea.revealedShoals = {};
 
   // Day effects per rulebook (p.8)
   const newDay = gameState.day;
