@@ -23,6 +23,16 @@ const useDepthCardBacks = () => {
         // Image doesn't exist, use CSS fallback
         setCardBacks(prev => ({ ...prev, 1: null }));
       });
+
+    // Try to load depth 2 card back
+    import('@/assets/depth-2-card-back.png')
+      .then((module) => {
+        setCardBacks(prev => ({ ...prev, 2: module.default }));
+      })
+      .catch(() => {
+        // Image doesn't exist, use CSS fallback
+        setCardBacks(prev => ({ ...prev, 2: null }));
+      });
   }, []);
 
   return cardBacks;
