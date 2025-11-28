@@ -57,10 +57,11 @@ import { GameAction } from '@/types/game';
 interface GameBoardProps {
   gameState: GameState;
   onAction: (action: GameAction) => void;
-  onNewGame: () => void;
+  onRestartGame: () => void;
+  onBackToStart: () => void;
 }
 
-export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) => {
+export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }: GameBoardProps) => {
   const [selectedShoal, setSelectedShoal] = useState<{depth: number, shoal: number} | null>(null);
   const [shoalDialogOpen, setShoalDialogOpen] = useState(false);
   const [isPortOpen, setIsPortOpen] = useState(false);
@@ -238,10 +239,10 @@ export const GameBoard = ({ gameState, onAction, onNewGame }: GameBoardProps) =>
               })}
             </div>
             <div className="flex flex-col gap-3">
-              <Button onClick={onNewGame} className="btn-ocean min-h-[44px] touch-manipulation active:scale-95">
+              <Button onClick={onRestartGame} className="btn-ocean min-h-[44px] touch-manipulation active:scale-95">
                 New Game
               </Button>
-              <Button onClick={onNewGame} variant="outline" className="border-primary/30 hover:border-primary min-h-[44px] touch-manipulation active:scale-95">
+              <Button onClick={onBackToStart} variant="outline" className="border-primary/30 hover:border-primary min-h-[44px] touch-manipulation active:scale-95">
                 Back to Start
               </Button>
             </div>
