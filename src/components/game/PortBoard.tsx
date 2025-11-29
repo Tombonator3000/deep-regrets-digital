@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull, Ship } from 'lucide-react';
 import { RegretDeck } from './RegretCard';
-import { AnchorToken } from './GameTokens';
+import { AnchorToken, BoatToken, BoatColor } from './GameTokens';
 
 import harborPortBoard from '@/assets/harbor-port-board.jpg';
 
@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 
 interface PortBoardProps {
   gameState: GameState;
+  playerColors: Record<string, BoatColor>;
   onAction: (action: GameAction) => void;
   className?: string;
 }
@@ -104,11 +105,12 @@ const UpgradeOption = ({ item, canInteract, funds, hasDiscount, onConfirm }: Upg
   );
 };
 
-export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) => {
+export const PortBoard = ({ gameState, playerColors, onAction, className }: PortBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const canInteract = currentPlayer.location === 'port' && !currentPlayer.hasPassed;
   const [activeMountFishId, setActiveMountFishId] = useState<string | null>(null);
   const [selectedMountSlot, setSelectedMountSlot] = useState<number | null>(null);
+  const portPlayers = gameState.players.filter((player) => player.location === 'port');
 
   const handleBuyUpgrade = (upgradeId: string, cost: number) => {
     if (currentPlayer.fishbucks >= cost) {
@@ -187,10 +189,43 @@ export const PortBoard = ({ gameState, onAction, className }: PortBoardProps) =>
           className="h-48 w-full object-cover object-center sm:h-56"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
+        {portPlayers.length > 0 && (
+          <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-20 flex flex-wrap gap-2">
+            {portPlayers.map((player) => {
+              const playerIndex = gameState.players.findIndex((p) => p.id === player.id);
+              const isCurrentTurn = playerIndex === gameState.currentPlayerIndex;
+              const color = playerColors[player.id] ?? 'primary';
+
+              return (
+                <div
+                  key={player.id}
+                  className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/15 bg-slate-900/85 px-2 py-1 shadow-sm"
+                >
+                  <BoatToken
+                    size="sm"
+                    color={color}
+                    animated
+                    highlight={isCurrentTurn}
+                    className={isCurrentTurn ? 'animate-[boat-bob_1.6s_ease-in-out_infinite]' : ''}
+                  />
+                  <div className="leading-tight">
+                    <div className="text-xs font-semibold text-white">{player.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{player.isAI ? 'AI' : 'Spiller'}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {/* Show anchor/ship when player is at port */}
         {currentPlayer.location === 'port' && (
           <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2 rounded-lg bg-slate-900/80 px-3 py-2 backdrop-blur-sm border border-primary/30">
-            <AnchorToken size="sm" animated highlight />
+            <BoatToken
+              size="sm"
+              color={playerColors[currentPlayer.id] ?? 'primary'}
+              animated
+              highlight
+            />
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-primary">{currentPlayer.name}</span>
               <span className="text-[10px] text-muted-foreground">I havnen</span>
