@@ -508,6 +508,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const fishDifficulty = fish.difficulty;
         const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
 
+        // Per rulebook (p.10): "If a fish has no printed cost, its cost is 0$, you don't need to spend any dice in order to catch it"
+        const isZeroCostFish = fishDifficulty === 0;
+
         // Mechanical Reel effect - auto catch fish with difficulty 3 or less
         const hasAutoCatch = playerHasEquippedEffect(player, 'auto_catch_difficulty_3');
         const isAutoCatch = hasAutoCatch && fishDifficulty <= 3;
@@ -549,9 +552,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const hasUsableSelection =
           (uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length) ||
           uniqueTackleIndices.length > 0 ||
-          isAutoCatch;
+          isAutoCatch ||
+          isZeroCostFish;
         const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0) + tackleTotal;
-        const meetsDifficulty = isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty);
+        const meetsDifficulty = isZeroCostFish || isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty);
 
         if (meetsDifficulty) {
           // Remove fresh dice (immutable)
@@ -578,6 +582,23 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           if (newState.sea.revealedShoals[catchShoalKey]) {
             const { [catchShoalKey]: _, ...rest } = newState.sea.revealedShoals;
             newState.sea.revealedShoals = rest;
+          }
+
+          // OVERFISHING: Per rulebook (p.10) - If you catch the last Fish in a Shoal, immediately draw one Regret
+          const updatedShoalArray = newState.sea.shoals[depth][shoal];
+          if (updatedShoalArray.length === 0) {
+            drawRegret(player, newState);
+
+            // Check if all shoals at all depths are empty - game ends immediately
+            const allShoalsEmpty = [1, 2, 3].every(d => {
+              const depthShoals = newState.sea.shoals[d];
+              return depthShoals.every((shoalArr: FishCard[]) => shoalArr.length === 0);
+            });
+
+            if (allShoalsEmpty) {
+              // "If the Sea is ever empty, the game ends immediately"
+              endGame(newState);
+            }
           }
 
           // Process fish abilities
@@ -874,6 +895,64 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           if (newState.pendingDiceRemoval.count <= 0) {
             newState.pendingDiceRemoval = undefined;
           }
+        }
+      }
+      break;
+
+    case 'EAT_FISH':
+      // Per rulebook (p.10): "If a Fish has an eat ability, it may be discarded at any stage
+      // of the fishing process by discarding the Fish from your hand"
+      // This is a FREE ACTION available at sea
+      if (player && player.location === 'sea') {
+        const { fishId } = action.payload;
+        const fishIndex = player.handFish.findIndex(f => f.id === fishId);
+
+        if (fishIndex >= 0) {
+          const fish = player.handFish[fishIndex];
+
+          // Check if fish has an 'eat' ability
+          if (fish.abilities.some(ability => ability.startsWith('eat'))) {
+            // Process eat ability effects before discarding
+            // (specific eat effects can be added here based on fish abilities)
+
+            // Remove from hand and add to graveyard at its depth
+            player.handFish = [
+              ...player.handFish.slice(0, fishIndex),
+              ...player.handFish.slice(fishIndex + 1)
+            ];
+            newState.sea.graveyards[fish.depth] = [
+              ...newState.sea.graveyards[fish.depth],
+              fish
+            ];
+          }
+        }
+      }
+      break;
+
+    case 'USE_CAN_OF_WORMS':
+      // Per rulebook (p.10): "Before revealing, you can flip your worms to peek at a Fish
+      // and decide to put it back on either the top or bottom of the Shoal"
+      // This is a FREE ACTION that requires canOfWormsFaceUp to be true
+      if (player && player.location === 'sea' && player.canOfWormsFaceUp) {
+        const { depth, shoal, moveToBottom } = action.payload;
+        const targetShoalKey = `${depth}-${shoal}`;
+        const targetShoalArray = newState.sea.shoals[depth]?.[shoal];
+
+        // Can only use on unrevealed shoals (before revealing)
+        if (targetShoalArray && targetShoalArray.length > 0 && !newState.sea.revealedShoals[targetShoalKey]) {
+          // Flip Can of Worms face-down (used)
+          player.canOfWormsFaceUp = false;
+
+          // The player has peeked and chosen where to place the top fish
+          if (moveToBottom && targetShoalArray.length > 1) {
+            // Move top fish to bottom of shoal
+            const topFish = targetShoalArray[0];
+            newState.sea.shoals[depth][shoal] = [
+              ...targetShoalArray.slice(1),
+              topFish
+            ];
+          }
+          // If moveToBottom is false, fish stays on top (no change needed)
         }
       }
       break;
