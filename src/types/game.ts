@@ -198,6 +198,16 @@ export interface RemoveDiePayload {
   dieIndex: number; // Index of the die to remove from freshDice
 }
 
+export interface EatFishPayload {
+  fishId: string;
+}
+
+export interface UseCanOfWormsPayload {
+  depth: number;
+  shoal: number;
+  moveToBottom: boolean; // true = move to bottom, false = keep on top
+}
+
 // Union type for all game actions
 export type GameAction =
   | { type: 'INIT_GAME'; playerId: string; payload: GameState }
@@ -219,7 +229,9 @@ export type GameAction =
   | { type: 'PASS'; playerId: string; payload: Record<string, never> }
   | { type: 'NEXT_PHASE'; playerId: string; payload: Record<string, never> }
   | { type: 'END_TURN'; playerId: string; payload: Record<string, never> }
-  | { type: 'REMOVE_DIE'; playerId: string; payload: RemoveDiePayload };
+  | { type: 'REMOVE_DIE'; playerId: string; payload: RemoveDiePayload }
+  | { type: 'EAT_FISH'; playerId: string; payload: EatFishPayload }
+  | { type: 'USE_CAN_OF_WORMS'; playerId: string; payload: UseCanOfWormsPayload };
 
 export interface CharacterOption {
   id: string;
