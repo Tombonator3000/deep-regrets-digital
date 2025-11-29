@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FishCard, GameState, Player, UpgradeCard } from '@/types/game';
+import { FishCard, GameState, Player, UpgradeCard, MAX_FISHBUCKS, ShopType } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
@@ -30,17 +30,38 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
     return null;
   }
 
+  // Helper to check if a shop has been visited this turn (per rulebook p.17)
+  const hasVisitedShop = (shopType: ShopType): boolean => {
+    return currentPlayer.shopVisits?.includes(shopType) ?? false;
+  };
+
+  // Check if player is at max fishbucks
+  const isAtMaxFishbucks = currentPlayer.fishbucks >= MAX_FISHBUCKS;
+
   const handleSellFish = (fish: FishCard) => {
     const saleDetails = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+    const potentialTotal = currentPlayer.fishbucks + saleDetails.adjustedValue;
+    const actualGain = Math.min(saleDetails.adjustedValue, MAX_FISHBUCKS - currentPlayer.fishbucks);
+    const excessLost = saleDetails.adjustedValue - actualGain;
+
     onAction({
       type: 'SELL_FISH',
       playerId: currentPlayer.id,
       payload: { fishId: fish.id }
     });
-    toast({
-      title: "Fish Sold",
-      description: `Sold ${fish.name} for ${saleDetails.adjustedValue} Fishbucks`,
-    });
+
+    if (excessLost > 0) {
+      toast({
+        title: "Fisk solgt - Overskudd tapt!",
+        description: `Solgte ${fish.name} for ${actualGain} Fishbucks (${excessLost} FB tapt - maks ${MAX_FISHBUCKS})`,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Fisk solgt",
+        description: `Solgte ${fish.name} for ${saleDetails.adjustedValue} Fishbucks`,
+      });
+    }
   };
 
   const handleMountFish = (fish: FishCard, slotIndex: number) => {
@@ -66,10 +87,27 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
   };
 
   const handleBuyUpgrade = (upgrade: UpgradeCard) => {
+    // Check shop visit limit per rulebook (p.17)
+    const shopTypeMap: Record<string, ShopType> = {
+      'rod': 'rods',
+      'reel': 'reels',
+      'supply': 'supplies'
+    };
+    const shopType = shopTypeMap[upgrade.type];
+
+    if (hasVisitedShop(shopType)) {
+      toast({
+        title: "Butikk allerede besøkt",
+        description: `Du har allerede handlet i ${shopType === 'rods' ? 'stang' : shopType === 'reels' ? 'hjul' : 'forsynings'}-butikken denne turen`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (currentPlayer.fishbucks < upgrade.cost) {
       toast({
-        title: "Insufficient Funds",
-        description: `Need ${upgrade.cost} Fishbucks but only have ${currentPlayer.fishbucks}`,
+        title: "Ikke nok penger",
+        description: `Trenger ${upgrade.cost} Fishbucks men har bare ${currentPlayer.fishbucks}`,
         variant: "destructive"
       });
       return;
@@ -81,16 +119,26 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
       payload: { upgradeId: upgrade.id }
     });
     toast({
-      title: "Upgrade Purchased",
-      description: `Bought ${upgrade.name} for ${upgrade.cost} Fishbucks`,
+      title: "Oppgradering kjøpt",
+      description: `Kjøpte ${upgrade.name} for ${upgrade.cost} Fishbucks`,
     });
   };
 
   const handleBuyTackleDie = (dieId: string, cost: number) => {
+    // Check shop visit limit per rulebook (p.17)
+    if (hasVisitedShop('tackle_dice')) {
+      toast({
+        title: "Butikk allerede besøkt",
+        description: "Du har allerede handlet i terning-butikken denne turen",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (currentPlayer.fishbucks < cost) {
       toast({
-        title: "Insufficient Funds",
-        description: `Need ${cost} Fishbucks but only have ${currentPlayer.fishbucks}`,
+        title: "Ikke nok penger",
+        description: `Trenger ${cost} Fishbucks men har bare ${currentPlayer.fishbucks}`,
         variant: "destructive"
       });
       return;
@@ -102,8 +150,8 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
       payload: { dieId, count: 1 }
     });
     toast({
-      title: "Tackle Die Purchased",
-      description: `Bought a tackle die for ${cost} Fishbucks`,
+      title: "Terning kjøpt",
+      description: `Kjøpte en spesialterning for ${cost} Fishbucks`,
     });
   };
 
@@ -179,11 +227,13 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           <div className="flex items-center gap-2 text-sm">
             <Lightbulb className="h-4 w-4 text-amber-400" />
             <span className="text-amber-200">
-              {currentPlayer.handFish.length === 0
-                ? "Du har ingen fisk å selge eller montere. Gå til havet for å fiske!"
-                : currentPlayer.handFish.length === 1
-                  ? "Du har 1 fisk. Vurder å montere den på ×3-plassen for maksimale poeng!"
-                  : `Du har ${currentPlayer.handFish.length} fisk. Selg eller monter dem for poeng.`}
+              {isAtMaxFishbucks
+                ? `⚠️ Du har ${MAX_FISHBUCKS} FB (maks). Overskudd fra salg går tapt!`
+                : currentPlayer.handFish.length === 0
+                  ? "Du har ingen fisk å selge eller montere. Gå til havet for å fiske!"
+                  : currentPlayer.handFish.length === 1
+                    ? "Du har 1 fisk. Vurder å montere den på ×3-plassen for maksimale poeng!"
+                    : `Du har ${currentPlayer.handFish.length} fisk. Selg eller monter dem for poeng.`}
             </span>
           </div>
         </Card>
@@ -344,18 +394,24 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           <div className="flex items-center gap-2">
             <Dice1 className="h-4 w-4 text-violet-400" />
             <h4 className="font-medium">Spesialterninger</h4>
+            {hasVisitedShop('tackle_dice') && (
+              <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
+                ✓ Besøkt
+              </Badge>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Spesialterninger med bedre odds. Lei dem for dagen!</p>
+                <p className="text-xs mt-1 text-muted-foreground">Du kan kun besøke hver butikk én gang per tur.</p>
               </TooltipContent>
             </Tooltip>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {TACKLE_DICE.map((die) => (
-              <Card key={die.id} className="card-game p-2">
+              <Card key={die.id} className={`card-game p-2 ${hasVisitedShop('tackle_dice') ? 'opacity-50' : ''}`}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <div className={`w-4 h-4 rounded ${dieColors[die.color] || 'bg-gray-500'}`} />
@@ -367,17 +423,19 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                     <TooltipTrigger asChild>
                       <Button
                         onClick={() => handleBuyTackleDie(die.id, die.cost)}
-                        disabled={currentPlayer.fishbucks < die.cost}
+                        disabled={currentPlayer.fishbucks < die.cost || hasVisitedShop('tackle_dice')}
                         size="sm"
                         className="w-full btn-ocean text-xs"
                       >
-                        Kjøp ({die.cost} FB)
+                        {hasVisitedShop('tackle_dice') ? '🔒 Besøkt' : `Kjøp (${die.cost} FB)`}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {currentPlayer.fishbucks < die.cost
-                        ? `Du trenger ${die.cost - currentPlayer.fishbucks} Fishbucks mer`
-                        : `Lei denne terningen for ${die.cost} Fishbucks`}
+                      {hasVisitedShop('tackle_dice')
+                        ? 'Du har allerede besøkt denne butikken denne turen'
+                        : currentPlayer.fishbucks < die.cost
+                          ? `Du trenger ${die.cost - currentPlayer.fishbucks} Fishbucks mer`
+                          : `Lei denne terningen for ${die.cost} Fishbucks`}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -404,9 +462,16 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           {/* Rods */}
           {gameState.port.shops.rods.length > 0 && (
             <div className="space-y-2">
-              <h5 className="text-sm font-medium text-primary-glow">Stenger</h5>
+              <div className="flex items-center gap-2">
+                <h5 className="text-sm font-medium text-primary-glow">Stenger</h5>
+                {hasVisitedShop('rods') && (
+                  <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
+                    ✓ Besøkt
+                  </Badge>
+                )}
+              </div>
               {gameState.port.shops.rods.map((rod) => (
-                <Card key={rod.id} className="card-game p-3">
+                <Card key={rod.id} className={`card-game p-3 ${hasVisitedShop('rods') ? 'opacity-50' : ''}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h6 className="font-medium">{rod.name}</h6>
@@ -418,17 +483,19 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleBuyUpgrade(rod)}
-                            disabled={currentPlayer.fishbucks < rod.cost}
+                            disabled={currentPlayer.fishbucks < rod.cost || hasVisitedShop('rods')}
                             size="sm"
                             className="btn-ocean mt-1"
                           >
-                            Kjøp
+                            {hasVisitedShop('rods') ? '🔒' : 'Kjøp'}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {currentPlayer.fishbucks < rod.cost
-                            ? `Trenger ${rod.cost - currentPlayer.fishbucks} FB mer`
-                            : 'Kjøp denne oppgraderingen'}
+                          {hasVisitedShop('rods')
+                            ? 'Du har allerede besøkt stang-butikken denne turen'
+                            : currentPlayer.fishbucks < rod.cost
+                              ? `Trenger ${rod.cost - currentPlayer.fishbucks} FB mer`
+                              : 'Kjøp denne oppgraderingen'}
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -441,9 +508,16 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           {/* Reels */}
           {gameState.port.shops.reels.length > 0 && (
             <div className="space-y-2">
-              <h5 className="text-sm font-medium text-primary-glow">Hjul</h5>
+              <div className="flex items-center gap-2">
+                <h5 className="text-sm font-medium text-primary-glow">Hjul</h5>
+                {hasVisitedShop('reels') && (
+                  <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
+                    ✓ Besøkt
+                  </Badge>
+                )}
+              </div>
               {gameState.port.shops.reels.map((reel) => (
-                <Card key={reel.id} className="card-game p-3">
+                <Card key={reel.id} className={`card-game p-3 ${hasVisitedShop('reels') ? 'opacity-50' : ''}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h6 className="font-medium">{reel.name}</h6>
@@ -455,17 +529,19 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleBuyUpgrade(reel)}
-                            disabled={currentPlayer.fishbucks < reel.cost}
+                            disabled={currentPlayer.fishbucks < reel.cost || hasVisitedShop('reels')}
                             size="sm"
                             className="btn-ocean mt-1"
                           >
-                            Kjøp
+                            {hasVisitedShop('reels') ? '🔒' : 'Kjøp'}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {currentPlayer.fishbucks < reel.cost
-                            ? `Trenger ${reel.cost - currentPlayer.fishbucks} FB mer`
-                            : 'Kjøp denne oppgraderingen'}
+                          {hasVisitedShop('reels')
+                            ? 'Du har allerede besøkt hjul-butikken denne turen'
+                            : currentPlayer.fishbucks < reel.cost
+                              ? `Trenger ${reel.cost - currentPlayer.fishbucks} FB mer`
+                              : 'Kjøp denne oppgraderingen'}
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -478,9 +554,16 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           {/* Supplies */}
           {gameState.port.shops.supplies.length > 0 && (
             <div className="space-y-2">
-              <h5 className="text-sm font-medium text-primary-glow">Forsyninger</h5>
+              <div className="flex items-center gap-2">
+                <h5 className="text-sm font-medium text-primary-glow">Forsyninger</h5>
+                {hasVisitedShop('supplies') && (
+                  <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
+                    ✓ Besøkt
+                  </Badge>
+                )}
+              </div>
               {gameState.port.shops.supplies.map((supply) => (
-                <Card key={supply.id} className="card-game p-3">
+                <Card key={supply.id} className={`card-game p-3 ${hasVisitedShop('supplies') ? 'opacity-50' : ''}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h6 className="font-medium">{supply.name}</h6>
@@ -492,17 +575,19 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                         <TooltipTrigger asChild>
                           <Button
                             onClick={() => handleBuyUpgrade(supply)}
-                            disabled={currentPlayer.fishbucks < supply.cost}
+                            disabled={currentPlayer.fishbucks < supply.cost || hasVisitedShop('supplies')}
                             size="sm"
                             className="btn-ocean mt-1"
                           >
-                            Kjøp
+                            {hasVisitedShop('supplies') ? '🔒' : 'Kjøp'}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {currentPlayer.fishbucks < supply.cost
-                            ? `Trenger ${supply.cost - currentPlayer.fishbucks} FB mer`
-                            : 'Kjøp forsyninger'}
+                          {hasVisitedShop('supplies')
+                            ? 'Du har allerede besøkt forsynings-butikken denne turen'
+                            : currentPlayer.fishbucks < supply.cost
+                              ? `Trenger ${supply.cost - currentPlayer.fishbucks} FB mer`
+                              : 'Kjøp forsyninger'}
                         </TooltipContent>
                       </Tooltip>
                     </div>

@@ -1,4 +1,4 @@
-import { GameState, Player, GameAction, CharacterOption, Depth, FishCard, GamePhase } from '@/types/game';
+import { GameState, Player, GameAction, CharacterOption, Depth, FishCard, GamePhase, MAX_FISHBUCKS, ShopType } from '@/types/game';
 import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish';
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
@@ -14,6 +14,34 @@ const shuffle = <T>(array: T[]): T[] => {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+};
+
+// Per rulebook (p.17): "You cannot have more than 10$ at one time. Any additional income is lost."
+const addFishbucks = (player: Player, amount: number): number => {
+  const newTotal = Math.min(player.fishbucks + amount, MAX_FISHBUCKS);
+  const actualGain = newTotal - player.fishbucks;
+  player.fishbucks = newTotal;
+  return actualGain; // Returns actual amount gained (for UI feedback)
+};
+
+// Check if player has already visited a shop this turn
+const hasVisitedShop = (player: Player, shopType: ShopType): boolean => {
+  return player.shopVisits?.includes(shopType) ?? false;
+};
+
+// Record a shop visit
+const recordShopVisit = (player: Player, shopType: ShopType): void => {
+  if (!player.shopVisits) {
+    player.shopVisits = [];
+  }
+  if (!player.shopVisits.includes(shopType)) {
+    player.shopVisits.push(shopType);
+  }
+};
+
+// Reset shop visits (called at end of turn or when leaving port)
+const resetShopVisits = (player: Player): void => {
+  player.shopVisits = [];
 };
 
 // Initialize new game
@@ -61,7 +89,8 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
       madnessOffset: 0,
       lifeboatFlipped: false,
       canOfWormsFaceUp: false,
-      hasPassed: false
+      hasPassed: false,
+      shopVisits: [] // Per rulebook (p.17): Track which shops visited this turn
     };
 
     return applyCharacterBonuses(basePlayer, character.id, { port });
@@ -691,7 +720,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const fish = player.handFish[fishIndex];
           // Use regret count for madness-based value calculation per rulebook
           const { adjustedValue } = calculateFishSaleValue(fish, player.regrets.length);
-          player.fishbucks += adjustedValue;
+          // Per rulebook (p.17): "You cannot have more than 10$ at one time. Any additional income is lost."
+          addFishbucks(player, adjustedValue);
           player.handFish = [
             ...player.handFish.slice(0, fishIndex),
             ...player.handFish.slice(fishIndex + 1)
@@ -708,6 +738,19 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const { upgradeId } = action.payload;
         const upgrade = ALL_UPGRADES.find(item => item.id === upgradeId);
         if (upgrade) {
+          // Per rulebook (p.17): "You may only visit each shop once on this turn"
+          const shopTypeMap: Record<string, ShopType> = {
+            'rod': 'rods',
+            'reel': 'reels',
+            'supply': 'supplies'
+          };
+          const shopType = shopTypeMap[upgrade.type];
+
+          if (hasVisitedShop(player, shopType)) {
+            console.warn(`BUY_UPGRADE blocked: Already visited ${shopType} shop this turn`);
+            break;
+          }
+
           // Apply port discount for 13+ regrets per rulebook (p.21)
           let discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
 
@@ -715,6 +758,19 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           if (hasActiveEffect(player, 'life_preserver_shop_discount')) {
             discount += 2;
             removeActiveEffect(player, 'life_preserver_shop_discount');
+          }
+
+          // Apply Dinks shop discount per rulebook (p.17)
+          const dinkDiscountIndex = player.dinks.findIndex(dink =>
+            hasEffect(dink.effects, 'shop_discount') && dink.timing.includes('port')
+          );
+          if (dinkDiscountIndex >= 0) {
+            discount += 2;
+            // Remove the used dink (one-shot)
+            player.dinks = [
+              ...player.dinks.slice(0, dinkDiscountIndex),
+              ...player.dinks.slice(dinkDiscountIndex + 1)
+            ];
           }
 
           const effectiveCost = Math.max(0, upgrade.cost - discount);
@@ -732,6 +788,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
             (['rods', 'reels', 'supplies'] as const).forEach(category => {
               newState.port.shops[category] = newState.port.shops[category].filter(item => item.id !== upgrade.id);
             });
+
+            // Record shop visit
+            recordShopVisit(player, shopType);
           }
         }
       }
@@ -740,16 +799,48 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
     case 'BUY_TACKLE_DICE':
       if (player && player.location === 'port') {
         const { dieId, count } = action.payload;
+
+        // Per rulebook (p.17): "You may only visit each shop once on this turn"
+        if (hasVisitedShop(player, 'tackle_dice')) {
+          console.warn('BUY_TACKLE_DICE blocked: Already visited tackle dice shop this turn');
+          break;
+        }
+
         const tackleDie = typeof dieId === 'string' ? TACKLE_DICE_LOOKUP[dieId] : undefined;
         if (!tackleDie || typeof count !== 'number' || count <= 0) {
           break;
         }
 
-        const totalCost = tackleDie.cost * count;
+        // Apply port discount for 13+ regrets per rulebook (p.21)
+        let discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
+
+        // Apply Life Preserver shop discount (2$) per rulebook (p.9)
+        if (hasActiveEffect(player, 'life_preserver_shop_discount')) {
+          discount += 2;
+          removeActiveEffect(player, 'life_preserver_shop_discount');
+        }
+
+        // Apply Dinks shop discount per rulebook (p.17)
+        const dinkDiscountIndex = player.dinks.findIndex(dink =>
+          hasEffect(dink.effects, 'shop_discount') && dink.timing.includes('port')
+        );
+        if (dinkDiscountIndex >= 0) {
+          discount += 2;
+          // Remove the used dink (one-shot)
+          player.dinks = [
+            ...player.dinks.slice(0, dinkDiscountIndex),
+            ...player.dinks.slice(dinkDiscountIndex + 1)
+          ];
+        }
+
+        const totalCost = Math.max(0, (tackleDie.cost * count) - discount);
         if (player.fishbucks >= totalCost) {
           player.fishbucks -= totalCost;
           const newDice = Array.from({ length: count }, () => tackleDie.id);
           player.tackleDice = [...player.tackleDice, ...newDice];
+
+          // Record shop visit
+          recordShopVisit(player, 'tackle_dice');
         }
       }
       break;
@@ -912,6 +1003,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const passedCount = newState.players.filter(p => p.hasPassed).length;
         player.hasPassed = true;
 
+        // Reset shop visits when passing
+        resetShopVisits(player);
+
         // Grant passing rewards based on order per rulebook (p.9)
         if (passedCount === 0) {
           // First to pass: Gets the Fishcoin (becomes next first player)
@@ -947,6 +1041,11 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'END_TURN':
+      // Reset shop visits for the current player at end of their turn
+      if (player) {
+        resetShopVisits(player);
+      }
+
       // Check if this is the last player with limited turns per rulebook (p.9)
       if (newState.lastPlayerTurnsRemaining !== undefined && newState.lastPlayerTurnsRemaining > 0) {
         newState.lastPlayerTurnsRemaining -= 1;
@@ -956,6 +1055,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const lastPlayer = newState.players.find(p => !p.hasPassed);
           if (lastPlayer) {
             lastPlayer.hasPassed = true;
+            resetShopVisits(lastPlayer);
           }
           newState.lastPlayerTurnsRemaining = undefined;
           // All players have now passed, advance to next day
