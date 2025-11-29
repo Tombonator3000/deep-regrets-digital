@@ -2,11 +2,13 @@ export type GamePhase = 'start' | 'refresh' | 'declaration' | 'action' | 'endgam
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
 export type Location = 'sea' | 'port';
 export type Depth = 1 | 2 | 3;
+export type FishSize = 'small' | 'mid' | 'large';
 
 export interface FishCard {
   id: string;
   name: string;
   depth: Depth;
+  size: FishSize;
   value: number;
   baseValue: number;
   difficulty: number;
