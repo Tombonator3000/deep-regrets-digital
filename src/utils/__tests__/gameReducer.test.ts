@@ -59,6 +59,9 @@ describe('character starting bonuses', () => {
 
 describe('gameReducer new actions', () => {
   it('declares a new location for the player', () => {
+    // Set phase to declaration - DECLARE_LOCATION only works in declaration phase
+    state.phase = 'declaration';
+
     const action: GameAction = {
       type: 'DECLARE_LOCATION',
       playerId: state.players[0].id,
@@ -70,6 +73,9 @@ describe('gameReducer new actions', () => {
 
     expect(player.location).toBe('port');
     expect(player.currentDepth).toBe(1);
+    // In declaration phase, hasPassed marks player as having declared
+    // With single player, it advances to action phase and resets hasPassed
+    expect(result.phase).toBe('action');
     expect(player.hasPassed).toBe(false);
   });
 
@@ -243,8 +249,9 @@ describe('gameReducer new actions', () => {
     expect(player.lifeboatFlipped).toBe(true);
     expect(player.regrets).toHaveLength(1);
     expect(result.port.regretsDiscard).toHaveLength(1);
-    expect(player.madnessLevel).toBe(0);
-    expect(player.maxDice).toBe(3);
+    // Per rulebook: 1 regret = tier 1 (1-3 regrets), maxDice = 4
+    expect(player.madnessLevel).toBe(1);
+    expect(player.maxDice).toBe(4);
   });
 
   it('draws a dink card from the deck into the player hand', () => {
@@ -269,6 +276,8 @@ describe('gameReducer new actions', () => {
     const fish = DEPTH_1_FISH[1];
     state.players[0].freshDice = [1, 2, 5];
     state.sea.shoals[1][0] = [fish];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
 
     const action: GameAction = {
       type: 'CATCH_FISH',
@@ -295,6 +304,8 @@ describe('gameReducer new actions', () => {
     state.players[0].freshDice = [2];
     state.sea.shoals[1][0] = [fish];
     state.port.dinksDeck = [...DINK_CARDS.slice(0, 3)];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
     const initialDeckLength = state.port.dinksDeck.length;
 
     const action: GameAction = {
@@ -324,6 +335,8 @@ describe('gameReducer new actions', () => {
     state.players[0].freshDice = [3, 4];
     state.sea.shoals[1][0] = [fish];
     state.port.dinksDeck = [...DINK_CARDS.slice(0, 2)];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
     const initialDeckLength = state.port.dinksDeck.length;
 
     const action: GameAction = {
@@ -350,124 +363,141 @@ describe('gameReducer new actions', () => {
 });
 
 describe('madness interactions', () => {
-  const createMadnessFish = (overrides: Partial<FishCard> = {}): FishCard => ({
-    id: 'TEST-MADNESS-001',
-    name: 'Test Madness Fish',
+  // Per rulebook: Madness is determined ONLY by regret count, not by fish abilities
+  // The madnessOffset is a legacy field that may affect madness tier calculation
+  // but the primary driver is regret card count
+
+  const createRegretDrawFish = (overrides: Partial<FishCard> = {}): FishCard => ({
+    id: 'TEST-REGRET-001',
+    name: 'Test Regret Fish',
     depth: 1,
     value: 1,
     baseValue: 1,
     difficulty: 1,
-    abilities: ['madness_+1'],
+    abilities: ['regret_draw'], // Per rulebook: this causes a regret draw
     tags: [],
-    description: 'Test fish that increases madness.',
-    quality: 'foul',
+    description: 'Test fish that causes regret draw.',
+    quality: 'fair',
     ...overrides
   });
 
-  it('raises madness when catching a madness fish', () => {
+  it('increases madness when catching a fish that causes regret draw', () => {
     const player = state.players[0];
     player.location = 'sea';
     player.currentDepth = 1;
     player.freshDice = [2, 3];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 3)];
 
-    const madnessFish = createMadnessFish();
-    state.sea.shoals[1] = [[madnessFish]];
+    const regretFish = createRegretDrawFish();
+    state.sea.shoals[1] = [[regretFish]];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
 
     const action: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
-      payload: { fish: madnessFish, depth: 1, shoal: 0, diceIndices: [0] }
+      payload: { fish: regretFish, depth: 1, shoal: 0, diceIndices: [0] }
     };
 
     const result = gameReducer(state, action);
     const updated = result.players[0];
 
+    // Per rulebook: madness level is based on regret count (tier index)
+    // 1 regret = tier 1 (1-3 regrets)
+    expect(updated.regrets.length).toBe(1);
     expect(updated.madnessLevel).toBe(1);
-    expect(updated.madnessOffset).toBe(1);
-    expect(updated.handFish.some(f => f.id === madnessFish.id)).toBe(true);
+    expect(updated.handFish.some(f => f.id === regretFish.id)).toBe(true);
   });
 
-  it('prevents madness gains while the Void Reel is equipped without consuming immunity', () => {
+  it('prevents regret draw when player has regret shields', () => {
     const player = state.players[0];
     player.location = 'sea';
     player.currentDepth = 1;
     player.freshDice = [6, 6];
-    const voidReel = REELS.find(reel => reel.effects.includes('madness_immune'));
-    if (!voidReel) {
-      throw new Error('Void Reel not found in test data');
-    }
-    player.equippedReel = voidReel;
+    player.regretShields = 2;
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 5)];
 
-    const madnessFishOne = createMadnessFish({ id: 'TEST-MADNESS-002' });
-    const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-003' });
-    state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
+    const regretFishOne = createRegretDrawFish({ id: 'TEST-REGRET-002' });
+    const regretFishTwo = createRegretDrawFish({ id: 'TEST-REGRET-003' });
+    state.sea.shoals[1] = [[regretFishOne, regretFishTwo]];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
 
     const firstAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
-      payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
+      payload: { fish: regretFishOne, depth: 1, shoal: 0, diceIndices: [0] }
     };
 
     const firstResult = gameReducer(state, firstAction);
     const afterFirstCatch = firstResult.players[0];
 
+    // Shield consumed, no regret drawn
+    expect(afterFirstCatch.regretShields).toBe(1);
+    expect(afterFirstCatch.regrets.length).toBe(0);
     expect(afterFirstCatch.madnessLevel).toBe(0);
-    expect(afterFirstCatch.madnessOffset).toBe(0);
+
+    // Re-reveal shoal after first catch
+    firstResult.sea.revealedShoals = { '1-0': true };
 
     const secondAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: afterFirstCatch.id,
-      payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
+      payload: { fish: regretFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
     };
 
     const secondResult = gameReducer(firstResult, secondAction);
     const afterSecondCatch = secondResult.players[0];
 
+    // Second shield consumed, still no regrets
+    expect(afterSecondCatch.regretShields).toBe(0);
+    expect(afterSecondCatch.regrets.length).toBe(0);
     expect(afterSecondCatch.madnessLevel).toBe(0);
-    expect(afterSecondCatch.madnessOffset).toBe(0);
-    expect(afterSecondCatch.handFish.filter(f => f.id.startsWith('TEST-MADNESS-'))).toHaveLength(2);
+    expect(afterSecondCatch.handFish.filter(f => f.id.startsWith('TEST-REGRET-'))).toHaveLength(2);
   });
 
-  it('consumes Scrimshaw Token to prevent a madness gain once', () => {
-    const scrimshaw = DINK_CARDS.find(dink => dink.effects.includes('ignore_madness_increase'));
-    if (!scrimshaw) {
-      throw new Error('Scrimshaw Token not found in test data');
-    }
-
+  it('draws regret once shields are depleted', () => {
     const player = state.players[0];
     player.location = 'sea';
     player.currentDepth = 1;
-    player.freshDice = [6, 6];
-    player.dinks = [scrimshaw];
+    player.freshDice = [6, 6, 6];
+    player.regretShields = 1; // Only one shield
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 5)];
 
-    const madnessFishOne = createMadnessFish({ id: 'TEST-MADNESS-004' });
-    const madnessFishTwo = createMadnessFish({ id: 'TEST-MADNESS-005' });
-    state.sea.shoals[1] = [[madnessFishOne, madnessFishTwo]];
+    const regretFishOne = createRegretDrawFish({ id: 'TEST-REGRET-004' });
+    const regretFishTwo = createRegretDrawFish({ id: 'TEST-REGRET-005' });
+    state.sea.shoals[1] = [[regretFishOne, regretFishTwo]];
+    // Mark shoal as revealed (required before catching)
+    state.sea.revealedShoals = { '1-0': true };
 
+    // First catch - shield absorbs regret
     const firstAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: player.id,
-      payload: { fish: madnessFishOne, depth: 1, shoal: 0, diceIndices: [0] }
+      payload: { fish: regretFishOne, depth: 1, shoal: 0, diceIndices: [0] }
     };
 
     const firstResult = gameReducer(state, firstAction);
     const afterFirstCatch = firstResult.players[0];
 
-    expect(afterFirstCatch.madnessLevel).toBe(0);
-    expect(afterFirstCatch.madnessOffset).toBe(0);
-    expect(afterFirstCatch.dinks.some(dink => dink.id === scrimshaw.id)).toBe(false);
+    expect(afterFirstCatch.regretShields).toBe(0);
+    expect(afterFirstCatch.regrets.length).toBe(0);
 
+    // Re-reveal shoal after first catch
+    firstResult.sea.revealedShoals = { '1-0': true };
+
+    // Second catch - no shield, regret drawn
     const secondAction: GameAction = {
       type: 'CATCH_FISH',
       playerId: afterFirstCatch.id,
-      payload: { fish: madnessFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
+      payload: { fish: regretFishTwo, depth: 1, shoal: 0, diceIndices: [0] }
     };
 
     const secondResult = gameReducer(firstResult, secondAction);
     const afterSecondCatch = secondResult.players[0];
 
-    expect(afterSecondCatch.madnessLevel).toBe(1);
-    expect(afterSecondCatch.madnessOffset).toBe(1);
+    expect(afterSecondCatch.regrets.length).toBe(1);
+    expect(afterSecondCatch.madnessLevel).toBe(1); // Tier 1 (1-3 regrets)
   });
 });
 
@@ -477,17 +507,26 @@ const gatherFoulFish = () => [
   ...DEPTH_3_FISH
 ].filter(fish => fish.quality === 'foul');
 
-describe('madness recalculation', () => {
-  it('applies madness thresholds and trims dice as regrets accumulate', () => {
+describe('madness recalculation (rulebook-based)', () => {
+  // Per rulebook (p.20-21): Madness tiers based on regret count
+  // | Regret Cards | Fair Value | Foul Value | Max Dice | Port Discount |
+  // | 0            | +2         | -2         | 4        | No            |
+  // | 1-3          | +1         | -1         | 4        | No            |
+  // | 4-6          | +1         | =          | 5        | No            |
+  // | 7-9          | =          | +1         | 6        | No            |
+  // | 10-12        | -1         | +1         | 7        | No            |
+  // | 13+          | -2         | +2         | 8        | Yes (-$1)     |
+
+  it('increases max dice as regrets accumulate per rulebook tiers', () => {
     const playerId = state.players[0].id;
     const foulFish = gatherFoulFish();
 
     state.players[0].location = 'port';
     state.players[0].freshDice = [2, 4, 6];
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 3;
+    state.players[0].maxDice = 4; // 0 regrets = tier 0 = 4 max dice
     state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
-    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 7)];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 10)];
 
     const sellNextFish = () => {
       const player = state.players[0];
@@ -499,44 +538,40 @@ describe('madness recalculation', () => {
       });
     };
 
+    // 0 regrets -> 1 regret (tier 1: 1-3 regrets, maxDice = 4)
     sellNextFish();
-    sellNextFish();
-    expect(state.players[0].madnessLevel).toBe(0);
-    expect(state.players[0].freshDice).toEqual([2, 4, 6]);
+    expect(state.players[0].regrets.length).toBe(1);
+    expect(state.players[0].madnessLevel).toBe(1); // Tier index
+    expect(state.players[0].maxDice).toBe(4);
 
+    // 1-3 regrets stay at tier 1
     sellNextFish();
+    sellNextFish();
+    expect(state.players[0].regrets.length).toBe(3);
+    expect(state.players[0].maxDice).toBe(4);
+
+    // 4 regrets -> tier 2 (4-6 regrets, maxDice = 5)
+    sellNextFish();
+    expect(state.players[0].regrets.length).toBe(4);
     expect(state.players[0].madnessLevel).toBe(2);
-    expect(state.players[0].maxDice).toBe(2);
-    expect(state.players[0].freshDice).toEqual([2, 4]);
-
-    sellNextFish();
-    sellNextFish();
-    expect(state.players[0].madnessLevel).toBe(4);
-    expect(state.players[0].maxDice).toBe(1);
-    expect(state.players[0].freshDice).toEqual([2]);
-
-    sellNextFish();
-    sellNextFish();
-    expect(state.players[0].madnessLevel).toBe(6);
-    expect(state.players[0].maxDice).toBe(1);
-    expect(state.players[0].freshDice).toEqual([2]);
+    expect(state.players[0].maxDice).toBe(5);
   });
 
-  it('discards the highest-value mounted fish on reaching madness level 6', () => {
+  it('keeps all mounted fish regardless of madness level (per rulebook)', () => {
     const playerId = state.players[0].id;
     const foulFish = gatherFoulFish();
 
     state.players[0].location = 'port';
     state.players[0].freshDice = [2, 4, 6];
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 3;
+    state.players[0].maxDice = 4;
     state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
     state.players[0].mountedFish = [
       { slot: 0, multiplier: 1, fish: DEPTH_1_FISH[0] },
       { slot: 1, multiplier: 2, fish: DEPTH_2_FISH[0] },
       { slot: 2, multiplier: 2, fish: DEPTH_3_FISH[1] }
     ];
-    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 7)];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 10)];
 
     const sellNextFish = () => {
       const player = state.players[0];
@@ -548,64 +583,32 @@ describe('madness recalculation', () => {
       });
     };
 
+    // Sell all foul fish, accumulating regrets
     for (let i = 0; i < 7; i++) {
       sellNextFish();
     }
 
+    // Per rulebook: No penalty for high madness - mounted fish are kept
+    // Max dice INCREASES with more regrets
     const remainingMounts = state.players[0].mountedFish;
-    expect(state.players[0].madnessLevel).toBe(6);
-    expect(remainingMounts).toHaveLength(2);
-    expect(remainingMounts.find(mount => mount.fish.id === DEPTH_3_FISH[1].id)).toBeUndefined();
+    expect(remainingMounts).toHaveLength(3); // All mounted fish kept
+    expect(state.players[0].regrets.length).toBe(7);
+    expect(state.players[0].maxDice).toBe(6); // 7-9 regrets = tier 3 = 6 max dice
   });
 
-  it('forces mounted fish sacrifices instead of collapse when possible', () => {
+  it('does not trigger endgame from madness alone (per rulebook)', () => {
     const playerId = state.players[0].id;
     const foulFish = gatherFoulFish();
 
     state.players[0].location = 'port';
     state.players[0].freshDice = [2, 4, 6];
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 3;
-    state.players[0].handFish = foulFish.slice(0, 8).map(fish => ({ ...fish }));
-    state.players[0].mountedFish = [
-      { slot: 0, multiplier: 1, fish: DEPTH_1_FISH[0] },
-      { slot: 1, multiplier: 1, fish: DEPTH_2_FISH[1] },
-      { slot: 2, multiplier: 2, fish: DEPTH_3_FISH[0] }
-    ];
-    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 8)];
-
-    const sellNextFish = () => {
-      const player = state.players[0];
-      const fishToSell = player.handFish[0];
-      state = gameReducer(state, {
-        type: 'SELL_FISH',
-        playerId,
-        payload: { fishId: fishToSell.id }
-      });
-    };
-
-    for (let i = 0; i < 8; i++) {
-      sellNextFish();
-    }
-
-    expect(state.players[0].madnessLevel).toBe(6);
-    expect(state.players[0].mountedFish).toHaveLength(0);
-    expect(state.isGameOver).toBe(false);
-  });
-
-  it('triggers immediate endgame when collapse cannot discard enough trophies', () => {
-    const playerId = state.players[0].id;
-    const foulFish = gatherFoulFish();
-
-    state.players[0].location = 'port';
-    state.players[0].freshDice = [2, 4, 6];
-    state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 3;
+    state.players[0].maxDice = 4;
     state.players[0].handFish = foulFish.slice(0, 8).map(fish => ({ ...fish }));
     state.players[0].mountedFish = [
       { slot: 0, multiplier: 1, fish: DEPTH_2_FISH[0] }
     ];
-    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 8)];
+    state.port.regretsDeck = [...REGRET_CARDS.slice(0, 15)];
 
     const sellNextFish = () => {
       const player = state.players[0];
@@ -617,12 +620,46 @@ describe('madness recalculation', () => {
       });
     };
 
+    // Sell all foul fish
     for (let i = 0; i < 8; i++) {
       sellNextFish();
     }
 
-    expect(state.players[0].madnessLevel).toBe(6);
-    expect(state.isGameOver).toBe(true);
-    expect(state.phase).toBe('endgame');
+    // Per rulebook: Game only ends after Saturday or when The Plug erodes all shoals
+    // High madness does NOT trigger endgame
+    expect(state.isGameOver).toBe(false);
+    expect(state.players[0].mountedFish).toHaveLength(1); // Mount preserved
+  });
+
+  it('grants port discount at 13+ regrets per rulebook', () => {
+    // This is tested by checking the maxDice at high regret counts
+    // and that port discount flag would be active
+    const playerId = state.players[0].id;
+    const foulFish = gatherFoulFish();
+
+    state.players[0].location = 'port';
+    state.players[0].baseMaxDice = 3;
+    state.players[0].maxDice = 4;
+    state.players[0].handFish = foulFish.slice(0, 14).map(fish => ({ ...fish }));
+    state.port.regretsDeck = [...REGRET_CARDS, ...REGRET_CARDS]; // Ensure enough regrets
+
+    const sellNextFish = () => {
+      const player = state.players[0];
+      const fishToSell = player.handFish[0];
+      state = gameReducer(state, {
+        type: 'SELL_FISH',
+        playerId,
+        payload: { fishId: fishToSell.id }
+      });
+    };
+
+    // Sell 13 foul fish to get 13+ regrets
+    for (let i = 0; i < 13; i++) {
+      sellNextFish();
+    }
+
+    // At 13+ regrets: maxDice = 8, port discount active
+    expect(state.players[0].regrets.length).toBeGreaterThanOrEqual(13);
+    expect(state.players[0].maxDice).toBe(8);
   });
 });

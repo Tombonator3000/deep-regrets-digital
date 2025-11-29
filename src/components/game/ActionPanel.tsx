@@ -181,26 +181,39 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         {/* Action Buttons */}
         <Card className="card-game p-1.5 sm:p-2 shrink-0">
           {gameState.phase === 'declaration' && (
-            <div className="grid grid-cols-2 gap-1 sm:gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleDeclareLocation('sea')}
-                variant={currentPlayer.location === 'sea' ? "default" : "outline"}
-                className={`min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'sea' ? "btn-ocean" : "border-primary/30"}`}
-              >
-                <Waves className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-                Sea
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => handleDeclareLocation('port')}
-                variant={currentPlayer.location === 'port' ? "default" : "outline"}
-                className={`min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 ${currentPlayer.location === 'port' ? "btn-ocean" : "border-primary/30"}`}
-              >
-                <Anchor className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-                Port
-              </Button>
-            </div>
+            currentPlayer.hasPassed ? (
+              // Player has already declared, waiting for others
+              <div className="text-center p-2 sm:p-3 rounded-lg bg-primary/10 border border-primary/30">
+                <p className="text-xs sm:text-sm text-primary-glow font-medium">
+                  Du har valgt {currentPlayer.location === 'sea' ? '🎣 Havet' : '⚓ Havnen'}
+                </p>
+                <p className="text-[10px] sm:text-xs text-foreground/70 mt-1">
+                  Venter på at andre spillere skal velge...
+                </p>
+              </div>
+            ) : (
+              // Player needs to declare
+              <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleDeclareLocation('sea')}
+                  variant="outline"
+                  className="min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 border-primary/30 hover:bg-blue-600/20 hover:border-blue-500/50"
+                >
+                  <Waves className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+                  Sea
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleDeclareLocation('port')}
+                  variant="outline"
+                  className="min-h-[40px] sm:min-h-[44px] text-[10px] sm:text-xs touch-manipulation active:scale-95 border-primary/30 hover:bg-amber-600/20 hover:border-amber-500/50"
+                >
+                  <Anchor className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+                  Port
+                </Button>
+              </div>
+            )
           )}
 
           {gameState.phase === 'action' && isPlayerTurn && (

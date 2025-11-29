@@ -380,9 +380,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'DECLARE_LOCATION':
-      if (player) {
+      if (player && newState.phase === 'declaration') {
         player.location = action.payload.location;
-        player.hasPassed = false;
+        player.hasPassed = true; // Mark as having declared
+
         if (player.location === 'port') {
           player.currentDepth = 1;
           // Make Port benefits per rulebook (p.17):
@@ -396,11 +397,34 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           // Muster Your Courage - reroll all dice
           const totalDice = [...player.freshDice, ...player.spentDice];
           const maxDice = player.maxDice;
-          const rerolledDice = rollDice(totalDice.length);
+          let rerolledDice = rollDice(totalDice.length);
+
+          // Apply reroll 1s ability if player has it
+          if (player.rerollOnes) {
+            rerolledDice = rerolledDice.map(value => (value === 1 ? rollDice(1)[0] : value));
+          }
 
           // Keep up to maxDice in fresh pool, rest go to spent
           player.freshDice = rerolledDice.slice(0, Math.min(rerolledDice.length, maxDice));
           player.spentDice = rerolledDice.slice(maxDice);
+        }
+
+        // Check if all players have declared their location
+        const allDeclared = newState.players.every(p => p.hasPassed);
+        if (allDeclared) {
+          // Advance to action phase
+          newState.phase = 'action';
+          // Reset hasPassed for action phase (players haven't passed yet)
+          newState.players.forEach(p => p.hasPassed = false);
+          // Set current player to first player
+          newState.currentPlayerIndex = newState.firstPlayerIndex;
+        } else {
+          // Move to next player who hasn't declared yet
+          let nextIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+          while (newState.players[nextIndex].hasPassed && nextIndex !== newState.currentPlayerIndex) {
+            nextIndex = (nextIndex + 1) % newState.players.length;
+          }
+          newState.currentPlayerIndex = nextIndex;
         }
       }
       break;
@@ -1154,10 +1178,39 @@ const advancePhase = (gameState: GameState) => {
     gameState.phase = 'start';
     advanceDay(gameState);
   }
-  
+
   // Reset player states for new phase
   gameState.players.forEach(p => p.hasPassed = false);
   gameState.currentPlayerIndex = gameState.firstPlayerIndex;
+
+  // Phase-specific logic
+  if (gameState.phase === 'refresh') {
+    // Refresh Phase: Move spent dice back to fresh and reroll (Muster Your Courage)
+    gameState.players.forEach(player => {
+      // Combine all dice
+      const totalDiceCount = player.freshDice.length + player.spentDice.length;
+      // Roll new dice up to maxDice limit
+      const diceToRoll = Math.min(totalDiceCount, player.maxDice);
+      let newDice = rollDice(diceToRoll);
+
+      // Apply reroll 1s ability if player has it (Finn - The Lucky)
+      if (player.rerollOnes) {
+        newDice = newDice.map(value => (value === 1 ? rollDice(1)[0] : value));
+      }
+
+      player.freshDice = newDice;
+      player.spentDice = [];
+    });
+  }
+
+  // Declaration Phase: All players start at sea by default, will choose in phase
+  if (gameState.phase === 'declaration') {
+    // Reset all players to sea (default) - they will choose during the phase
+    gameState.players.forEach(player => {
+      player.location = 'sea';
+      player.currentDepth = 1;
+    });
+  }
 };
 
 const advanceDay = (gameState: GameState) => {
@@ -1169,6 +1222,11 @@ const advanceDay = (gameState: GameState) => {
     endGame(gameState);
     return;
   }
+
+  // Reset player states for new day
+  gameState.players.forEach(p => {
+    p.hasPassed = false;
+  });
 
   // Reset revealed shoals at day change - fish "swim away" and new ones appear
   gameState.sea.revealedShoals = {};
