@@ -96,5 +96,13 @@ export const DINK_CARDS: DinkCard[] = [
     effects: ['sell_bonus_1'],
     oneShot: false,
     description: 'Whenever you sell a fish, gain +1 Fishbuck.'
+  },
+  {
+    id: 'DINK-013',
+    name: 'Merchant\'s Token',
+    timing: ['port'],
+    effects: ['shop_discount'],
+    oneShot: true,
+    description: 'Discard at Port to reduce the cost of a single Shop purchase by 2$.'
   }
 ];

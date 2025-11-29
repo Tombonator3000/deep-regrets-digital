@@ -53,6 +53,11 @@ export interface TackleDie {
   description: string;
 }
 
+// Per rulebook (p.17): "You cannot have more than 10$ at one time. Any additional income is lost."
+export const MAX_FISHBUCKS = 10;
+
+export type ShopType = 'rods' | 'reels' | 'supplies' | 'tackle_dice';
+
 export interface Player {
   id: string;
   name: string;
@@ -87,6 +92,8 @@ export interface Player {
   hasPassed: boolean;
   isAI?: boolean;
   aiDifficulty?: 'easy' | 'medium' | 'hard';
+  // Per rulebook (p.17): "You may only visit each shop once on this turn"
+  shopVisits: ShopType[];
 }
 
 export interface GameState {
