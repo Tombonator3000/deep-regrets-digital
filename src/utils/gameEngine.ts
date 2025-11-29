@@ -1260,12 +1260,44 @@ const drawRegret = (player: Player, gameState: GameState) => {
     gameState.port.regretsDeck,
     gameState.port.regretsDiscard
   );
+
   if (card) {
+    // Drew from deck/discard pile
     gameState.port.regretsDeck = deck;
     gameState.port.regretsDiscard = discard;
     const previousRegretCount = player.regrets.length;
     player.regrets = [...player.regrets, card];
     recalculateMadness(player, { previousRegretCount, gameState });
+  } else {
+    // Per rulebook (p.20): "If the draw pile is empty, you must draw from another player"
+    // Find another player with regrets to draw from
+    const otherPlayersWithRegrets = gameState.players.filter(
+      p => p.id !== player.id && p.regrets.length > 0
+    );
+
+    if (otherPlayersWithRegrets.length > 0) {
+      // Draw from the player with the most regrets (or random among tied)
+      otherPlayersWithRegrets.sort((a, b) => b.regrets.length - a.regrets.length);
+      const targetPlayer = otherPlayersWithRegrets[0];
+
+      // Take a random regret from the target player
+      const randomIndex = Math.floor(Math.random() * targetPlayer.regrets.length);
+      const stolenRegret = targetPlayer.regrets[randomIndex];
+
+      // Remove from target player
+      const targetPreviousCount = targetPlayer.regrets.length;
+      targetPlayer.regrets = [
+        ...targetPlayer.regrets.slice(0, randomIndex),
+        ...targetPlayer.regrets.slice(randomIndex + 1)
+      ];
+      recalculateMadness(targetPlayer, { previousRegretCount: targetPreviousCount, gameState });
+
+      // Add to current player
+      const previousRegretCount = player.regrets.length;
+      player.regrets = [...player.regrets, stolenRegret];
+      recalculateMadness(player, { previousRegretCount, gameState });
+    }
+    // If no other players have regrets either, no regret is drawn (all regrets are distributed)
   }
 };
 
