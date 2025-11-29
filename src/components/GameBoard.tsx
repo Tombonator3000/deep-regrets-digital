@@ -46,12 +46,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { calculatePlayerScoreBreakdown } from '@/utils/gameEngine';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
 import { getSlotMultiplier } from '@/utils/mounting';
+import { EndGameScreen } from './game/EndGameScreen';
 
 import { GameAction } from '@/types/game';
 import { BoatColor } from './game/GameTokens';
@@ -118,13 +118,6 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
   const dayLabel = currentDayIndex >= 0
     ? `Day ${currentDayIndex + 1}: ${gameState.day}`
     : gameState.day;
-  const finalScores = gameState.players.map(player => ({
-    player,
-    breakdown: calculatePlayerScoreBreakdown(player)
-  }));
-  const sortedFinalScores = [...finalScores].sort((a, b) =>
-    b.breakdown.totalScore - a.breakdown.totalScore
-  );
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -200,64 +193,11 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
       
       {/* Game Over Overlay - uses absolute positioning to work in fullscreen */}
       {gameState.isGameOver && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100]">
-          <div className="card-game p-6 sm:p-8 text-center space-y-4 sm:space-y-6 max-w-md mx-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-primary-glow">Game Over</h2>
-            {gameState.winner && (
-              <p className="text-lg sm:text-xl">
-                🏆 <span className="text-primary-glow font-bold">{gameState.winner}</span> wins!
-              </p>
-            )}
-            <div className="space-y-3 text-left">
-              <h3 className="font-semibold text-center">Final Scores:</h3>
-              {sortedFinalScores.map(({ player, breakdown }) => {
-                const isWinner = gameState.winner === player.name;
-                return (
-                  <div
-                    key={player.id}
-                    className={`rounded-md border border-border/40 p-3 transition ${
-                      isWinner ? 'border-primary text-primary-glow' : ''
-                    } ${player.isAI ? 'bg-purple-900/20' : ''}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
-                        {player.name}
-                        {player.isAI && (
-                          <span className="ml-2 text-xs text-purple-400">(AI)</span>
-                        )}
-                      </span>
-                      <span className={`font-semibold ${isWinner ? 'text-primary-glow' : ''}`}>
-                        {breakdown.totalScore} pts
-                      </span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                      <div>
-                        <span className="block font-semibold text-foreground/80">Hand (Madness)</span>
-                        <span>{breakdown.handScore}</span>
-                      </div>
-                      <div>
-                        <span className="block font-semibold text-foreground/80">Mounted</span>
-                        <span>{breakdown.mountedScore}</span>
-                      </div>
-                      <div>
-                        <span className="block font-semibold text-foreground/80">Fishbucks</span>
-                        <span>{breakdown.fishbuckScore}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex flex-col gap-3">
-              <Button onClick={onRestartGame} className="btn-ocean min-h-[44px] touch-manipulation active:scale-95">
-                New Game
-              </Button>
-              <Button onClick={onBackToStart} variant="outline" className="border-primary/30 hover:border-primary min-h-[44px] touch-manipulation active:scale-95">
-                Back to Start
-              </Button>
-            </div>
-          </div>
-        </div>
+        <EndGameScreen
+          gameState={gameState}
+          onRestartGame={onRestartGame}
+          onBackToStart={onBackToStart}
+        />
       )}
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
