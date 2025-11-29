@@ -960,6 +960,17 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         }
 
         newState.pendingPassingReward = undefined;
+
+        // Process next player in skipped rewards queue
+        if (newState.pendingSkippedRewards && newState.pendingSkippedRewards.length > 0) {
+          const nextPlayerId = newState.pendingSkippedRewards.shift();
+          if (nextPlayerId) {
+            newState.pendingPassingReward = {
+              playerId: nextPlayerId,
+              isFirstPass: false
+            };
+          }
+        }
       }
       break;
 
@@ -1014,11 +1025,12 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           // First to pass: Gets the Fishcoin (becomes next first player)
           newState.fishCoinOwner = player.id;
 
-          // Per rulebook (p.9): "When skipped first in the turn order, they may either draw
+          // Per rulebook (p.9): "When a player first passes... they may either draw
           // a Dink or discard one random Regret card"
           // Set pending reward so player can choose
           newState.pendingPassingReward = {
-            playerId: player.id
+            playerId: player.id,
+            isFirstPass: true
           };
         }
 
@@ -1034,6 +1046,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       if (newState.players.every(p => p.hasPassed)) {
         newState.lastPlayerTurnsRemaining = undefined;
         newState.pendingPassingReward = undefined; // Clear any pending reward
+        newState.pendingSkippedRewards = undefined; // Clear any skipped rewards queue
         newState.phase = 'start';
         advanceDay(newState);
       }
@@ -1061,6 +1074,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
             resetShopVisits(lastPlayer);
           }
           newState.lastPlayerTurnsRemaining = undefined;
+          newState.pendingSkippedRewards = undefined; // Clear any skipped rewards queue
           // All players have now passed, advance to next day
           newState.phase = 'start';
           advanceDay(newState);
@@ -1068,11 +1082,36 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         }
       }
 
-      // Move to next player
+      // Move to next player, tracking skipped players for passing rewards
+      // Per rulebook (p.9): "each time they are skipped in the turn order, they may either draw
+      // a Dink or discard one random Regret card"
+      const skippedPlayers: string[] = [];
       do {
         newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+        const nextPlayer = newState.players[newState.currentPlayerIndex];
+        // If this player has passed and we're skipping them, they get a reward
+        if (nextPlayer.hasPassed && newState.players.some(p => !p.hasPassed)) {
+          skippedPlayers.push(nextPlayer.id);
+        }
       } while (newState.players[newState.currentPlayerIndex].hasPassed &&
                newState.players.some(p => !p.hasPassed));
+
+      // Add skipped players to the reward queue
+      if (skippedPlayers.length > 0) {
+        const existingQueue = newState.pendingSkippedRewards || [];
+        newState.pendingSkippedRewards = [...existingQueue, ...skippedPlayers];
+
+        // If no pending reward is being processed, start processing the queue
+        if (!newState.pendingPassingReward && newState.pendingSkippedRewards.length > 0) {
+          const nextPlayerId = newState.pendingSkippedRewards.shift();
+          if (nextPlayerId) {
+            newState.pendingPassingReward = {
+              playerId: nextPlayerId,
+              isFirstPass: false
+            };
+          }
+        }
+      }
       break;
 
     case 'REMOVE_DIE':

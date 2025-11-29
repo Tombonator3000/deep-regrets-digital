@@ -2,7 +2,7 @@ import { GameState, Player } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Sparkles, Trash2, Coins } from 'lucide-react';
+import { Gift, Sparkles, Trash2, Coins, SkipForward } from 'lucide-react';
 
 interface PassingRewardProps {
   gameState: GameState;
@@ -17,6 +17,7 @@ export const PassingReward = ({ gameState, currentPlayer, onAction }: PassingRew
   }
 
   const hasRegrets = currentPlayer.regrets.length > 0;
+  const isFirstPass = gameState.pendingPassingReward.isFirstPass;
 
   const handleClaimReward = (choice: 'draw_dink' | 'discard_regret') => {
     onAction({
@@ -30,13 +31,21 @@ export const PassingReward = ({ gameState, currentPlayer, onAction }: PassingRew
     <Card className="card-game p-4 border-green-500/50 bg-green-900/20">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Gift className="h-5 w-5 text-green-400" />
-          <h3 className="font-semibold text-green-400">Passeringsbelønning</h3>
-          <Badge className="bg-yellow-600 text-xs">Fish Coin</Badge>
+          {isFirstPass ? (
+            <Gift className="h-5 w-5 text-green-400" />
+          ) : (
+            <SkipForward className="h-5 w-5 text-blue-400" />
+          )}
+          <h3 className="font-semibold text-green-400">
+            {isFirstPass ? 'Passeringsbelønning' : 'Hoppet Over-belønning'}
+          </h3>
+          {isFirstPass && <Badge className="bg-yellow-600 text-xs">Fish Coin</Badge>}
         </div>
 
         <p className="text-sm text-foreground/80">
-          Du var første til å passe og har mottatt Fish Coin! Du blir førstespiller neste dag.
+          {isFirstPass
+            ? 'Du var første til å passe og har mottatt Fish Coin! Du blir førstespiller neste dag.'
+            : 'Du ble hoppet over i turrekkefølgen og har rett på en belønning!'}
         </p>
 
         <p className="text-sm text-foreground/80">

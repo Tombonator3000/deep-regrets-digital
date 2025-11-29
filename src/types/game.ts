@@ -144,7 +144,9 @@ export interface GameState {
   };
   pendingPassingReward?: {
     playerId: string; // Player who can choose their passing reward
+    isFirstPass: boolean; // True if this is the first-to-pass reward (gets Fish Coin), false if skipped reward
   };
+  pendingSkippedRewards?: string[]; // Queue of player IDs who were skipped and need to claim rewards
   lifePreserverDifficultyReduction?: number; // Current difficulty reduction from Life Preserver (0 or 2)
 }
 
