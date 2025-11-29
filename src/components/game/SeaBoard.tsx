@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles, Ship } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
-import { PlugMarker, DepthMarker, LighthouseToken, BoatToken } from './GameTokens';
+import { PlugMarker, DepthMarker, LighthouseToken, BoatToken, BoatColor } from './GameTokens';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -92,6 +92,7 @@ const useDepthCardBacks = () => {
 interface SeaBoardProps {
   gameState: GameState;
   selectedShoal: {depth: number, shoal: number} | null;
+  playerColors: Record<string, BoatColor>;
   onShoalSelect: (shoal: {depth: number, shoal: number}) => void;
   onInspectShoal?: (shoal: {depth: number, shoal: number}) => void;
   onAction: (action: any) => void;
@@ -103,7 +104,7 @@ const DEPTH_INFO = {
   3: { label: 'The Abyss', color: 'from-purple-800/50 to-slate-950/60', border: 'border-purple-500/40', icon: '👁️' }
 };
 
-export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectShoal, onAction }: SeaBoardProps) => {
+export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect, onInspectShoal, onAction }: SeaBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const { toast } = useToast();
   const depthCardBacks = useDepthCardBacks();
@@ -295,6 +296,9 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
               const isCurrentDepth = currentPlayer.currentDepth === depth;
               const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed && currentPlayer.location === 'sea';
               const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed && currentPlayer.location === 'sea';
+              const playersAtDepth = gameState.players.filter((player) =>
+                player.location === 'sea' && player.currentDepth === depth
+              );
 
               return (
                 <div
@@ -304,12 +308,48 @@ export const SeaBoard = ({ gameState, selectedShoal, onShoalSelect, onInspectSho
                   {/* Depth indicator overlay */}
                   <div className="absolute top-0 left-0 z-20 flex items-center gap-1 bg-black/40 rounded px-1 py-0.5">
                     {isCurrentDepth && currentPlayer.location === 'sea' && (
-                      <BoatToken size="sm" animated highlight color="primary" />
+                      <BoatToken
+                        size="sm"
+                        animated
+                        highlight
+                        color={playerColors[currentPlayer.id] ?? 'primary'}
+                      />
                     )}
                     <span className="text-[10px] sm:text-xs font-bold text-white/90">D{depth}</span>
                     {canDescend && <ArrowDown className="h-3 w-3 text-primary" />}
                     {canAscend && <ArrowUp className="h-3 w-3 text-primary" />}
                   </div>
+
+                  {playersAtDepth.length > 0 && (
+                    <div className="pointer-events-none absolute top-0 left-16 right-1 z-20 flex flex-wrap items-center gap-1 px-1 pt-1">
+                      {playersAtDepth.map((player) => {
+                        const playerIndex = gameState.players.findIndex((p) => p.id === player.id);
+                        const isCurrentTurn = playerIndex === gameState.currentPlayerIndex;
+                        const color = playerColors[player.id] ?? 'primary';
+
+                        return (
+                          <div
+                            key={player.id}
+                            className="flex items-center gap-1 rounded-full border border-white/10 bg-slate-900/80 px-1.5 py-0.5 shadow-sm"
+                          >
+                            <BoatToken
+                              size="sm"
+                              color={color}
+                              animated
+                              highlight={isCurrentTurn}
+                              className={isCurrentTurn ? 'animate-[boat-bob_1.6s_ease-in-out_infinite]' : ''}
+                            />
+                            <span className="text-[9px] sm:text-[10px] font-semibold text-white/90 leading-none">
+                              {player.name}
+                            </span>
+                            {player.isAI && (
+                              <Badge className="bg-purple-700/70 text-[9px] text-purple-100">AI</Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Fish count indicator */}
                   <div className="absolute top-0 right-0 z-20 bg-black/40 rounded px-1 py-0.5">

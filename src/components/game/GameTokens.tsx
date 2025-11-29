@@ -8,6 +8,8 @@ interface TokenProps {
   onClick?: () => void;
 }
 
+export type BoatColor = 'primary' | 'red' | 'blue' | 'green' | 'orange';
+
 const sizeClasses = {
   sm: 'w-6 h-6',
   md: 'w-10 h-10',
@@ -168,7 +170,7 @@ export const BoatToken = ({
   highlight = false,
   color = 'primary',
   onClick,
-}: TokenProps & { color?: string }) => (
+}: TokenProps & { color?: BoatColor }) => (
   <div
     onClick={onClick}
     className={cn(

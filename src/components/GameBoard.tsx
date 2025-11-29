@@ -54,6 +54,7 @@ import { HelpSystem } from '@/components/HelpSystem';
 import { getSlotMultiplier } from '@/utils/mounting';
 
 import { GameAction } from '@/types/game';
+import { BoatColor } from './game/GameTokens';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -97,6 +98,14 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
   const shoalIsEmpty = selectedShoal ? selectedShoalFish.length === 0 : true;
   const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
   const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
+  const playerBoatColors = useMemo(() => {
+    const palette: BoatColor[] = ['primary', 'blue', 'orange', 'green', 'red'];
+
+    return gameState.players.reduce<Record<string, BoatColor>>((acc, player, index) => {
+      acc[player.id] = palette[index % palette.length];
+      return acc;
+    }, {});
+  }, [gameState.players]);
   const phaseDisplay: Record<GameState['phase'], string> = {
     start: 'Start',
     refresh: 'Refresh',
@@ -314,6 +323,7 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
                     <PortBoard
                       className="h-full"
                       gameState={gameState}
+                      playerColors={playerBoatColors}
                       onAction={onAction}
                     />
                   </div>
@@ -390,6 +400,7 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
+                playerColors={playerBoatColors}
                 onShoalSelect={(selection) => {
                   setSelectedShoal(selection);
                   setShoalDialogOpen(true);
