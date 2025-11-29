@@ -132,6 +132,13 @@ export interface GameState {
     playerId: string;
     count: number; // Number of dice that need to be removed
   };
+  pendingLifePreserverGift?: {
+    fromPlayerId: string; // Player who must give away the Life Preserver
+  };
+  pendingPassingReward?: {
+    playerId: string; // Player who can choose their passing reward
+  };
+  lifePreserverDifficultyReduction?: number; // Current difficulty reduction from Life Preserver (0 or 2)
 }
 
 // Specific action payload types for type safety
@@ -209,6 +216,17 @@ export interface UseCanOfWormsPayload {
 }
 
 // Union type for all game actions
+export interface UseLifePreserverPayload {
+  targetPlayerId?: string; // For giving the Life Preserver to another player
+  useType?: 'reduce_fish_difficulty' | 'reduce_shop_cost'; // How to use it
+  fishId?: string; // Target fish when reducing difficulty
+  upgradeId?: string; // Target upgrade when reducing shop cost
+}
+
+export interface PassingRewardPayload {
+  choice: 'draw_dink' | 'discard_regret';
+}
+
 export type GameAction =
   | { type: 'INIT_GAME'; playerId: string; payload: GameState }
   | { type: 'RESET_GAME'; playerId: string; payload: Record<string, never> }
@@ -221,12 +239,15 @@ export type GameAction =
   | { type: 'SELL_FISH'; playerId: string; payload: SellFishPayload }
   | { type: 'BUY_UPGRADE'; playerId: string; payload: BuyUpgradePayload }
   | { type: 'BUY_TACKLE_DICE'; playerId: string; payload: BuyTackleDicePayload }
-  | { type: 'USE_LIFE_PRESERVER'; playerId: string; payload: Record<string, never> }
+  | { type: 'USE_LIFE_PRESERVER'; playerId: string; payload: UseLifePreserverPayload }
+  | { type: 'GIVE_LIFE_PRESERVER'; playerId: string; payload: { targetPlayerId: string } }
   | { type: 'DRAW_DINK'; playerId: string; payload: Record<string, never> }
   | { type: 'DISCARD_REGRET'; playerId: string; payload: Record<string, never> }
+  | { type: 'DISCARD_RANDOM_REGRET'; playerId: string; payload: Record<string, never> }
   | { type: 'MOUNT_FISH'; playerId: string; payload: MountFishPayload }
   | { type: 'ROLL_DICE'; playerId: string; payload: Record<string, never> }
   | { type: 'PASS'; playerId: string; payload: Record<string, never> }
+  | { type: 'CLAIM_PASSING_REWARD'; playerId: string; payload: PassingRewardPayload }
   | { type: 'NEXT_PHASE'; playerId: string; payload: Record<string, never> }
   | { type: 'END_TURN'; playerId: string; payload: Record<string, never> }
   | { type: 'REMOVE_DIE'; playerId: string; payload: RemoveDiePayload }
