@@ -21,6 +21,11 @@ interface FishingActionsProps {
   onAction: (action: any) => void;
 }
 
+// Calculate effective difficulty with Life Preserver reduction
+const getEffectiveDifficulty = (baseDifficulty: number, lifePreserverReduction: number | undefined): number => {
+  return Math.max(0, baseDifficulty - (lifePreserverReduction ?? 0));
+};
+
 export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onAction }: FishingActionsProps) => {
   const {
     availableDiceTotal,
@@ -254,13 +259,32 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="rounded bg-red-900/30 p-2 cursor-help">
+                    <div className={`rounded p-2 cursor-help ${
+                      gameState.lifePreserverDifficultyReduction
+                        ? 'bg-yellow-900/30 border border-yellow-500/30'
+                        : 'bg-red-900/30'
+                    }`}>
                       <span className="text-muted-foreground">Vanskelighetsgrad:</span>
-                      <span className="ml-1 font-bold text-destructive">{revealedFish.difficulty}</span>
+                      {gameState.lifePreserverDifficultyReduction ? (
+                        <span className="ml-1">
+                          <span className="font-bold text-yellow-400">
+                            {getEffectiveDifficulty(revealedFish.difficulty, gameState.lifePreserverDifficultyReduction)}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-1 line-through">
+                            {revealedFish.difficulty}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="ml-1 font-bold text-destructive">{revealedFish.difficulty}</span>
+                      )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Summen av terningene du velger må være ≥ {revealedFish.difficulty} for å fange fisken.</p>
+                    {gameState.lifePreserverDifficultyReduction ? (
+                      <p>Life Preserver aktiv! Vanskelighetsgrad redusert med {gameState.lifePreserverDifficultyReduction}.</p>
+                    ) : (
+                      <p>Summen av terningene du velger må være ≥ {revealedFish.difficulty} for å fange fisken.</p>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -363,28 +387,36 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
               </div>
 
               {/* Progress indicator */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>Valgt sum:</span>
-                  <span className={`font-bold ${selectedDiceTotal >= revealedFish.difficulty ? 'text-green-400' : 'text-primary-glow'}`}>
-                    {selectedDiceTotal} / {revealedFish.difficulty}
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-black/30 overflow-hidden">
-                  <div
-                    className={`h-full transition-all ${selectedDiceTotal >= revealedFish.difficulty ? 'bg-green-500' : 'bg-primary'}`}
-                    style={{ width: `${Math.min(100, (selectedDiceTotal / revealedFish.difficulty) * 100)}%` }}
-                  />
-                </div>
-                {selectedDiceTotal >= revealedFish.difficulty && (
-                  <p className="text-xs text-green-400">✓ Nok til å fange!</p>
-                )}
-                {selectedDiceTotal > 0 && selectedDiceTotal < revealedFish.difficulty && (
-                  <p className="text-xs text-muted-foreground">
-                    Trenger {revealedFish.difficulty - selectedDiceTotal} mer
-                  </p>
-                )}
-              </div>
+              {(() => {
+                const effectiveDifficulty = getEffectiveDifficulty(revealedFish.difficulty, gameState.lifePreserverDifficultyReduction);
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Valgt sum:</span>
+                      <span className={`font-bold ${selectedDiceTotal >= effectiveDifficulty ? 'text-green-400' : 'text-primary-glow'}`}>
+                        {selectedDiceTotal} / {effectiveDifficulty}
+                        {gameState.lifePreserverDifficultyReduction && (
+                          <span className="text-xs text-yellow-400 ml-1">(LP -2)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-black/30 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${selectedDiceTotal >= effectiveDifficulty ? 'bg-green-500' : gameState.lifePreserverDifficultyReduction ? 'bg-yellow-500' : 'bg-primary'}`}
+                        style={{ width: `${Math.min(100, (selectedDiceTotal / Math.max(1, effectiveDifficulty)) * 100)}%` }}
+                      />
+                    </div>
+                    {selectedDiceTotal >= effectiveDifficulty && (
+                      <p className="text-xs text-green-400">✓ Nok til å fange!</p>
+                    )}
+                    {selectedDiceTotal > 0 && selectedDiceTotal < effectiveDifficulty && (
+                      <p className="text-xs text-muted-foreground">
+                        Trenger {effectiveDifficulty - selectedDiceTotal} mer
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Overfishing Warning */}
               {(isLastFishInShoal || isAlmostEmpty) && (
@@ -395,43 +427,48 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
                 />
               )}
 
-              <div className="grid gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleCatchFish}
-                      disabled={selectedDiceIndices.length === 0}
-                      className={`w-full min-h-[44px] touch-manipulation active:scale-95 ${selectedDiceTotal >= revealedFish.difficulty ? 'bg-green-600 hover:bg-green-700' : 'btn-ocean'}`}
-                    >
-                      <Fish className="h-4 w-4 mr-2" />
-                      Fang Fisken
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {selectedDiceTotal >= revealedFish.difficulty
-                      ? 'Du har nok - klikk for å fange!'
-                      : selectedDiceIndices.length === 0
-                        ? 'Velg terninger først'
-                        : `Du trenger ${revealedFish.difficulty - selectedDiceTotal} mer for å lykkes`}
-                  </TooltipContent>
-                </Tooltip>
+              {(() => {
+                const effectiveDiff = getEffectiveDifficulty(revealedFish.difficulty, gameState.lifePreserverDifficultyReduction);
+                return (
+                  <div className="grid gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={handleCatchFish}
+                          disabled={selectedDiceIndices.length === 0}
+                          className={`w-full min-h-[44px] touch-manipulation active:scale-95 ${selectedDiceTotal >= effectiveDiff ? 'bg-green-600 hover:bg-green-700' : 'btn-ocean'}`}
+                        >
+                          <Fish className="h-4 w-4 mr-2" />
+                          Fang Fisken
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {selectedDiceTotal >= effectiveDiff
+                          ? 'Du har nok - klikk for å fange!'
+                          : selectedDiceIndices.length === 0
+                            ? 'Velg terninger først'
+                            : `Du trenger ${effectiveDiff - selectedDiceTotal} mer for å lykkes`}
+                      </TooltipContent>
+                    </Tooltip>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handlePassOnFish}
-                      variant="outline"
-                      className="w-full min-h-[44px] border-dashed border-destructive/40 text-destructive text-xs touch-manipulation active:scale-95"
-                    >
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Pass på Fisken (Mist 1 terning + trekk Dink)
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Hopp over denne fisken. Du mister 1 terning og trekker et Dink-kort som straff.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={handlePassOnFish}
+                          variant="outline"
+                          className="w-full min-h-[44px] border-dashed border-destructive/40 text-destructive text-xs touch-manipulation active:scale-95"
+                        >
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Pass på Fisken (Mist 1 terning + trekk Dink)
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Hopp over denne fisken. Du mister 1 terning og trekker et Dink-kort som straff.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              })()}
             </div>
           </Card>
         )}

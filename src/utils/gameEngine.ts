@@ -505,7 +505,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           break;
         }
 
-        const fishDifficulty = fish.difficulty;
+        // Apply Life Preserver difficulty reduction if active (rulebook p.9)
+        const lifePreserverReduction = newState.lifePreserverDifficultyReduction ?? 0;
+        const fishDifficulty = Math.max(0, fish.difficulty - lifePreserverReduction);
         const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
 
         // Per rulebook (p.10): "If a fish has no printed cost, its cost is 0$, you don't need to spend any dice in order to catch it"
@@ -655,6 +657,11 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           removeActiveEffect(player, 'regret_reduction_used');
 
           applyMadnessAbilities(player, fish, newState);
+
+          // Clear Life Preserver difficulty reduction after use
+          if (newState.lifePreserverDifficultyReduction) {
+            newState.lifePreserverDifficultyReduction = undefined;
+          }
         } else {
           const shouldTakeDink =
             availableDiceTotal < fishDifficulty || !hasUsableSelection || selectedTotal < fishDifficulty;
@@ -702,7 +709,14 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const upgrade = ALL_UPGRADES.find(item => item.id === upgradeId);
         if (upgrade) {
           // Apply port discount for 13+ regrets per rulebook (p.21)
-          const discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
+          let discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
+
+          // Apply Life Preserver shop discount (2$) per rulebook (p.9)
+          if (hasActiveEffect(player, 'life_preserver_shop_discount')) {
+            discount += 2;
+            removeActiveEffect(player, 'life_preserver_shop_discount');
+          }
+
           const effectiveCost = Math.max(0, upgrade.cost - discount);
 
           if (player.fishbucks >= effectiveCost) {
@@ -741,16 +755,46 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'USE_LIFE_PRESERVER':
-      if (player && player.location === 'port') {
-        newState.lifePreserverOwner = player.id;
-        player.lifeboatFlipped = true;
+      // Per rulebook (p.9): Life Preserver can be discarded at Sea to reduce Fish Difficulty by 2♠,
+      // or at Port to reduce shop cost by 2$
+      if (player && newState.lifePreserverOwner === player.id) {
+        const { useType } = action.payload;
 
-        if (player.regrets.length > 0) {
-          const previousRegretCount = player.regrets.length;
-          const removed = player.regrets[player.regrets.length - 1];
-          player.regrets = player.regrets.slice(0, -1);
-          newState.port.regretsDiscard = [...newState.port.regretsDiscard, removed];
-          recalculateMadness(player, { previousRegretCount, gameState: newState });
+        if (useType === 'reduce_fish_difficulty' && player.location === 'sea') {
+          // At Sea: Reduce fish difficulty by 2 for the next catch
+          newState.lifePreserverDifficultyReduction = 2;
+          newState.lifePreserverOwner = undefined;
+        } else if (useType === 'reduce_shop_cost' && player.location === 'port') {
+          // At Port: This is handled when buying - we just mark that LP is used for discount
+          // The discount is applied in BUY_UPGRADE
+          newState.lifePreserverOwner = undefined;
+          // Give player a temporary 2$ discount marker
+          player.activeEffects = [...(player.activeEffects || []), 'life_preserver_shop_discount'];
+        } else if (!useType) {
+          // Legacy behavior: at port, discard regret with penalty
+          newState.lifePreserverOwner = player.id;
+          player.lifeboatFlipped = true;
+
+          if (player.regrets.length > 0) {
+            const previousRegretCount = player.regrets.length;
+            const removed = player.regrets[player.regrets.length - 1];
+            player.regrets = player.regrets.slice(0, -1);
+            newState.port.regretsDiscard = [...newState.port.regretsDiscard, removed];
+            recalculateMadness(player, { previousRegretCount, gameState: newState });
+          }
+        }
+      }
+      break;
+
+    case 'GIVE_LIFE_PRESERVER':
+      // Per rulebook (p.9): Player with highest dice total must give Life Preserver to another player
+      if (player && newState.pendingLifePreserverGift?.fromPlayerId === player.id) {
+        const { targetPlayerId } = action.payload;
+        const targetPlayer = newState.players.find(p => p.id === targetPlayerId);
+
+        if (targetPlayer && targetPlayer.id !== player.id) {
+          newState.lifePreserverOwner = targetPlayerId;
+          newState.pendingLifePreserverGift = undefined;
         }
       }
       break;
@@ -775,6 +819,53 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           newState.port.regretsDiscard = [...newState.port.regretsDiscard, discardedRegret];
           recalculateMadness(player, { previousRegretCount, gameState: newState });
         }
+      }
+      break;
+
+    case 'DISCARD_RANDOM_REGRET':
+      // Per rulebook (p.9): Passing reward - discard one random Regret card
+      if (player && player.regrets.length > 0) {
+        const previousRegretCount = player.regrets.length;
+        // Pick a random regret to discard
+        const randomIndex = Math.floor(Math.random() * player.regrets.length);
+        const discardedRegret = player.regrets[randomIndex];
+        player.regrets = [
+          ...player.regrets.slice(0, randomIndex),
+          ...player.regrets.slice(randomIndex + 1)
+        ];
+        newState.port.regretsDiscard = [...newState.port.regretsDiscard, discardedRegret];
+        recalculateMadness(player, { previousRegretCount, gameState: newState });
+        // Clear pending reward if this was from passing
+        if (newState.pendingPassingReward?.playerId === player.id) {
+          newState.pendingPassingReward = undefined;
+        }
+      }
+      break;
+
+    case 'CLAIM_PASSING_REWARD':
+      // Per rulebook (p.9): When skipped first in turn order, player may draw a Dink or discard random Regret
+      if (player && newState.pendingPassingReward?.playerId === player.id) {
+        const { choice } = action.payload;
+
+        if (choice === 'draw_dink') {
+          const { card, deck } = drawCard(newState.port.dinksDeck);
+          if (card) {
+            player.dinks = [...player.dinks, card];
+          }
+          newState.port.dinksDeck = deck;
+        } else if (choice === 'discard_regret' && player.regrets.length > 0) {
+          const previousRegretCount = player.regrets.length;
+          const randomIndex = Math.floor(Math.random() * player.regrets.length);
+          const discardedRegret = player.regrets[randomIndex];
+          player.regrets = [
+            ...player.regrets.slice(0, randomIndex),
+            ...player.regrets.slice(randomIndex + 1)
+          ];
+          newState.port.regretsDiscard = [...newState.port.regretsDiscard, discardedRegret];
+          recalculateMadness(player, { previousRegretCount, gameState: newState });
+        }
+
+        newState.pendingPassingReward = undefined;
       }
       break;
 
@@ -824,10 +915,15 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         // Grant passing rewards based on order per rulebook (p.9)
         if (passedCount === 0) {
           // First to pass: Gets the Fishcoin (becomes next first player)
-          // Note: Rulebook doesn't mention +2 Fishbucks for first to pass
           newState.fishCoinOwner = player.id;
+
+          // Per rulebook (p.9): "When skipped first in the turn order, they may either draw
+          // a Dink or discard one random Regret card"
+          // Set pending reward so player can choose
+          newState.pendingPassingReward = {
+            playerId: player.id
+          };
         }
-        // Note: Rulebook doesn't specify rewards for 2nd/3rd pass in competitive mode
 
         // Check if only one player remains (Last-to-Pass rule, p.9)
         const remainingPlayers = newState.players.filter(p => !p.hasPassed);
@@ -840,6 +936,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       // Check if all players passed
       if (newState.players.every(p => p.hasPassed)) {
         newState.lastPlayerTurnsRemaining = undefined;
+        newState.pendingPassingReward = undefined; // Clear any pending reward
         newState.phase = 'start';
         advanceDay(newState);
       }
@@ -1264,6 +1361,14 @@ const advancePhase = (gameState: GameState) => {
 
   // Phase-specific logic
   if (gameState.phase === 'refresh') {
+    // REEL IN (from START phase per rulebook p.9):
+    // All players at Sea must move their Boat up one Depth, if they are not already at Depth 1
+    gameState.players.forEach(player => {
+      if (player.location === 'sea' && player.currentDepth > 1) {
+        player.currentDepth = (player.currentDepth - 1) as 1 | 2 | 3;
+      }
+    });
+
     // Refresh Phase: Move spent dice back to fresh and reroll (Muster Your Courage)
     gameState.players.forEach(player => {
       // Combine all dice
@@ -1280,6 +1385,10 @@ const advancePhase = (gameState: GameState) => {
       player.freshDice = newDice;
       player.spentDice = [];
     });
+
+    // THROW THE LIFE PRESERVER (rulebook p.9):
+    // Player with highest total of Fresh dice values takes Life Preserver and gives it to another player
+    assignLifePreserver(gameState);
   }
 
   // Declaration Phase: All players start at sea by default, will choose in phase
@@ -1289,6 +1398,35 @@ const advancePhase = (gameState: GameState) => {
       player.location = 'sea';
       player.currentDepth = 1;
     });
+  }
+};
+
+// Assign Life Preserver to player with highest fresh dice total
+const assignLifePreserver = (gameState: GameState) => {
+  // Calculate fresh dice totals for each player
+  const playersWithTotals = gameState.players.map((player, index) => ({
+    player,
+    index,
+    total: player.freshDice.reduce((sum, die) => sum + die, 0)
+  }));
+
+  // Sort by total (descending), then by turn order (ascending) for ties
+  playersWithTotals.sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    // For ties, earliest in turn order wins (relative to first player)
+    const firstPlayerIndex = gameState.firstPlayerIndex;
+    const aOrder = (a.index - firstPlayerIndex + gameState.players.length) % gameState.players.length;
+    const bOrder = (b.index - firstPlayerIndex + gameState.players.length) % gameState.players.length;
+    return aOrder - bOrder;
+  });
+
+  const winner = playersWithTotals[0];
+  if (winner && gameState.players.length > 1) {
+    // The winner must give the Life Preserver to another player
+    gameState.lifePreserverOwner = winner.player.id;
+    gameState.pendingLifePreserverGift = {
+      fromPlayerId: winner.player.id
+    };
   }
 };
 

@@ -24,6 +24,9 @@ import { FishingWizard, getFishingStep } from './FishingWizard';
 import { LastToPassWarning } from './LastToPassWarning';
 import { DeclarationChoice } from './DeclarationChoice';
 import { CanOfWormsStatus } from './CanOfWormsPeek';
+import { LifePreserverGift } from './LifePreserverGift';
+import { LifePreserverUse } from './LifePreserverUse';
+import { PassingReward } from './PassingReward';
 
 interface ActionPanelProps {
   gameState: GameState;
@@ -168,6 +171,33 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
             </div>
           </div>
         </Card>
+
+        {/* Life Preserver Gift - Must give away if you have highest dice total */}
+        {gameState.pendingLifePreserverGift?.fromPlayerId === currentPlayer.id && (
+          <LifePreserverGift
+            gameState={gameState}
+            currentPlayer={currentPlayer}
+            onAction={onAction}
+          />
+        )}
+
+        {/* Passing Reward - Choose reward when first to pass */}
+        {gameState.pendingPassingReward?.playerId === currentPlayer.id && (
+          <PassingReward
+            gameState={gameState}
+            currentPlayer={currentPlayer}
+            onAction={onAction}
+          />
+        )}
+
+        {/* Life Preserver Use - Show options when player owns it */}
+        {gameState.lifePreserverOwner === currentPlayer.id && gameState.phase === 'action' && !currentPlayer.hasPassed && (
+          <LifePreserverUse
+            gameState={gameState}
+            currentPlayer={currentPlayer}
+            onAction={onAction}
+          />
+        )}
 
         {/* Last to Pass Warning */}
         {isLastActive && gameState.phase === 'action' && (
