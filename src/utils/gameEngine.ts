@@ -62,16 +62,19 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
     const basicRod = RODS[0]; // Glass Rod
     const basicReel = REELS[0]; // Quick Release Reel
 
+    // Get max dice from madness tier (player starts with 0 regrets)
+    const startingMaxDice = getMaxDiceFromMadness(0);
+
     const basePlayer: Player = {
       id: `player-${index + 1}`,
       name: character.name,
       character: character.id,
       location: 'sea',
       currentDepth: 1,
-      freshDice: [1, 2, 3], // Starting dice
+      freshDice: rollDice(startingMaxDice), // Starting dice based on tier
       spentDice: [],
       tackleDice: [],
-      maxDice: 3,
+      maxDice: startingMaxDice,
       baseMaxDice: 3,
       maxMountSlots: 3,
       regretShields: 0,
@@ -1347,13 +1350,15 @@ interface MadnessTier {
   portDiscount: boolean;
 }
 
+// Madness tier values per rulebook p.18-19
+// As regrets increase: Fair modifier decreases, Foul modifier increases, Max Dice DECREASES
 const MADNESS_TIERS: MadnessTier[] = [
-  { minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 4, portDiscount: false },
-  { minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false },
-  { minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: 0, maxDice: 5, portDiscount: false },
-  { minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 1, maxDice: 6, portDiscount: false },
-  { minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 7, portDiscount: false },
-  { minRegrets: 13, maxRegrets: Infinity, fairModifier: -2, foulModifier: 2, maxDice: 8, portDiscount: true },
+  { minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 5, portDiscount: false },
+  { minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -2, maxDice: 5, portDiscount: false },
+  { minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false },
+  { minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 0, maxDice: 4, portDiscount: false },
+  { minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 3, portDiscount: false },
+  { minRegrets: 13, maxRegrets: Infinity, fairModifier: -2, foulModifier: 2, maxDice: 3, portDiscount: true },
 ];
 
 export const getMadnessTier = (regretCount: number): MadnessTier => {
@@ -1461,20 +1466,24 @@ const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
   const newMadnessLevel = calculateMadnessLevelFromRegrets(currentRegrets);
   player.madnessLevel = newMadnessLevel;
 
-  // Get max dice from the madness tier per rulebook
-  // Note: Max dice INCREASES with more regrets (4 -> 8) per rulebook
+  // Get max dice from the madness tier per rulebook p.18-19
+  // Note: Max dice DECREASES with more regrets (5 -> 3) per rulebook
   const tierMaxDice = getMaxDiceFromMadness(currentRegrets);
   // Apply character bonus (Storm gets +1 base max dice)
   const characterBonus = (player.baseMaxDice ?? 3) - 3;
   player.maxDice = tierMaxDice + characterBonus;
 
   // The rulebook doesn't have the "lose die at madness 4" or "lose mount at madness 6" penalties
-  // Those were incorrect interpretations - the madness system only affects:
-  // 1. Fair/Foul value modifiers
-  // 2. Max dice (which increases, not decreases)
-  // 3. Port discount at 13+ regrets
+  // The madness system only affects:
+  // 1. Fair/Foul value modifiers (Fair decreases, Foul increases with more regrets)
+  // 2. Max dice (DECREASES with more regrets: 5 -> 3)
+  // 3. Port discount at 13+ regrets ($1 off all shop items)
 
-  enforceFreshDiceLimit(player, gameState);
+  // Per rulebook p.19: "You never need to remove dice from your Fresh Pool."
+  // The max dice limit is only enforced when:
+  // 1. Acquiring new dice (excess goes to spent pool on madness tracker)
+  // 2. Refreshing dice from spent pool during Refresh phase
+  // NOT when madness level changes - players keep their existing fresh dice
 };
 
 const advancePhase = (gameState: GameState) => {

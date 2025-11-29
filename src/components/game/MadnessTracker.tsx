@@ -35,13 +35,14 @@ interface MadnessTierInfo {
   name: string;
 }
 
+// Madness tier values per rulebook p.18-19
 const MADNESS_TIERS: MadnessTierInfo[] = [
-  { level: 0, minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 4, portDiscount: false, name: 'Calm' },
-  { level: 1, minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false, name: 'Uneasy' },
-  { level: 2, minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: 0, maxDice: 5, portDiscount: false, name: 'Disturbed' },
-  { level: 3, minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 1, maxDice: 6, portDiscount: false, name: 'Unhinged' },
-  { level: 4, minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 7, portDiscount: false, name: 'Deranged' },
-  { level: 5, minRegrets: 13, maxRegrets: 999, fairModifier: -2, foulModifier: 2, maxDice: 8, portDiscount: true, name: 'Lost' },
+  { level: 0, minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 5, portDiscount: false, name: 'Calm' },
+  { level: 1, minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -2, maxDice: 5, portDiscount: false, name: 'Uneasy' },
+  { level: 2, minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false, name: 'Disturbed' },
+  { level: 3, minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 0, maxDice: 4, portDiscount: false, name: 'Unhinged' },
+  { level: 4, minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 3, portDiscount: false, name: 'Deranged' },
+  { level: 5, minRegrets: 13, maxRegrets: 999, fairModifier: -2, foulModifier: 2, maxDice: 3, portDiscount: true, name: 'Lost' },
 ];
 
 const getTierFromRegrets = (regretCount: number): MadnessTierInfo => {

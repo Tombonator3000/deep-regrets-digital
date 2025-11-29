@@ -50,7 +50,8 @@ describe('character starting bonuses', () => {
     expect(finn.rerollOnes).toBe(true);
 
     const storm = playerByCharacter['storm'];
-    expect(storm.maxDice).toBe(4);
+    // Storm: +1 base max dice bonus on top of tier 0 max dice (5)
+    expect(storm.maxDice).toBe(6);
     expect(storm.maxMountSlots).toBe(4);
 
     expect(characterState.port.dinksDeck.length).toBe(DINK_CARDS.length - marina.dinks.length);
@@ -256,9 +257,9 @@ describe('gameReducer new actions', () => {
     expect(player.lifeboatFlipped).toBe(true);
     expect(player.regrets).toHaveLength(1);
     expect(result.port.regretsDiscard).toHaveLength(1);
-    // Per rulebook: 1 regret = tier 1 (1-3 regrets), maxDice = 4
+    // Per rulebook p.18-19: 1 regret = tier 1 (1-3 regrets), maxDice = 5
     expect(player.madnessLevel).toBe(1);
-    expect(player.maxDice).toBe(4);
+    expect(player.maxDice).toBe(5);
   });
 
   it('draws a dink card from the deck into the player hand', () => {
@@ -569,23 +570,24 @@ const gatherFoulFish = () => [
 ].filter(fish => fish.quality === 'foul');
 
 describe('madness recalculation (rulebook-based)', () => {
-  // Per rulebook (p.20-21): Madness tiers based on regret count
+  // Per rulebook (p.18-19): Madness tiers based on regret count
+  // As regrets increase, max dice DECREASES (player becomes less effective)
   // | Regret Cards | Fair Value | Foul Value | Max Dice | Port Discount |
-  // | 0            | +2         | -2         | 4        | No            |
-  // | 1-3          | +1         | -1         | 4        | No            |
-  // | 4-6          | +1         | =          | 5        | No            |
-  // | 7-9          | =          | +1         | 6        | No            |
-  // | 10-12        | -1         | +1         | 7        | No            |
-  // | 13+          | -2         | +2         | 8        | Yes (-$1)     |
+  // | 0            | +2         | -2         | 5        | No            |
+  // | 1-3          | +1         | -2         | 5        | No            |
+  // | 4-6          | +1         | -1         | 4        | No            |
+  // | 7-9          | =          | =          | 4        | No            |
+  // | 10-12        | -1         | +1         | 3        | No            |
+  // | 13+          | -2         | +2         | 3        | Yes (-$1)     |
 
-  it('increases max dice as regrets accumulate per rulebook tiers', () => {
+  it('decreases max dice as regrets accumulate per rulebook tiers', () => {
     const playerId = state.players[0].id;
     const foulFish = gatherFoulFish();
 
     state.players[0].location = 'port';
     state.players[0].freshDice = [2, 4, 6];
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 4; // 0 regrets = tier 0 = 4 max dice
+    state.players[0].maxDice = 5; // 0 regrets = tier 0 = 5 max dice
     state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
     state.port.regretsDeck = [...REGRET_CARDS.slice(0, 10)];
 
@@ -599,23 +601,23 @@ describe('madness recalculation (rulebook-based)', () => {
       });
     };
 
-    // 0 regrets -> 1 regret (tier 1: 1-3 regrets, maxDice = 4)
+    // 0 regrets -> 1 regret (tier 1: 1-3 regrets, maxDice = 5)
     sellNextFish();
     expect(state.players[0].regrets.length).toBe(1);
     expect(state.players[0].madnessLevel).toBe(1); // Tier index
-    expect(state.players[0].maxDice).toBe(4);
+    expect(state.players[0].maxDice).toBe(5);
 
-    // 1-3 regrets stay at tier 1
+    // 1-3 regrets stay at tier 1, maxDice still 5
     sellNextFish();
     sellNextFish();
     expect(state.players[0].regrets.length).toBe(3);
-    expect(state.players[0].maxDice).toBe(4);
+    expect(state.players[0].maxDice).toBe(5);
 
-    // 4 regrets -> tier 2 (4-6 regrets, maxDice = 5)
+    // 4 regrets -> tier 2 (4-6 regrets, maxDice = 4) - DECREASES
     sellNextFish();
     expect(state.players[0].regrets.length).toBe(4);
     expect(state.players[0].madnessLevel).toBe(2);
-    expect(state.players[0].maxDice).toBe(5);
+    expect(state.players[0].maxDice).toBe(4);
   });
 
   it('keeps all mounted fish regardless of madness level (per rulebook)', () => {
@@ -625,7 +627,7 @@ describe('madness recalculation (rulebook-based)', () => {
     state.players[0].location = 'port';
     state.players[0].freshDice = [2, 4, 6];
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 4;
+    state.players[0].maxDice = 5;
     state.players[0].handFish = foulFish.slice(0, 7).map(fish => ({ ...fish }));
     state.players[0].mountedFish = [
       { slot: 0, multiplier: 1, fish: DEPTH_1_FISH[0] },
@@ -650,11 +652,11 @@ describe('madness recalculation (rulebook-based)', () => {
     }
 
     // Per rulebook: No penalty for high madness - mounted fish are kept
-    // Max dice INCREASES with more regrets
+    // Max dice DECREASES with more regrets
     const remainingMounts = state.players[0].mountedFish;
     expect(remainingMounts).toHaveLength(3); // All mounted fish kept
     expect(state.players[0].regrets.length).toBe(7);
-    expect(state.players[0].maxDice).toBe(6); // 7-9 regrets = tier 3 = 6 max dice
+    expect(state.players[0].maxDice).toBe(4); // 7-9 regrets = tier 3 = 4 max dice
   });
 
   it('does not trigger endgame from madness alone (per rulebook)', () => {
@@ -700,7 +702,7 @@ describe('madness recalculation (rulebook-based)', () => {
 
     state.players[0].location = 'port';
     state.players[0].baseMaxDice = 3;
-    state.players[0].maxDice = 4;
+    state.players[0].maxDice = 5;
     state.players[0].handFish = foulFish.slice(0, 14).map(fish => ({ ...fish }));
     state.port.regretsDeck = [...REGRET_CARDS, ...REGRET_CARDS]; // Ensure enough regrets
 
@@ -719,8 +721,8 @@ describe('madness recalculation (rulebook-based)', () => {
       sellNextFish();
     }
 
-    // At 13+ regrets: maxDice = 8, port discount active
+    // At 13+ regrets: maxDice = 3 (DECREASES with madness), port discount active
     expect(state.players[0].regrets.length).toBeGreaterThanOrEqual(13);
-    expect(state.players[0].maxDice).toBe(8);
+    expect(state.players[0].maxDice).toBe(3);
   });
 });
