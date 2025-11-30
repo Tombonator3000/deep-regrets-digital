@@ -148,6 +148,45 @@ export default {
           "0%": { transform: "scale(0)", opacity: "1" },
           "100%": { transform: "scale(2)", opacity: "0" },
         },
+        // Fish catch celebration
+        "fish-catch": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "25%": { transform: "scale(1.3)", opacity: "1" },
+          "50%": { transform: "scale(1.1)", opacity: "1" },
+          "75%": { transform: "scale(1.2)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        // Animated counter pulse
+        "counter-pop": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.3)" },
+          "100%": { transform: "scale(1)" },
+        },
+        // Shoal hover glow
+        "shoal-glow": {
+          "0%, 100%": { boxShadow: "0 0 5px hsl(var(--primary) / 0.3), inset 0 0 5px hsl(var(--primary) / 0.1)" },
+          "50%": { boxShadow: "0 0 20px hsl(var(--primary) / 0.6), inset 0 0 10px hsl(var(--primary) / 0.2)" },
+        },
+        // Madness warning pulse
+        "madness-warning": {
+          "0%, 100%": { boxShadow: "0 0 5px hsl(var(--destructive) / 0.3)", borderColor: "hsl(var(--destructive) / 0.4)" },
+          "50%": { boxShadow: "0 0 25px hsl(var(--destructive) / 0.7)", borderColor: "hsl(var(--destructive) / 0.8)" },
+        },
+        // Plug erosion effect
+        "plug-erosion": {
+          "0%": { transform: "scale(1) rotate(0deg)", filter: "brightness(1)" },
+          "25%": { transform: "scale(1.1) rotate(-5deg)", filter: "brightness(1.2)" },
+          "50%": { transform: "scale(0.95) rotate(5deg)", filter: "brightness(0.9)" },
+          "75%": { transform: "scale(1.05) rotate(-3deg)", filter: "brightness(1.1)" },
+          "100%": { transform: "scale(1) rotate(0deg)", filter: "brightness(1)" },
+        },
+        // Enhanced boat bob for current player
+        "boat-bob-active": {
+          "0%, 100%": { transform: "translateY(0) rotate(-3deg)" },
+          "25%": { transform: "translateY(-4px) rotate(0deg)" },
+          "50%": { transform: "translateY(0) rotate(3deg)" },
+          "75%": { transform: "translateY(-2px) rotate(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -168,6 +207,13 @@ export default {
         "slide-up-fade": "slide-up-fade 0.3s ease-out",
         "token-appear": "token-appear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
         "success-burst": "success-burst 0.5s ease-out forwards",
+        // New game polish animations
+        "fish-catch": "fish-catch 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "counter-pop": "counter-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "shoal-glow": "shoal-glow 1.5s ease-in-out infinite",
+        "madness-warning": "madness-warning 1s ease-in-out infinite",
+        "plug-erosion": "plug-erosion 2s ease-in-out infinite",
+        "boat-bob-active": "boat-bob-active 1.5s ease-in-out infinite",
       },
     },
   },

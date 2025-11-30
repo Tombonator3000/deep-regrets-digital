@@ -332,16 +332,22 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                         return (
                           <div
                             key={player.id}
-                            className="flex items-center gap-1 rounded-full border border-white/10 bg-slate-900/80 px-1.5 py-0.5 shadow-sm"
+                            className={`flex items-center gap-1 rounded-full border bg-slate-900/80 px-1.5 py-0.5 shadow-sm transition-all ${
+                              isCurrentTurn
+                                ? 'border-primary/50 ring-1 ring-primary/30 shadow-lg shadow-primary/20'
+                                : 'border-white/10'
+                            }`}
                           >
                             <BoatToken
                               size="sm"
                               color={color}
                               animated
                               highlight={isCurrentTurn}
-                              className={isCurrentTurn ? 'animate-[boat-bob_1.6s_ease-in-out_infinite]' : ''}
+                              className={isCurrentTurn ? 'animate-boat-bob-active' : 'animate-boat-bob'}
                             />
-                            <span className="text-[9px] sm:text-[10px] font-semibold text-white/90 leading-none">
+                            <span className={`text-[9px] sm:text-[10px] font-semibold leading-none ${
+                              isCurrentTurn ? 'text-primary-glow' : 'text-white/90'
+                            }`}>
                               {player.name}
                             </span>
                             {player.isAI && (
@@ -426,13 +432,13 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                               }
                             }}
                             className={`shoal-card relative overflow-hidden rounded-lg border-2 bg-slate-950/60 backdrop-blur-sm p-1 sm:p-1.5 text-white shadow-lg transition-all h-full flex flex-col ${
-                              isSelected ? 'border-primary ring-2 ring-primary/70' : 'border-white/20'
+                              isSelected ? 'border-primary ring-2 ring-primary/70 animate-shoal-glow' : 'border-white/20'
                             } ${
-                              hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50' : ''
+                              hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50 animate-plug-erosion' : ''
                             } ${
                               shoalEmpty ? 'opacity-30 bg-transparent border-dashed' : ''
                             } ${
-                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-900/70 active:scale-[0.97]' : ''
+                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-900/70 hover:shadow-[0_0_15px_hsl(var(--primary)/0.4)] active:scale-[0.97]' : ''
                             } ${
                               !isAccessible ? 'opacity-40' : ''
                             }`}

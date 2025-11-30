@@ -4,6 +4,7 @@ import { getSlotMultiplier } from '@/utils/mounting';
 import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
 import { PlayerHand, CardDragData } from './PlayerHand';
 import { LifebuoyToken, FishCoinToken, BoatToken } from './GameTokens';
+import { AnimatedCounter } from './ParticleEffects';
 import { CharacterCardModal } from './CharacterCardModal';
 import { DragEvent, useState } from 'react';
 
@@ -80,7 +81,7 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
         <div className="grid grid-cols-4 gap-0.5">
           <div className="flex items-center justify-center gap-0.5 rounded border border-fishbuck/30 bg-fishbuck/10 p-0.5 py-1">
             <Coins className="h-3 w-3 text-fishbuck" />
-            <span className="text-[10px] font-bold text-fishbuck">${player.fishbucks}</span>
+            <AnimatedCounter value={player.fishbucks} prefix="$" className="text-[10px] font-bold" />
           </div>
           <div className="flex items-center justify-center gap-0.5 rounded border border-destructive/30 bg-destructive/10 p-0.5 py-1">
             <Skull className="h-3 w-3 text-destructive" />
@@ -223,7 +224,7 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
       {/* Compact Stats Row */}
       <div className="shrink-0 grid grid-cols-3 gap-1 mb-2">
         <div className="flex flex-col items-center rounded border border-fishbuck/30 bg-fishbuck/10 p-1">
-          <span className="text-sm font-bold text-fishbuck">${player.fishbucks}</span>
+          <AnimatedCounter value={player.fishbucks} prefix="$" className="text-sm font-bold" />
         </div>
         <div className="flex flex-col items-center rounded border border-destructive/30 bg-destructive/10 p-1">
           <span className="text-sm font-bold text-destructive">{player.regrets.length}</span>
