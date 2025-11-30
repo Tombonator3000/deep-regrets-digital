@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import logoImage from '@/assets/deep-regrets-logo.jpg';
-import headerImage from '@/assets/briny-deep-background.png';
+import backgroundImage from '@/assets/tentacle-background.png';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
@@ -119,15 +119,15 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden">
-      {/* Header image - fishing boat silhouette */}
-      <div className="relative w-full h-[140px] shrink-0 overflow-hidden">
+      {/* Full-screen background image */}
+      <div className="absolute inset-0 z-0">
         <img
-          src={headerImage}
+          src={backgroundImage}
           alt=""
-          className="w-full h-[400px] object-cover object-top"
+          className="w-full h-full object-cover"
           aria-hidden="true"
         />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[hsl(220,30%,8%)] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,30%,8%)] via-[hsl(220,30%,8%)]/70 to-transparent" />
       </div>
 
       {/* Animated background particles */}
