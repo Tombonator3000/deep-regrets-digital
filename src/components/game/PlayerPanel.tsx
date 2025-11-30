@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
+import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import { RegretHand } from './RegretCard';
 import { CharacterCardModal } from './CharacterCardModal';
 
@@ -43,17 +44,27 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
   return (
     <div className="p-4 space-y-4">
       {/* Player Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setShowCharacterCard(true)}
+          className="h-12 w-12 rounded-full border-2 border-primary/50 overflow-hidden hover:border-primary transition-colors flex-shrink-0"
+        >
+          <img 
+            src={CHARACTER_PORTRAITS[player.character]} 
+            alt={player.name}
+            className="w-full h-full object-cover"
+          />
+        </button>
+        <div className="flex-1 min-w-0">
           <button
             onClick={() => setShowCharacterCard(true)}
-            className="font-bold text-lg text-primary hover:text-primary/80 hover:underline cursor-pointer transition-colors text-left"
+            className="font-bold text-lg text-primary hover:text-primary/80 hover:underline cursor-pointer transition-colors text-left truncate block"
           >
             {player.name}
           </button>
-          <p className="text-sm text-muted-foreground">{player.character}</p>
+          <p className="text-sm text-muted-foreground truncate">{player.character}</p>
         </div>
-        <div className="text-right">
+        <div className="text-right flex-shrink-0">
           <div className="text-2xl font-bold text-fishbuck">${player.fishbucks}</div>
           <div className="text-xs text-muted-foreground">Fishbucks</div>
         </div>
