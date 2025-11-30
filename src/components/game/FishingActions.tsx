@@ -421,9 +421,8 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
               {/* Overfishing Warning */}
               {(isLastFishInShoal || isAlmostEmpty) && (
                 <OverfishingWarning
-                  fishName={revealedFish.name}
+                  shoalFishCount={shoalFishCount}
                   isLastFish={isLastFishInShoal}
-                  fishRemaining={shoalFishCount}
                 />
               )}
 

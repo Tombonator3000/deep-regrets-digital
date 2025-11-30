@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Fish, Sparkles, Package, Skull, Star, Zap, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 
 type CardType = 'fish' | 'dink' | 'supply';
 type AnyCard = FishCard | DinkCard | UpgradeCard;
@@ -90,6 +91,9 @@ const EnlargedFishCard = ({ fish, onClose, rotation = 0 }: { fish: FishCard; onC
     : 'from-cyan-900 via-cyan-800 to-cyan-950';
   const borderColor = isFoul ? 'border-purple-400' : 'border-cyan-400';
   const accentColor = isFoul ? 'text-purple-300' : 'text-cyan-300';
+  
+  // Get fish illustration image
+  const fishImage = getFishImage(fish.id) || getDefaultFishImage(fish.depth);
 
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
 
@@ -118,25 +122,21 @@ const EnlargedFishCard = ({ fish, onClose, rotation = 0 }: { fish: FishCard; onC
       </div>
 
       {/* Fish illustration area */}
-      <div className="relative h-40 flex items-center justify-center bg-black/20">
-        <Fish className={`h-24 w-24 ${accentColor} drop-shadow-lg`} />
-        {isFoul && (
-          <Skull className="absolute top-2 left-2 h-6 w-6 text-purple-400/60" />
+      <div className="relative h-48 flex items-center justify-center bg-black/20 overflow-hidden">
+        {fishImage ? (
+          <img 
+            src={fishImage} 
+            alt={fish.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Fish className={`h-24 w-24 ${accentColor} drop-shadow-lg`} />
         )}
-        {/* Decorative bubbles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 rounded-full bg-white/20 animate-pulse"
-              style={{
-                left: `${20 + i * 15}%`,
-                top: `${30 + (i % 3) * 20}%`,
-                animationDelay: `${i * 0.3}s`
-              }}
-            />
-          ))}
-        </div>
+        {isFoul && (
+          <Skull className="absolute top-2 left-2 h-6 w-6 text-purple-400/60 drop-shadow-md" />
+        )}
+        {/* Overlay gradient for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* Card body */}

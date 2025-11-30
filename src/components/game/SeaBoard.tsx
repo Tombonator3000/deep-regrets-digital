@@ -8,6 +8,7 @@ import { PlugMarker, DepthMarker, LighthouseToken, BoatToken, BoatColor } from '
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 
 // Hook to load briny deep background image
 const useBrinyDeepBackground = () => {
@@ -456,11 +457,22 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                                 <Waves className="h-4 w-4 sm:h-5 sm:w-5 text-white/20" />
                               </div>
                             ) : isRevealed ? (
-                              <div className="flex flex-col flex-1 justify-between">
-                                <div className="text-[10px] sm:text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow">
+                              <div className="flex flex-col flex-1 justify-between relative overflow-hidden">
+                                {/* Fish illustration background */}
+                                {topFish && (
+                                  <div className="absolute inset-0">
+                                    <img 
+                                      src={getFishImage(topFish.id) || getDefaultFishImage(topFish.depth)} 
+                                      alt={topFish.name}
+                                      className="w-full h-full object-cover opacity-70"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                                  </div>
+                                )}
+                                <div className="text-[10px] sm:text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow relative z-10">
                                   {topFish?.name ?? '?'}
                                 </div>
-                                <div className="flex gap-0.5 sm:gap-1 mt-auto flex-wrap">
+                                <div className="flex gap-0.5 sm:gap-1 mt-auto flex-wrap relative z-10">
                                   <Badge className="bg-fishbuck/90 text-slate-900 text-[9px] sm:text-[10px] px-1 py-0 font-bold">
                                     ${topFish?.value ?? '?'}
                                   </Badge>

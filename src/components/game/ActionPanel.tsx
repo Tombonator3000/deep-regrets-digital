@@ -110,9 +110,9 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
     revealedFish?.depth
   );
 
-  // Check Can of Worms status
-  const hasCanOfWorms = currentPlayer.canOfWorms?.isActive ?? false;
-  const canOfWormsUsed = currentPlayer.canOfWorms?.isUsed ?? false;
+  // Check Can of Worms status - uses canOfWormsFaceUp boolean
+  const hasCanOfWorms = currentPlayer.canOfWormsFaceUp ?? false;
+  const canOfWormsUsed = false; // Can of Worms can only be used once per day when face-up
 
   const handleNextPhase = () => {
     onAction({
@@ -202,9 +202,10 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         {/* Last to Pass Warning */}
         {isLastActive && gameState.phase === 'action' && (
           <LastToPassWarning
+            isLastPlayer={true}
             location={currentPlayer.location}
             turnsRemaining={turnsRemaining}
-            isUrgent={turnsRemaining <= 1}
+            maxTurns={currentPlayer.location === 'sea' ? 2 : 4}
           />
         )}
 

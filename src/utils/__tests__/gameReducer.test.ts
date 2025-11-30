@@ -384,6 +384,7 @@ describe('madness interactions', () => {
     id: 'TEST-REGRET-001',
     name: 'Test Regret Fish',
     depth: 1,
+    size: 'small',
     value: 1,
     baseValue: 1,
     difficulty: 1,
