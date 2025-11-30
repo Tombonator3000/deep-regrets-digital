@@ -2,21 +2,35 @@ import { Player } from '@/types/game';
 import { Brain, Skull, Dice6, TrendingUp, TrendingDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// Hook to load ocean madness background image
+// Hook to load ocean madness background (video with PNG fallback)
 const useOceanMadnessBackground = () => {
-  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    import('@/assets/ocean-madness.png')
-      .then((module) => {
-        setBackgroundUrl(module.default);
+    // Try to load video first by checking if it exists
+    const videoPath = '/ocean-madness.mp4';
+    fetch(videoPath, { method: 'HEAD' })
+      .then((response) => {
+        if (response.ok) {
+          setVideoUrl(videoPath);
+        }
       })
       .catch(() => {
-        setBackgroundUrl(null);
+        // Video doesn't exist, will use image fallback
+      });
+
+    // Always load image as fallback
+    import('@/assets/ocean-madness.png')
+      .then((module) => {
+        setImageUrl(module.default);
+      })
+      .catch(() => {
+        setImageUrl(null);
       });
   }, []);
 
-  return backgroundUrl;
+  return { videoUrl, imageUrl };
 };
 
 interface MadnessTrackerProps {
@@ -53,7 +67,7 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
   const regretCount = player.regrets.length;
   const tier = getTierFromRegrets(regretCount);
   const effectiveMadness = Math.min(5, Math.max(0, tier.level + player.madnessOffset));
-  const oceanMadnessBackground = useOceanMadnessBackground();
+  const { videoUrl, imageUrl } = useOceanMadnessBackground();
 
   // Calculate progress to next tier
   const progressToNext = tier.level < 5
@@ -63,11 +77,21 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
   if (compact) {
     return (
       <div className="madness-tracker-compact relative overflow-hidden rounded-lg border border-madness/40 bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60">
-        {/* Background image */}
-        {oceanMadnessBackground && (
+        {/* Background video or image */}
+        {videoUrl ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+          >
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        ) : imageUrl && (
           <div
             className="absolute inset-0 opacity-30 bg-cover bg-center"
-            style={{ backgroundImage: `url(${oceanMadnessBackground})` }}
+            style={{ backgroundImage: `url(${imageUrl})` }}
           />
         )}
         <div className="relative z-10 flex items-center gap-2 p-2">
@@ -89,11 +113,21 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
 
   return (
     <div className="madness-tracker relative overflow-hidden rounded-xl border border-madness/30 bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20">
-      {/* Background image with swirling eyes effect */}
-      {oceanMadnessBackground && (
+      {/* Background video or image with swirling eyes effect */}
+      {videoUrl ? (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
+      ) : imageUrl && (
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
-          style={{ backgroundImage: `url(${oceanMadnessBackground})` }}
+          style={{ backgroundImage: `url(${imageUrl})` }}
         />
       )}
 
