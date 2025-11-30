@@ -729,3 +729,243 @@ describe('madness recalculation (rulebook-based)', () => {
     expect(state.players[0].maxDice).toBe(8);
   });
 });
+
+describe('day advancement system', () => {
+  it('advances from Monday to Tuesday when all players pass', () => {
+    // Game starts on Monday
+    expect(state.day).toBe('Monday');
+    expect(state.phase).toBe('start');
+
+    // Set phase to action (PASS only works in action phase)
+    state.phase = 'action';
+
+    // Have the player pass
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Day should advance to Tuesday
+    expect(result.day).toBe('Tuesday');
+    expect(result.phase).toBe('start');
+    // Player's hasPassed should be reset for the new day
+    expect(result.players[0].hasPassed).toBe(false);
+  });
+
+  it('advances through all days until Saturday', () => {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+
+    let currentState = state;
+    currentState.phase = 'action';
+
+    for (let i = 0; i < 5; i++) {
+      // Verify current day
+      expect(currentState.day).toBe(days[i]);
+
+      // Pass to advance to next day
+      const passAction: GameAction = {
+        type: 'PASS',
+        playerId: currentState.players[0].id,
+        payload: {}
+      };
+      currentState = gameReducer(currentState, passAction);
+      currentState.phase = 'action'; // Reset phase for next pass
+
+      // Verify we advanced to next day
+      expect(currentState.day).toBe(days[i + 1]);
+    }
+
+    // We should be on Saturday now
+    expect(currentState.day).toBe('Saturday');
+  });
+
+  it('ends the game when Saturday ends', () => {
+    // Fast-forward to Saturday
+    state.day = 'Saturday';
+    state.phase = 'action';
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Game should be over after Saturday
+    expect(result.isGameOver).toBe(true);
+    expect(result.phase).toBe('endgame');
+  });
+
+  it('resets player hasPassed at start of new day', () => {
+    state.phase = 'action';
+    state.players[0].hasPassed = false;
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // After advancing to Tuesday, hasPassed should be reset to false
+    expect(result.day).toBe('Tuesday');
+    expect(result.players[0].hasPassed).toBe(false);
+  });
+
+  it('clears revealed shoals when day advances (fish swim away)', () => {
+    state.phase = 'action';
+    state.sea.revealedShoals = { '1-0': true, '2-1': true };
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Revealed shoals should be cleared on new day
+    expect(result.sea.revealedShoals).toEqual({});
+  });
+
+  it('flips Can of Worms face-up on Wednesday', () => {
+    state.day = 'Tuesday';
+    state.phase = 'action';
+    state.players[0].canOfWormsFaceUp = false;
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Should now be Wednesday with Can of Worms face-up
+    expect(result.day).toBe('Wednesday');
+    expect(result.players[0].canOfWormsFaceUp).toBe(true);
+  });
+
+  it('flips Can of Worms face-up on Friday', () => {
+    state.day = 'Thursday';
+    state.phase = 'action';
+    state.players[0].canOfWormsFaceUp = false;
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Should now be Friday with Can of Worms face-up
+    expect(result.day).toBe('Friday');
+    expect(result.players[0].canOfWormsFaceUp).toBe(true);
+  });
+
+  it('gives free tackle die on Thursday', () => {
+    state.day = 'Wednesday';
+    state.phase = 'action';
+    const initialTackleCount = state.players[0].tackleDice.length;
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Should now be Thursday with extra tackle die
+    expect(result.day).toBe('Thursday');
+    expect(result.players[0].tackleDice.length).toBe(initialTackleCount + 1);
+  });
+
+  it('gives free tackle die on Saturday', () => {
+    state.day = 'Friday';
+    state.phase = 'action';
+    const initialTackleCount = state.players[0].tackleDice.length;
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // Should now be Saturday with extra tackle die
+    expect(result.day).toBe('Saturday');
+    expect(result.players[0].tackleDice.length).toBe(initialTackleCount + 1);
+  });
+
+  it('rotates market items at start of new day', () => {
+    state.phase = 'action';
+    const originalFirstRod = state.port.shops.rods[0];
+
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: state.players[0].id,
+      payload: {}
+    };
+
+    const result = gameReducer(state, passAction);
+
+    // The original first rod should now be at the end
+    const lastRod = result.port.shops.rods[result.port.shops.rods.length - 1];
+    expect(lastRod.id).toBe(originalFirstRod.id);
+  });
+
+  it('assigns Fish Coin owner as first player for next day', () => {
+    // Set up 2-player game
+    const twoPlayerState = initializeGame([
+      mockCharacters[0],
+      { ...mockCharacters[0], id: 'char-2', name: 'Player Two' }
+    ]);
+
+    twoPlayerState.phase = 'action';
+    twoPlayerState.firstPlayerIndex = 0;
+    twoPlayerState.currentPlayerIndex = 1;
+    twoPlayerState.players[0].hasPassed = true;
+
+    // Player 2 passes last, gets Fish Coin
+    const passAction: GameAction = {
+      type: 'PASS',
+      playerId: twoPlayerState.players[1].id,
+      payload: {}
+    };
+
+    // But player 0 was first to pass, so gets Fish Coin
+    // Let's simulate: player 0 passes first
+    let testState = twoPlayerState;
+    testState.players[0].hasPassed = false;
+    testState.players[1].hasPassed = false;
+
+    const pass1: GameAction = {
+      type: 'PASS',
+      playerId: testState.players[0].id,
+      payload: {}
+    };
+
+    testState = gameReducer(testState, pass1);
+    expect(testState.fishCoinOwner).toBe(testState.players[0].id);
+
+    const pass2: GameAction = {
+      type: 'PASS',
+      playerId: testState.players[1].id,
+      payload: {}
+    };
+
+    testState = gameReducer(testState, pass2);
+
+    // First player should now be player 0 (Fish Coin owner)
+    expect(testState.firstPlayerIndex).toBe(0);
+    expect(testState.fishCoinOwner).toBeUndefined();
+  });
+});
