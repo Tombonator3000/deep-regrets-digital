@@ -1,6 +1,7 @@
 import { Player, FishCard, DinkCard, UpgradeCard } from '@/types/game';
 import { Fish, Sparkles, Package, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { useState, useEffect, DragEvent, useCallback } from 'react';
+import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 
 // Hook to load dink card back image
 const useDinkCardBack = () => {
@@ -144,6 +145,8 @@ const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false, rota
   const qualityClass = fish.quality === 'foul'
     ? 'border-purple-500/60 bg-gradient-to-b from-purple-900/80 to-purple-950/90'
     : 'border-cyan-500/60 bg-gradient-to-b from-cyan-900/80 to-cyan-950/90';
+  
+  const fishImage = getFishImage(fish.id) || getDefaultFishImage(fish.depth);
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     const dragData: CardDragData = {
@@ -157,7 +160,7 @@ const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false, rota
 
   return (
     <MiniCard
-      className={qualityClass}
+      className={`${qualityClass} overflow-hidden`}
       onClick={onClick}
       onEnlarge={onEnlarge}
       draggable={draggable}
@@ -186,11 +189,18 @@ const FishMiniCard = ({ fish, index, onClick, onEnlarge, draggable = false, rota
         </div>
       }
     >
-      <Fish className="h-4 w-4 text-cyan-300 mb-0.5" />
-      <span className="text-[8px] font-medium text-white leading-tight line-clamp-2">
+      {fishImage ? (
+        <div className="absolute inset-0 overflow-hidden rounded-lg">
+          <img src={fishImage} alt={fish.name} className="w-full h-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        </div>
+      ) : (
+        <Fish className="h-4 w-4 text-cyan-300 mb-0.5" />
+      )}
+      <span className="text-[8px] font-medium text-white leading-tight line-clamp-2 relative z-10 drop-shadow-md">
         {fish.name}
       </span>
-      <span className="text-[10px] font-bold text-fishbuck mt-0.5">
+      <span className="text-[10px] font-bold text-fishbuck mt-0.5 relative z-10 drop-shadow-md">
         ${fish.value}
       </span>
     </MiniCard>
