@@ -3,7 +3,7 @@ import { ALL_FISH, DEPTH_1_FISH, DEPTH_2_FISH, DEPTH_3_FISH } from '@/data/fish'
 import { REGRET_CARDS } from '@/data/regrets';
 import { DINK_CARDS } from '@/data/dinks';
 import { ALL_UPGRADES, RODS, REELS, SUPPLIES } from '@/data/upgrades';
-import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
+import { TACKLE_DICE_LOOKUP, ALL_TACKLE_DIE_IDS, getTackleDieColor } from '@/data/tackleDice';
 import { getSlotMultiplier } from './mounting';
 
 // Shuffle utility
@@ -46,12 +46,19 @@ const resetShopVisits = (player: Player): void => {
 
 // Initialize new game
 export const initializeGame = (selectedCharacters: CharacterOption[]): GameState => {
+  // Per rulebook (p.6): Place all Tackle Dice into the dice bag, randomly draw 4 for the Market
+  const shuffledTackleDice = shuffle([...ALL_TACKLE_DIE_IDS]);
+  const tackleDiceMarket = shuffledTackleDice.slice(0, 4);
+  const tackleDiceBag = shuffledTackleDice.slice(4);
+
   const port: GameState['port'] = {
     shops: {
       rods: shuffle([...RODS]).slice(0, 3),
       reels: shuffle([...REELS]).slice(0, 3),
       supplies: shuffle([...SUPPLIES]).slice(0, 3)
     },
+    tackleDiceMarket,
+    tackleDiceBag,
     dinksDeck: shuffle(DINK_CARDS),
     regretsDeck: shuffle(REGRET_CARDS),
     regretsDiscard: []
@@ -462,27 +469,16 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'REVEAL_FISH':
-      // Per rulebook: Revealing a fish costs 1 fresh die
+      // Per rulebook (p.11): Revealing is FREE - the cost is in the PAY step when catching
+      // However, player must have at least 1 fresh die to fish at all
       if (player && player.location === 'sea' && player.freshDice.length > 0) {
         const { depth, shoal } = action.payload;
         const shoalArray = newState.sea.shoals[depth]?.[shoal];
         const shoalKey = `${depth}-${shoal}`;
 
-        // Only charge if there's a fish to reveal and it's not already revealed
+        // Reveal is free - just flip the top card if not already revealed
         if (shoalArray && shoalArray.length > 0 && !newState.sea.revealedShoals[shoalKey]) {
-          // Spend the lowest value die for reveal (player choice could be added later)
-          const lowestIndex = player.freshDice.reduce(
-            (minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx,
-            0
-          );
-          const spentDie = player.freshDice[lowestIndex];
-          player.freshDice = [
-            ...player.freshDice.slice(0, lowestIndex),
-            ...player.freshDice.slice(lowestIndex + 1)
-          ];
-          player.spentDice = [...player.spentDice, spentDie];
-
-          // Mark the shoal as revealed
+          // Mark the shoal as revealed (no die cost)
           newState.sea.revealedShoals = {
             ...newState.sea.revealedShoals,
             [shoalKey]: true
@@ -542,12 +538,22 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const fishDifficulty = Math.max(0, fish.difficulty - lifePreserverReduction);
         const availableDiceTotal = player.freshDice.reduce((sum, die) => sum + die, 0);
 
+        // Per rulebook (p.27): ALL EELS, ALL OCTOPUSES AND THE KRAKEN must spend required dice
+        // even if difficulty is reduced to 0
+        const fishNameLower = fish.name.toLowerCase();
+        const requiresMinimumDice = fishNameLower.includes('eel') ||
+                                    fishNameLower.includes('octopus') ||
+                                    fishNameLower.includes('kraken');
+        const minimumDiceRequired = requiresMinimumDice ? fish.difficulty : 0;
+
         // Per rulebook (p.10): "If a fish has no printed cost, its cost is 0$, you don't need to spend any dice in order to catch it"
-        const isZeroCostFish = fishDifficulty === 0;
+        // But this doesn't apply to eels/octopuses/kraken per appendix
+        const isZeroCostFish = fishDifficulty === 0 && !requiresMinimumDice;
 
         // Mechanical Reel effect - auto catch fish with difficulty 3 or less
+        // Note: Auto-catch still requires meeting minimum dice for eels/octopuses/kraken
         const hasAutoCatch = playerHasEquippedEffect(player, 'auto_catch_difficulty_3');
-        const isAutoCatch = hasAutoCatch && fishDifficulty <= 3;
+        const isAutoCatch = hasAutoCatch && fishDifficulty <= 3 && !requiresMinimumDice;
 
         const requestedIndices = Array.isArray(diceIndices) ? diceIndices : [];
         const uniqueValidIndices = Array.from(
@@ -583,13 +589,17 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const tackleTotal = tackleDiceValues.reduce((sum, val) => sum + val, 0);
 
         const selectedDiceValues = uniqueValidIndices.map(index => player.freshDice[index]);
+        const totalDiceUsed = uniqueValidIndices.length + uniqueTackleIndices.length;
         const hasUsableSelection =
           (uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length) ||
           uniqueTackleIndices.length > 0 ||
           isAutoCatch ||
           isZeroCostFish;
         const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0) + tackleTotal;
-        const meetsDifficulty = isZeroCostFish || isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty);
+
+        // Per rulebook (p.27): Eels/Octopuses/Kraken require spending dice equal to their printed difficulty
+        const meetsMinimumDiceRequirement = !requiresMinimumDice || selectedTotal >= minimumDiceRequired;
+        const meetsDifficulty = (isZeroCostFish || isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty)) && meetsMinimumDiceRequirement;
 
         if (meetsDifficulty) {
           // Remove fresh dice (immutable)
@@ -597,9 +607,12 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           player.freshDice = player.freshDice.filter((_, idx) => !indexSetToRemove.has(idx));
           player.spentDice = [...player.spentDice, ...selectedDiceValues];
 
-          // Remove used tackle dice (immutable - they are consumed on use)
+          // Per rulebook (p.17): "Tackle Dice are returned to the bag when they are spent"
           const tackleIndexSetToRemove = new Set(uniqueTackleIndices);
+          const returnedTackleDice = player.tackleDice.filter((_, idx) => tackleIndexSetToRemove.has(idx));
           player.tackleDice = player.tackleDice.filter((_, idx) => !tackleIndexSetToRemove.has(idx));
+          // Return spent tackle dice to the bag
+          newState.port.tackleDiceBag = [...newState.port.tackleDiceBag, ...returnedTackleDice];
 
           player.handFish = [...player.handFish, fish];
 
@@ -800,8 +813,10 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'BUY_TACKLE_DICE':
+      // Per rulebook (p.17): Buy from the visible Market dice, refill from bag
+      // Per rulebook (p.21): Port discount does NOT apply to Tackle Dice
       if (player && player.location === 'port') {
-        const { dieId, count } = action.payload;
+        const { dieId } = action.payload;
 
         // Per rulebook (p.17): "You may only visit each shop once on this turn"
         if (hasVisitedShop(player, 'tackle_dice')) {
@@ -809,13 +824,21 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           break;
         }
 
-        const tackleDie = typeof dieId === 'string' ? TACKLE_DICE_LOOKUP[dieId] : undefined;
-        if (!tackleDie || typeof count !== 'number' || count <= 0) {
+        // Check if the die is in the market
+        const marketIndex = newState.port.tackleDiceMarket.indexOf(dieId);
+        if (marketIndex === -1) {
+          console.warn('BUY_TACKLE_DICE blocked: Die not in market');
           break;
         }
 
-        // Apply port discount for 13+ regrets per rulebook (p.21)
-        let discount = hasPortDiscount(player.regrets.length) ? 1 : 0;
+        const tackleDie = typeof dieId === 'string' ? TACKLE_DICE_LOOKUP[dieId] : undefined;
+        if (!tackleDie) {
+          break;
+        }
+
+        // Per rulebook (p.21): Port discount does NOT apply to Tackle Dice
+        // Only Life Preserver discount applies
+        let discount = 0;
 
         // Apply Life Preserver shop discount (2$) per rulebook (p.9)
         if (hasActiveEffect(player, 'life_preserver_shop_discount')) {
@@ -823,24 +846,23 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           removeActiveEffect(player, 'life_preserver_shop_discount');
         }
 
-        // Apply Dinks shop discount per rulebook (p.17)
-        const dinkDiscountIndex = player.dinks.findIndex(dink =>
-          hasEffect(dink.effects, 'shop_discount') && dink.timing.includes('port')
-        );
-        if (dinkDiscountIndex >= 0) {
-          discount += 2;
-          // Remove the used dink (one-shot)
-          player.dinks = [
-            ...player.dinks.slice(0, dinkDiscountIndex),
-            ...player.dinks.slice(dinkDiscountIndex + 1)
-          ];
-        }
-
-        const totalCost = Math.max(0, (tackleDie.cost * count) - discount);
+        const totalCost = Math.max(0, tackleDie.cost - discount);
         if (player.fishbucks >= totalCost) {
           player.fishbucks -= totalCost;
-          const newDice = Array.from({ length: count }, () => tackleDie.id);
-          player.tackleDice = [...player.tackleDice, ...newDice];
+
+          // Remove from market and add to player
+          newState.port.tackleDiceMarket = [
+            ...newState.port.tackleDiceMarket.slice(0, marketIndex),
+            ...newState.port.tackleDiceMarket.slice(marketIndex + 1)
+          ];
+          player.tackleDice = [...player.tackleDice, dieId];
+
+          // Refill market from bag
+          if (newState.port.tackleDiceBag.length > 0) {
+            const newDie = newState.port.tackleDiceBag[0];
+            newState.port.tackleDiceBag = newState.port.tackleDiceBag.slice(1);
+            newState.port.tackleDiceMarket = [...newState.port.tackleDiceMarket, newDie];
+          }
 
           // Record shop visit
           recordShopVisit(player, 'tackle_dice');
@@ -975,15 +997,43 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'MOUNT_FISH':
+      // Per rulebook (p.17): Mounting costs 1 fresh die + 1 supply token
       if (player && player.location === 'port') {
         const { fishId, slot } = action.payload;
         if (typeof slot !== 'number' || slot < 0 || slot >= player.maxMountSlots) {
           break;
         }
+
+        // Check requirements: 1 fresh die and at least 1 supply
+        if (player.freshDice.length === 0) {
+          console.warn('MOUNT_FISH blocked: No fresh dice available');
+          break;
+        }
+        if (player.supplies.length === 0) {
+          console.warn('MOUNT_FISH blocked: No supply tokens available');
+          break;
+        }
+
         const fishIndex = player.handFish.findIndex(f => f.id === fishId);
         const slotOccupied = player.mountedFish.some(mount => mount.slot === slot);
         if (fishIndex >= 0 && !slotOccupied) {
           const fish = player.handFish[fishIndex];
+
+          // Spend 1 fresh die (lowest value)
+          const lowestDieIndex = player.freshDice.reduce(
+            (minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx,
+            0
+          );
+          const spentDie = player.freshDice[lowestDieIndex];
+          player.freshDice = [
+            ...player.freshDice.slice(0, lowestDieIndex),
+            ...player.freshDice.slice(lowestDieIndex + 1)
+          ];
+          player.spentDice = [...player.spentDice, spentDie];
+
+          // Consume 1 supply token (first available)
+          player.supplies = player.supplies.slice(1);
+
           player.mountedFish = [
             ...player.mountedFish,
             {
@@ -1196,6 +1246,70 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       }
       break;
 
+    case 'CYCLE_MARKET':
+      // Per rulebook (p.17): Pay $1 to cycle items or dice in the market
+      if (player && player.location === 'port' && player.fishbucks >= 1) {
+        const { targetType } = action.payload;
+
+        if (targetType === 'tackle_dice') {
+          // Per rulebook: Place all dice in Market back in bag and draw 4 new ones
+          player.fishbucks -= 1;
+          const allDice = [...newState.port.tackleDiceMarket, ...newState.port.tackleDiceBag];
+          const shuffled = shuffle(allDice);
+          newState.port.tackleDiceMarket = shuffled.slice(0, 4);
+          newState.port.tackleDiceBag = shuffled.slice(4);
+        } else if (targetType === 'rods' || targetType === 'reels' || targetType === 'supplies') {
+          // Per rulebook: Place all revealed items of type on bottom of deck and reveal 2 new
+          player.fishbucks -= 1;
+          const currentItems = newState.port.shops[targetType];
+          // Move current visible items to end (bottom of deck) and take 2 new from "top"
+          // Since we're simulating a deck, rotate the array
+          if (currentItems.length >= 2) {
+            // Put visible items at end, get "new" items from remaining pool
+            const allItems = targetType === 'rods' ? [...RODS] :
+                           targetType === 'reels' ? [...REELS] :
+                           [...SUPPLIES];
+            // Remove already visible items and shuffle remainder
+            const remainingItems = allItems.filter(item =>
+              !currentItems.some(visible => visible.id === item.id)
+            );
+            const shuffledRemaining = shuffle(remainingItems);
+            // Take 2 new items (or all if less than 2 available)
+            const newVisible = shuffledRemaining.slice(0, 2);
+            newState.port.shops[targetType] = newVisible;
+          }
+        }
+      }
+      break;
+
+    case 'ABANDON_SHIP':
+      // Per rulebook (p.10): Flip lifeboat to immediately Make Port
+      // Per rulebook (p.10): "You cannot abandon ship once you have passed."
+      if (player && player.location === 'sea' && !player.lifeboatFlipped && !player.hasPassed) {
+        player.lifeboatFlipped = true;
+        player.location = 'port';
+        player.currentDepth = 1;
+
+        // Make Port benefits per rulebook (p.17):
+        // 1. Muster Your Courage again (reroll dice)
+        player.canOfWormsFaceUp = true;
+        const totalDice = [...player.freshDice, ...player.spentDice];
+        let rerolledDice = rollDice(totalDice.length);
+        if (player.rerollOnes) {
+          rerolledDice = rerolledDice.map(value => (value === 1 ? rollDice(1)[0] : value));
+        }
+        player.freshDice = rerolledDice.slice(0, Math.min(rerolledDice.length, player.maxDice));
+        player.spentDice = rerolledDice.slice(player.maxDice);
+
+        // Per rulebook (p.10): "If all other players have passed when a player uses their
+        // lifeboat, they may still take FOUR actions at Port."
+        const remainingPlayers = newState.players.filter(p => !p.hasPassed);
+        if (remainingPlayers.length === 1 && remainingPlayers[0].id === player.id) {
+          newState.lastPlayerTurnsRemaining = 4;
+        }
+      }
+      break;
+
     default:
       console.warn('Unknown action type:', (action as { type: string }).type);
   }
@@ -1270,11 +1384,13 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
   const mountedScore = calculateMountedFishScore(player);
   const fishbuckScore = calculateFishbuckScore(player);
   const regretValue = calculatePlayerRegretValue(player);
+  // Per rulebook (p.22): Score = Fish in hand + Mounted Fish + Fishbucks
+  // Regret value is NOT subtracted - the penalty is only losing a mounted fish at game end
   return {
     handScore,
     mountedScore,
     fishbuckScore,
-    totalScore: handScore + mountedScore + fishbuckScore - regretValue,
+    totalScore: handScore + mountedScore + fishbuckScore,
     regretValue
   };
 };
@@ -1389,15 +1505,15 @@ interface MadnessTier {
   portDiscount: boolean;
 }
 
-// Madness tier values per rulebook p.18-19
-// As regrets increase: Fair modifier decreases, Foul modifier increases, Max Dice DECREASES
+// Madness tier values per rulebook p.20-21
+// As regrets increase: Fair modifier decreases, Foul modifier increases, Max Dice INCREASES
 const MADNESS_TIERS: MadnessTier[] = [
-  { minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 5, portDiscount: false },
-  { minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -2, maxDice: 5, portDiscount: false },
-  { minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false },
-  { minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 0, maxDice: 4, portDiscount: false },
-  { minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 3, portDiscount: false },
-  { minRegrets: 13, maxRegrets: Infinity, fairModifier: -2, foulModifier: 2, maxDice: 3, portDiscount: true },
+  { minRegrets: 0, maxRegrets: 0, fairModifier: 2, foulModifier: -2, maxDice: 4, portDiscount: false },
+  { minRegrets: 1, maxRegrets: 3, fairModifier: 1, foulModifier: -1, maxDice: 4, portDiscount: false },
+  { minRegrets: 4, maxRegrets: 6, fairModifier: 1, foulModifier: 0, maxDice: 5, portDiscount: false },
+  { minRegrets: 7, maxRegrets: 9, fairModifier: 0, foulModifier: 1, maxDice: 6, portDiscount: false },
+  { minRegrets: 10, maxRegrets: 12, fairModifier: -1, foulModifier: 1, maxDice: 7, portDiscount: false },
+  { minRegrets: 13, maxRegrets: Infinity, fairModifier: -2, foulModifier: 2, maxDice: 8, portDiscount: true },
 ];
 
 export const getMadnessTier = (regretCount: number): MadnessTier => {
@@ -1638,15 +1754,78 @@ const advanceDay = (gameState: GameState) => {
     });
   }
 
-  // Thu/Sat: All players take one tackle die from the bag
-  // Per rulebook: blue/orange die, or green if not enough available
+  // Thu/Sat: All players take one blue/orange die from bag (or Market)
+  // Per rulebook (p.8): If not enough available, all players take green dice instead
   if (newDay === 'Thursday' || newDay === 'Saturday') {
-    // Give each player a tackle die (simplified: give them a standard tackle die ID)
-    gameState.players.forEach(p => {
-      // Add a standard tackle die to player's tackle dice
-      // Using 'TACKLE-GREEN-001' as default per rulebook's fallback rule
-      p.tackleDice = [...p.tackleDice, 'TACKLE-GREEN-001'];
-    });
+    const playerCount = gameState.players.length;
+
+    // Count available blue/orange dice in bag and market combined
+    const allAvailableDice = [...gameState.port.tackleDiceBag, ...gameState.port.tackleDiceMarket];
+    const blueOrangeDice = allAvailableDice.filter(id =>
+      getTackleDieColor(id) === 'blue' || getTackleDieColor(id) === 'orange'
+    );
+
+    if (blueOrangeDice.length >= playerCount) {
+      // Enough blue/orange dice - give one to each player
+      gameState.players.forEach((p, idx) => {
+        const dieToGive = blueOrangeDice[idx];
+        // Remove from bag or market
+        const bagIdx = gameState.port.tackleDiceBag.indexOf(dieToGive);
+        if (bagIdx >= 0) {
+          gameState.port.tackleDiceBag = [
+            ...gameState.port.tackleDiceBag.slice(0, bagIdx),
+            ...gameState.port.tackleDiceBag.slice(bagIdx + 1)
+          ];
+        } else {
+          const marketIdx = gameState.port.tackleDiceMarket.indexOf(dieToGive);
+          if (marketIdx >= 0) {
+            gameState.port.tackleDiceMarket = [
+              ...gameState.port.tackleDiceMarket.slice(0, marketIdx),
+              ...gameState.port.tackleDiceMarket.slice(marketIdx + 1)
+            ];
+            // Refill market from bag
+            if (gameState.port.tackleDiceBag.length > 0) {
+              const newMarketDie = gameState.port.tackleDiceBag[0];
+              gameState.port.tackleDiceBag = gameState.port.tackleDiceBag.slice(1);
+              gameState.port.tackleDiceMarket = [...gameState.port.tackleDiceMarket, newMarketDie];
+            }
+          }
+        }
+        p.tackleDice = [...p.tackleDice, dieToGive];
+      });
+    } else {
+      // Not enough blue/orange - all players get green dice instead
+      const greenDice = allAvailableDice.filter(id => getTackleDieColor(id) === 'green');
+      gameState.players.forEach((p, idx) => {
+        if (idx < greenDice.length) {
+          const dieToGive = greenDice[idx];
+          // Remove from bag or market
+          const bagIdx = gameState.port.tackleDiceBag.indexOf(dieToGive);
+          if (bagIdx >= 0) {
+            gameState.port.tackleDiceBag = [
+              ...gameState.port.tackleDiceBag.slice(0, bagIdx),
+              ...gameState.port.tackleDiceBag.slice(bagIdx + 1)
+            ];
+          } else {
+            const marketIdx = gameState.port.tackleDiceMarket.indexOf(dieToGive);
+            if (marketIdx >= 0) {
+              gameState.port.tackleDiceMarket = [
+                ...gameState.port.tackleDiceMarket.slice(0, marketIdx),
+                ...gameState.port.tackleDiceMarket.slice(marketIdx + 1)
+              ];
+              // Refill market from bag
+              if (gameState.port.tackleDiceBag.length > 0) {
+                const newMarketDie = gameState.port.tackleDiceBag[0];
+                gameState.port.tackleDiceBag = gameState.port.tackleDiceBag.slice(1);
+                gameState.port.tackleDiceMarket = [...gameState.port.tackleDiceMarket, newMarketDie];
+              }
+            }
+          }
+          p.tackleDice = [...p.tackleDice, dieToGive];
+        }
+        // If no dice available at all, player doesn't get one
+      });
+    }
   }
 
   // Market fluctuations per rulebook (p.8):
