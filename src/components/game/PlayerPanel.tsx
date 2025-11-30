@@ -7,6 +7,7 @@ import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import { CHARACTERS } from '@/data/characters';
 import { RegretHand } from './RegretCard';
+import { AnimatedCounter } from './ParticleEffects';
 import { Anchor, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Dialog,
@@ -77,7 +78,9 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
               )}
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-2xl font-bold text-fishbuck">${player.fishbucks}</div>
+              <div className="text-2xl font-bold">
+                <AnimatedCounter value={player.fishbucks} prefix="$" className="text-2xl font-bold" />
+              </div>
               <div className="text-xs text-muted-foreground">Fishbucks</div>
             </div>
           </div>

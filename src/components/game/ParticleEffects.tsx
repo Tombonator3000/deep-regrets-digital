@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Particle {
@@ -411,6 +411,141 @@ export const GlowPulse = ({
       } as React.CSSProperties}
     >
       {children}
+    </div>
+  );
+};
+
+// Animated counter for fishbucks and score changes
+interface AnimatedCounterProps {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  className?: string;
+  colorClass?: string;
+}
+
+export const AnimatedCounter = ({
+  value,
+  prefix = '',
+  suffix = '',
+  className,
+  colorClass = 'text-fishbuck',
+}: AnimatedCounterProps) => {
+  const [displayValue, setDisplayValue] = useState(value);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const previousValue = useRef(value);
+
+  useEffect(() => {
+    if (previousValue.current !== value) {
+      setIsAnimating(true);
+      const diff = value - previousValue.current;
+      const steps = Math.min(Math.abs(diff), 20);
+      const stepValue = diff / steps;
+      const stepDuration = 300 / steps;
+
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        currentStep++;
+        if (currentStep >= steps) {
+          setDisplayValue(value);
+          setIsAnimating(false);
+          clearInterval(interval);
+        } else {
+          setDisplayValue(Math.round(previousValue.current + stepValue * currentStep));
+        }
+      }, stepDuration);
+
+      previousValue.current = value;
+
+      return () => clearInterval(interval);
+    }
+  }, [value]);
+
+  return (
+    <span
+      className={cn(
+        'inline-block transition-transform',
+        isAnimating && 'animate-counter-pop',
+        colorClass,
+        className
+      )}
+    >
+      {prefix}{displayValue}{suffix}
+    </span>
+  );
+};
+
+// Fish catch celebration effect
+interface FishCatchEffectProps {
+  active: boolean;
+  fishName?: string;
+  value?: number;
+  x?: number;
+  y?: number;
+  onComplete?: () => void;
+}
+
+export const FishCatchEffect = ({
+  active,
+  fishName,
+  value,
+  x = 50,
+  y = 50,
+  onComplete,
+}: FishCatchEffectProps) => {
+  const [showEffect, setShowEffect] = useState(false);
+
+  useEffect(() => {
+    if (active) {
+      setShowEffect(true);
+      const timer = setTimeout(() => {
+        setShowEffect(false);
+        onComplete?.();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [active, onComplete]);
+
+  if (!showEffect) return null;
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+      {/* Central celebration burst */}
+      <div
+        className="absolute animate-fish-catch"
+        style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+      >
+        <div className="relative">
+          {/* Glowing ring */}
+          <div className="absolute inset-0 -m-8 rounded-full bg-gradient-to-r from-primary/30 via-fishbuck/40 to-primary/30 animate-[success-burst_0.8s_ease-out_forwards]" />
+
+          {/* Fish name popup */}
+          {fishName && (
+            <div className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap animate-score-float">
+              <span className="text-2xl font-bold text-primary-glow drop-shadow-lg">
+                🎣 {fishName}!
+              </span>
+            </div>
+          )}
+
+          {/* Value popup */}
+          {value && (
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 animate-score-float" style={{ animationDelay: '0.2s' }}>
+              <span className="text-xl font-bold text-fishbuck drop-shadow-lg">
+                +${value}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sparkle particles */}
+      <ParticleBurst
+        active={active}
+        type="sparkle"
+        originX={x}
+        originY={y}
+      />
     </div>
   );
 };

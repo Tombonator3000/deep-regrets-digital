@@ -309,13 +309,19 @@ export const PlugMarker = ({
     className={cn(
       'relative flex items-center justify-center',
       sizeClasses[size],
-      animated && 'animate-pulse',
+      animated && 'animate-plug-erosion',
       highlight && 'drop-shadow-[0_0_15px_hsl(0,70%,50%)]',
       onClick && 'cursor-pointer hover:scale-110 transition-transform',
       className
     )}
   >
+    {/* Pulsing danger ring */}
+    {animated && (
+      <div className="absolute inset-[-4px] rounded-full bg-gradient-to-br from-red-500/50 to-orange-500/30 animate-pulse" />
+    )}
     <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-600 to-red-900 shadow-lg border-2 border-red-400/50" />
+    {/* Inner glow effect */}
+    <div className="absolute inset-[5%] rounded-full bg-gradient-radial from-red-400/20 to-transparent animate-pulse" />
     <svg viewBox="0 0 24 24" className="absolute inset-[15%] w-[70%] h-[70%]">
       {/* Skull */}
       <circle cx="12" cy="10" r="6" className="fill-slate-200" />

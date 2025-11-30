@@ -83,11 +83,18 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
     ? ((regretCount - tier.minRegrets) / (tier.maxRegrets - tier.minRegrets + 1)) * 100
     : 100;
 
+  // Check if close to next tier threshold (1 regret away)
+  const isNearThreshold = tier.level < 5 && regretCount === tier.maxRegrets;
+  // Check if at high madness (tier 4 or 5)
+  const isHighMadness = effectiveMadness >= 4;
+
   if (compact) {
     return (
       <>
         <div
-          className="madness-tracker-compact relative overflow-hidden rounded-lg border border-madness/40 bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60 cursor-pointer hover:border-madness/60 transition-colors"
+          className={`madness-tracker-compact relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60 cursor-pointer hover:border-madness/60 transition-colors ${
+            isNearThreshold ? 'animate-madness-warning border-destructive/60' : 'border-madness/40'
+          } ${isHighMadness ? 'ring-1 ring-destructive/30' : ''}`}
           onClick={() => setShowRegrets(true)}
         >
           {/* Background video or image */}
@@ -163,7 +170,9 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
   return (
     <>
       <div
-        className="madness-tracker relative overflow-hidden rounded-xl border border-madness/30 bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20 cursor-pointer hover:border-madness/50 transition-colors"
+        className={`madness-tracker relative overflow-hidden rounded-xl border bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20 cursor-pointer hover:border-madness/50 transition-colors ${
+          isNearThreshold ? 'animate-madness-warning border-destructive/50' : 'border-madness/30'
+        } ${isHighMadness ? 'ring-2 ring-destructive/40' : ''}`}
         onClick={() => setShowRegrets(true)}
       >
         {/* Background video or image with swirling eyes effect */}

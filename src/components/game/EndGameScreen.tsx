@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { calculatePlayerScoreBreakdown } from "@/utils/gameEngine";
 import { GameState } from "@/types/game";
 import { Trophy, RefreshCw, Home, Anchor } from "lucide-react";
+import { ConfettiBurst, AnimatedCounter } from "./ParticleEffects";
 
 interface EndGameScreenProps {
   gameState: GameState;
@@ -11,6 +13,8 @@ interface EndGameScreenProps {
 }
 
 export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGameScreenProps) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+
   const finalScores = gameState.players.map(player => ({
     player,
     breakdown: calculatePlayerScoreBreakdown(player)
@@ -22,8 +26,16 @@ export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGa
 
   const winner = sortedFinalScores[0];
 
+  // Trigger confetti on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setShowConfetti(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+      {/* Winner confetti celebration */}
+      <ConfettiBurst active={showConfetti} />
       <div className="card-game w-full max-w-3xl space-y-5 p-6 sm:p-8 border border-primary/30 shadow-xl shadow-primary/20">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -107,7 +119,9 @@ export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGa
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-primary-glow">{breakdown.totalScore}</p>
+                    <p className="text-2xl font-bold text-primary-glow">
+                      <AnimatedCounter value={breakdown.totalScore} colorClass="text-primary-glow" />
+                    </p>
                     <p className="text-xs text-muted-foreground">points</p>
                   </div>
                 </div>
