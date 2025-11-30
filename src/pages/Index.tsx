@@ -128,6 +128,10 @@ const Index = () => {
   const handleGameAction = useCallback((action: GameAction) => {
     if (gameState) {
       dispatch(action);
+      // After a player passes, end their turn to advance to the next player
+      if (action.type === 'PASS') {
+        dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
+      }
     }
   }, [gameState]);
 
@@ -177,9 +181,7 @@ const Index = () => {
         dispatch(aiDecision.action);
 
         // After AI action, move to next player
-        if (aiDecision.action.type !== 'PASS') {
-          dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
-        }
+        dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
 
         // Clear the action display after a brief moment
         setTimeout(() => {
