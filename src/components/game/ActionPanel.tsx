@@ -262,6 +262,20 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         {/* Location-specific actions - scrollable if needed */}
         {gameState.phase === 'action' && isPlayerTurn && (
           <div className="flex-1 min-h-0 overflow-auto space-y-2">
+            {/* Port guidance - explain that actions are in the Havnhandlinger modal */}
+            {currentPlayer.location === 'port' && (
+              <Card className="card-game border-amber-500/40 bg-amber-500/10 p-2 sm:p-3">
+                <div className="flex items-start gap-2">
+                  <Anchor className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                  <div className="text-xs sm:text-sm text-foreground/90">
+                    <p className="font-medium text-amber-300">Du er i havnen</p>
+                    <p className="text-foreground/70 mt-1">
+                      Klikk på <span className="text-primary font-medium">Havnhandlinger</span>-knappen øverst for å selge fisk, kjøpe oppgraderinger og bruke havnetjenester.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
             {/* Fishing Wizard - shows step progress when at sea */}
             {currentPlayer.location === 'sea' && selectedShoal && (
               <FishingWizard
