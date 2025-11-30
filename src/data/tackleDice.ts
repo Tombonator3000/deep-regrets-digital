@@ -1,40 +1,167 @@
 import { TackleDie } from '@/types/game';
 
+// Per rulebook (p.17): Tackle dice have different costs and pip values by color
+// Green: $1, faces [0, 0, 1, 2]
+// Blue: $2, faces [0, 1, 1, 1]
+// Orange: $3, faces [2, 3]
+
 export const TACKLE_DICE: TackleDie[] = [
   {
-    id: 'tackle-standard',
-    name: 'Standard Lead',
-    color: 'slate',
+    id: 'TACKLE-GREEN-001',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2], // 6-sided with rulebook distribution
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-GREEN-002',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2],
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-GREEN-003',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2],
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-GREEN-004',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2],
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-GREEN-005',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2],
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-GREEN-006',
+    name: 'Green Tackle Die',
+    color: 'green',
+    cost: 1,
+    faces: [0, 0, 1, 2, 1, 2],
+    description: 'Basic tackle die, affordable but unreliable.'
+  },
+  {
+    id: 'TACKLE-BLUE-001',
+    name: 'Blue Tackle Die',
+    color: 'blue',
     cost: 2,
-    faces: [1, 2, 3, 4, 5, 6],
-    description: 'Reliable and well-balanced—no surprises beneath the waves.'
+    faces: [0, 1, 1, 1, 1, 1], // 6-sided with rulebook distribution
+    description: 'Reliable tackle die with consistent results.'
   },
   {
-    id: 'tackle-luminous',
-    name: 'Luminous Jig',
-    color: 'emerald',
+    id: 'TACKLE-BLUE-002',
+    name: 'Blue Tackle Die',
+    color: 'blue',
+    cost: 2,
+    faces: [0, 1, 1, 1, 1, 1],
+    description: 'Reliable tackle die with consistent results.'
+  },
+  {
+    id: 'TACKLE-BLUE-003',
+    name: 'Blue Tackle Die',
+    color: 'blue',
+    cost: 2,
+    faces: [0, 1, 1, 1, 1, 1],
+    description: 'Reliable tackle die with consistent results.'
+  },
+  {
+    id: 'TACKLE-BLUE-004',
+    name: 'Blue Tackle Die',
+    color: 'blue',
+    cost: 2,
+    faces: [0, 1, 1, 1, 1, 1],
+    description: 'Reliable tackle die with consistent results.'
+  },
+  {
+    id: 'TACKLE-BLUE-005',
+    name: 'Blue Tackle Die',
+    color: 'blue',
+    cost: 2,
+    faces: [0, 1, 1, 1, 1, 1],
+    description: 'Reliable tackle die with consistent results.'
+  },
+  {
+    id: 'TACKLE-BLUE-006',
+    name: 'Blue Tackle Die',
+    color: 'blue',
+    cost: 2,
+    faces: [0, 1, 1, 1, 1, 1],
+    description: 'Reliable tackle die with consistent results.'
+  },
+  {
+    id: 'TACKLE-ORANGE-001',
+    name: 'Orange Tackle Die',
+    color: 'orange',
     cost: 3,
-    faces: [2, 3, 3, 4, 5, 6],
-    description: 'Glows with eldritch light to tempt wary fish into striking.'
+    faces: [2, 2, 2, 3, 3, 3], // 6-sided with rulebook distribution
+    description: 'Premium tackle die with high values.'
   },
   {
-    id: 'tackle-barbed',
-    name: 'Barbed Sinkline',
-    color: 'rose',
+    id: 'TACKLE-ORANGE-002',
+    name: 'Orange Tackle Die',
+    color: 'orange',
     cost: 3,
-    faces: [1, 2, 4, 4, 5, 6],
-    description: 'Jagged hooks dig deep, trading finesse for raw stopping power.'
+    faces: [2, 2, 2, 3, 3, 3],
+    description: 'Premium tackle die with high values.'
   },
   {
-    id: 'tackle-abyssal',
-    name: 'Abyssal Weight',
-    color: 'violet',
-    cost: 4,
-    faces: [3, 3, 4, 5, 6, 6],
-    description: 'Heavy rune-etched tackle ideal for wrangling horrors at Depth III.'
+    id: 'TACKLE-ORANGE-003',
+    name: 'Orange Tackle Die',
+    color: 'orange',
+    cost: 3,
+    faces: [2, 2, 2, 3, 3, 3],
+    description: 'Premium tackle die with high values.'
+  },
+  {
+    id: 'TACKLE-ORANGE-004',
+    name: 'Orange Tackle Die',
+    color: 'orange',
+    cost: 3,
+    faces: [2, 2, 2, 3, 3, 3],
+    description: 'Premium tackle die with high values.'
+  },
+  {
+    id: 'TACKLE-ORANGE-005',
+    name: 'Orange Tackle Die',
+    color: 'orange',
+    cost: 3,
+    faces: [2, 2, 2, 3, 3, 3],
+    description: 'Premium tackle die with high values.'
+  },
+  {
+    id: 'TACKLE-ORANGE-006',
+    name: 'Orange Tackle Die',
+    color: 'orange',
+    cost: 3,
+    faces: [2, 2, 2, 3, 3, 3],
+    description: 'Premium tackle die with high values.'
   }
 ];
+
+// All tackle die IDs for the bag
+export const ALL_TACKLE_DIE_IDS = TACKLE_DICE.map(die => die.id);
 
 export const TACKLE_DICE_LOOKUP: Record<string, TackleDie> = Object.fromEntries(
   TACKLE_DICE.map(die => [die.id, die])
 );
+
+// Helper to get color from die ID
+export const getTackleDieColor = (dieId: string): 'green' | 'blue' | 'orange' => {
+  if (dieId.includes('GREEN')) return 'green';
+  if (dieId.includes('BLUE')) return 'blue';
+  return 'orange';
+};

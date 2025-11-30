@@ -125,6 +125,9 @@ export interface GameState {
       reels: UpgradeCard[];
       supplies: UpgradeCard[];
     };
+    // Per rulebook (p.6, p.17): 4 visible tackle dice in Market
+    tackleDiceMarket: string[]; // Array of tackle die IDs (max 4 visible)
+    tackleDiceBag: string[]; // Remaining tackle dice in bag
     dinksDeck: DinkCard[];
     regretsDeck: RegretCard[];
     regretsDiscard: RegretCard[];
@@ -224,6 +227,16 @@ export interface UseCanOfWormsPayload {
   moveToBottom: boolean; // true = move to bottom, false = keep on top
 }
 
+// Per rulebook (p.17): Cycle the Market action
+export interface CycleMarketPayload {
+  targetType: 'rods' | 'reels' | 'supplies' | 'tackle_dice';
+}
+
+// Per rulebook (p.10): Abandon Ship action
+export interface AbandonShipPayload {
+  // No additional payload needed
+}
+
 // Union type for all game actions
 export interface UseLifePreserverPayload {
   targetPlayerId?: string; // For giving the Life Preserver to another player
@@ -261,7 +274,9 @@ export type GameAction =
   | { type: 'END_TURN'; playerId: string; payload: Record<string, never> }
   | { type: 'REMOVE_DIE'; playerId: string; payload: RemoveDiePayload }
   | { type: 'EAT_FISH'; playerId: string; payload: EatFishPayload }
-  | { type: 'USE_CAN_OF_WORMS'; playerId: string; payload: UseCanOfWormsPayload };
+  | { type: 'USE_CAN_OF_WORMS'; playerId: string; payload: UseCanOfWormsPayload }
+  | { type: 'CYCLE_MARKET'; playerId: string; payload: CycleMarketPayload }
+  | { type: 'ABANDON_SHIP'; playerId: string; payload: AbandonShipPayload };
 
 export interface CharacterOption {
   id: string;
