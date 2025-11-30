@@ -1,6 +1,14 @@
 import { Player } from '@/types/game';
 import { Brain, Skull, Dice6, TrendingUp, TrendingDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { RegretCard } from './RegretCard';
 
 // Hook to load ocean madness background (video with PNG fallback)
 const useOceanMadnessBackground = () => {
@@ -64,6 +72,7 @@ const getTierFromRegrets = (regretCount: number): MadnessTierInfo => {
 };
 
 export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps) => {
+  const [showRegrets, setShowRegrets] = useState(false);
   const regretCount = player.regrets.length;
   const tier = getTierFromRegrets(regretCount);
   const effectiveMadness = Math.min(5, Math.max(0, tier.level + player.madnessOffset));
@@ -76,85 +85,129 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
 
   if (compact) {
     return (
-      <div className="madness-tracker-compact relative overflow-hidden rounded-lg border border-madness/40 bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60">
-        {/* Background video or image */}
+      <>
+        <div
+          className="madness-tracker-compact relative overflow-hidden rounded-lg border border-madness/40 bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60 cursor-pointer hover:border-madness/60 transition-colors"
+          onClick={() => setShowRegrets(true)}
+        >
+          {/* Background video or image */}
+          {videoUrl ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          ) : imageUrl && (
+            <div
+              className="absolute inset-0 opacity-30 bg-cover bg-center"
+              style={{ backgroundImage: `url(${imageUrl})` }}
+            />
+          )}
+          <div className="relative z-10 flex items-center gap-2 p-2">
+            <Brain className="h-4 w-4 text-madness animate-pulse" style={{ filter: 'drop-shadow(0 0 4px rgba(168, 85, 247, 0.5))' }} />
+            <div className="flex-1">
+              <div className="text-xs font-bold text-madness" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{tier.name}</div>
+              <div className="h-1.5 w-full rounded-full bg-black/40 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 via-red-500 to-orange-500 transition-all duration-500"
+                  style={{ width: `${(effectiveMadness / 5) * 100}%` }}
+                />
+              </div>
+            </div>
+            <span className="text-sm font-bold text-madness" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{effectiveMadness}</span>
+          </div>
+        </div>
+
+        {/* Regrets Dialog */}
+        <Dialog open={showRegrets} onOpenChange={setShowRegrets}>
+          <DialogContent className="border-madness/30 bg-gradient-to-br from-purple-950/95 via-slate-900 to-red-950/90">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-madness">
+                <Brain className="h-5 w-5" />
+                Dine Regrets ({regretCount})
+              </DialogTitle>
+              <DialogDescription>
+                Regrets påvirker ditt Madness-nivå og gir minuspoeng ved spillets slutt.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              {player.regrets.length === 0 ? (
+                <p className="text-center text-muted-foreground italic py-4">
+                  Ingen regrets ennå...
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                  {player.regrets.map((regret, index) => (
+                    <div key={`${regret.id}-${index}`} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-black/30 border border-white/10">
+                      <RegretCard regret={regret} faceUp={true} size="sm" />
+                      <div className="text-xs text-center text-white/80 line-clamp-2">{regret.frontText}</div>
+                      <div className="text-sm font-bold text-destructive">-{regret.value} poeng</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="pt-2 border-t border-white/10 text-sm text-center text-white/60">
+                Nåværende tier: <span className="font-bold text-madness">{tier.name}</span> (Tier {effectiveMadness}/5)
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="madness-tracker relative overflow-hidden rounded-xl border border-madness/30 bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20 cursor-pointer hover:border-madness/50 transition-colors"
+        onClick={() => setShowRegrets(true)}
+      >
+        {/* Background video or image with swirling eyes effect */}
         {videoUrl ? (
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
         ) : imageUrl && (
           <div
-            className="absolute inset-0 opacity-30 bg-cover bg-center"
+            className="absolute inset-0 opacity-40 bg-cover bg-center"
             style={{ backgroundImage: `url(${imageUrl})` }}
           />
         )}
-        <div className="relative z-10 flex items-center gap-2 p-2">
-          <Brain className="h-4 w-4 text-madness animate-pulse" />
-          <div className="flex-1">
-            <div className="text-xs font-bold text-madness">{tier.name}</div>
-            <div className="h-1.5 w-full rounded-full bg-black/40 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-purple-500 via-red-500 to-orange-500 transition-all duration-500"
-                style={{ width: `${(effectiveMadness / 5) * 100}%` }}
-              />
+
+        {/* Animated overlay - stronger for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/50" />
+
+        {/* Content */}
+        <div className="relative z-10 p-3">
+          {/* Header with title */}
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-madness animate-pulse" style={{ filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.6))' }} />
+              <span className="text-sm font-bold tracking-wide text-white" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5)' }}>OCEAN MADNESS</span>
+            </div>
+            <div className="flex items-center gap-1 rounded-full bg-madness/30 px-2 py-0.5 border border-madness/20">
+              <Skull className="h-3 w-3 text-destructive" style={{ filter: 'drop-shadow(0 0 4px rgba(239, 68, 68, 0.5))' }} />
+              <span className="text-xs font-bold text-destructive" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{regretCount}</span>
             </div>
           </div>
-          <span className="text-sm font-bold text-madness">{effectiveMadness}</span>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="madness-tracker relative overflow-hidden rounded-xl border border-madness/30 bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20">
-      {/* Background video or image with swirling eyes effect */}
-      {videoUrl ? (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
-      ) : imageUrl && (
-        <div
-          className="absolute inset-0 opacity-40 bg-cover bg-center"
-          style={{ backgroundImage: `url(${imageUrl})` }}
-        />
-      )}
-
-      {/* Animated overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
-
-      {/* Content */}
-      <div className="relative z-10 p-3">
-        {/* Header with title */}
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-madness animate-pulse" />
-            <span className="text-sm font-bold tracking-wide text-white/90">OCEAN MADNESS</span>
+          {/* Tier name and level */}
+          <div className="mb-2 text-center">
+            <div className="text-2xl font-black text-madness tracking-wider" style={{ textShadow: '0 0 20px rgba(168, 85, 247, 0.6), 0 2px 4px rgba(0,0,0,0.9)' }}>
+              {tier.name.toUpperCase()}
+            </div>
+            <div className="text-xs text-white/80" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>Tier {effectiveMadness} / 5</div>
           </div>
-          <div className="flex items-center gap-1 rounded-full bg-madness/20 px-2 py-0.5">
-            <Skull className="h-3 w-3 text-destructive" />
-            <span className="text-xs font-bold text-destructive">{regretCount}</span>
-          </div>
-        </div>
-
-        {/* Tier name and level */}
-        <div className="mb-2 text-center">
-          <div className="text-2xl font-black text-madness tracking-wider" style={{ textShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
-            {tier.name.toUpperCase()}
-          </div>
-          <div className="text-xs text-white/60">Tier {effectiveMadness} / 5</div>
-        </div>
 
         {/* Progress bar */}
         <div className="mb-3">
@@ -173,7 +226,7 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
             ))}
           </div>
           {tier.level < 5 && (
-            <div className="mt-1 text-center text-[10px] text-white/40">
+            <div className="mt-1 text-center text-[10px] text-white/60" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
               {tier.maxRegrets - regretCount + 1} regrets to next tier
             </div>
           )}
@@ -212,11 +265,47 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
 
         {/* Port discount indicator */}
         {tier.portDiscount && (
-          <div className="mt-2 rounded bg-fishbuck/20 p-1 text-center text-xs font-medium text-fishbuck">
+          <div className="mt-2 rounded bg-fishbuck/20 p-1 text-center text-xs font-medium text-fishbuck" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
             Port Discount Active!
           </div>
         )}
+        </div>
       </div>
-    </div>
+
+      {/* Regrets Dialog */}
+      <Dialog open={showRegrets} onOpenChange={setShowRegrets}>
+        <DialogContent className="border-madness/30 bg-gradient-to-br from-purple-950/95 via-slate-900 to-red-950/90">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-madness">
+              <Brain className="h-5 w-5" />
+              Dine Regrets ({regretCount})
+            </DialogTitle>
+            <DialogDescription>
+              Regrets påvirker ditt Madness-nivå og gir minuspoeng ved spillets slutt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {player.regrets.length === 0 ? (
+              <p className="text-center text-muted-foreground italic py-4">
+                Ingen regrets ennå...
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                {player.regrets.map((regret, index) => (
+                  <div key={`${regret.id}-${index}`} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-black/30 border border-white/10">
+                    <RegretCard regret={regret} faceUp={true} size="sm" />
+                    <div className="text-xs text-center text-white/80 line-clamp-2">{regret.frontText}</div>
+                    <div className="text-sm font-bold text-destructive">-{regret.value} poeng</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="pt-2 border-t border-white/10 text-sm text-center text-white/60">
+              Nåværende tier: <span className="font-bold text-madness">{tier.name}</span> (Tier {effectiveMadness}/5)
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
