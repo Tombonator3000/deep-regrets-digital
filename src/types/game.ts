@@ -237,6 +237,12 @@ export interface AbandonShipPayload {
   // No additional payload needed
 }
 
+// Play a DINK card from hand
+export interface PlayDinkPayload {
+  dinkId: string;
+  effect: string;
+}
+
 // Union type for all game actions
 export interface UseLifePreserverPayload {
   targetPlayerId?: string; // For giving the Life Preserver to another player
@@ -276,7 +282,8 @@ export type GameAction =
   | { type: 'EAT_FISH'; playerId: string; payload: EatFishPayload }
   | { type: 'USE_CAN_OF_WORMS'; playerId: string; payload: UseCanOfWormsPayload }
   | { type: 'CYCLE_MARKET'; playerId: string; payload: CycleMarketPayload }
-  | { type: 'ABANDON_SHIP'; playerId: string; payload: AbandonShipPayload };
+  | { type: 'ABANDON_SHIP'; playerId: string; payload: AbandonShipPayload }
+  | { type: 'PLAY_DINK'; playerId: string; payload: PlayDinkPayload };
 
 export interface CharacterOption {
   id: string;

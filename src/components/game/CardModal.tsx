@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Fish, Sparkles, Package, Skull, Star, Zap, X } from 'lucide-react';
+import { Fish, Sparkles, Package, Skull, Star, Zap, X, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 
@@ -16,9 +16,10 @@ type CardType = 'fish' | 'dink' | 'supply';
 type AnyCard = FishCard | DinkCard | UpgradeCard;
 
 interface CardModalContextType {
-  openCard: (card: AnyCard, type: CardType, rotation?: number) => void;
+  openCard: (card: AnyCard, type: CardType, rotation?: number, canPlay?: boolean) => void;
   closeCard: () => void;
   isOpen: boolean;
+  setOnPlayDink: (callback: ((dinkId: string, effect: string) => void) | null) => void;
 }
 
 const CardModalContext = createContext<CardModalContextType | null>(null);
@@ -40,26 +41,48 @@ export const CardModalProvider = ({ children }: CardModalProviderProps) => {
   const [selectedCard, setSelectedCard] = useState<AnyCard | null>(null);
   const [cardType, setCardType] = useState<CardType>('fish');
   const [cardRotation, setCardRotation] = useState(0);
+  const [canPlay, setCanPlay] = useState(false);
+  const [onPlayDinkCallback, setOnPlayDinkCallback] = useState<((dinkId: string, effect: string) => void) | null>(null);
 
-  const openCard = useCallback((card: AnyCard, type: CardType, rotation: number = 0) => {
+  const openCard = useCallback((card: AnyCard, type: CardType, rotation: number = 0, canPlayCard: boolean = false) => {
     setSelectedCard(card);
     setCardType(type);
     setCardRotation(rotation);
+    setCanPlay(canPlayCard);
     setIsOpen(true);
   }, []);
 
   const closeCard = useCallback(() => {
     setIsOpen(false);
     setSelectedCard(null);
+    setCanPlay(false);
   }, []);
 
+  const setOnPlayDink = useCallback((callback: ((dinkId: string, effect: string) => void) | null) => {
+    setOnPlayDinkCallback(() => callback);
+  }, []);
+
+  const handlePlayDink = useCallback((dinkId: string, effect: string) => {
+    if (onPlayDinkCallback) {
+      onPlayDinkCallback(dinkId, effect);
+      closeCard();
+    }
+  }, [onPlayDinkCallback, closeCard]);
+
   return (
-    <CardModalContext.Provider value={{ openCard, closeCard, isOpen }}>
+    <CardModalContext.Provider value={{ openCard, closeCard, isOpen, setOnPlayDink }}>
       {children}
       <Dialog open={isOpen} onOpenChange={(open) => !open && closeCard()}>
         <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none">
           {selectedCard && (
-            <EnlargedCard card={selectedCard} type={cardType} onClose={closeCard} rotation={cardRotation} />
+            <EnlargedCard
+              card={selectedCard}
+              type={cardType}
+              onClose={closeCard}
+              rotation={cardRotation}
+              canPlay={canPlay}
+              onPlayDink={handlePlayDink}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -72,14 +95,16 @@ interface EnlargedCardProps {
   type: CardType;
   onClose: () => void;
   rotation?: number;
+  canPlay?: boolean;
+  onPlayDink?: (dinkId: string, effect: string) => void;
 }
 
-const EnlargedCard = ({ card, type, onClose, rotation = 0 }: EnlargedCardProps) => {
+const EnlargedCard = ({ card, type, onClose, rotation = 0, canPlay = false, onPlayDink }: EnlargedCardProps) => {
   if (type === 'fish') {
     return <EnlargedFishCard fish={card as FishCard} onClose={onClose} rotation={rotation} />;
   }
   if (type === 'dink') {
-    return <EnlargedDinkCard dink={card as DinkCard} onClose={onClose} rotation={rotation} />;
+    return <EnlargedDinkCard dink={card as DinkCard} onClose={onClose} rotation={rotation} canPlay={canPlay} onPlayDink={onPlayDink} />;
   }
   return <EnlargedSupplyCard supply={card as UpgradeCard} onClose={onClose} rotation={rotation} />;
 };
@@ -195,8 +220,14 @@ const EnlargedFishCard = ({ fish, onClose, rotation = 0 }: { fish: FishCard; onC
   );
 };
 
-const EnlargedDinkCard = ({ dink, onClose, rotation = 0 }: { dink: DinkCard; onClose: () => void; rotation?: number }) => {
+const EnlargedDinkCard = ({ dink, onClose, rotation = 0, canPlay = false, onPlayDink }: { dink: DinkCard; onClose: () => void; rotation?: number; canPlay?: boolean; onPlayDink?: (dinkId: string, effect: string) => void }) => {
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+
+  const handlePlayEffect = (effect: string) => {
+    if (onPlayDink && canPlay) {
+      onPlayDink(dink.id, effect);
+    }
+  };
 
   return (
     <div className="relative w-80 rounded-2xl border-4 border-amber-400 bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 shadow-2xl overflow-hidden transition-transform" style={rotationStyle}>
@@ -267,7 +298,7 @@ const EnlargedDinkCard = ({ dink, onClose, rotation = 0 }: { dink: DinkCard; onC
           </div>
         </div>
 
-        {/* Effects */}
+        {/* Effects - Clickable when canPlay is true */}
         {dink.effects.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-white/60">
@@ -276,9 +307,22 @@ const EnlargedDinkCard = ({ dink, onClose, rotation = 0 }: { dink: DinkCard; onC
             </div>
             <div className="flex flex-wrap gap-1.5">
               {dink.effects.map((effect) => (
-                <Badge key={effect} variant="secondary" className="bg-amber-500/20 text-amber-200 text-xs">
-                  {effect}
-                </Badge>
+                canPlay ? (
+                  <Button
+                    key={effect}
+                    variant="secondary"
+                    size="sm"
+                    className="bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 text-xs px-2 py-1 h-auto gap-1 transition-all active:scale-95"
+                    onClick={() => handlePlayEffect(effect)}
+                  >
+                    <Play className="h-3 w-3" />
+                    {effect}
+                  </Button>
+                ) : (
+                  <Badge key={effect} variant="secondary" className="bg-amber-500/20 text-amber-200 text-xs">
+                    {effect}
+                  </Badge>
+                )
               ))}
             </div>
           </div>
