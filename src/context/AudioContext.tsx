@@ -255,17 +255,40 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Track whether this is a source change that needs loading
+    const sourceChanged = musicSourceRef.current !== currentTrack.url;
+
     // Update source if track changed
-    if (musicSourceRef.current !== currentTrack.url) {
+    if (sourceChanged) {
       element.src = currentTrack.url;
       musicSourceRef.current = currentTrack.url;
+      // Load the new track
+      element.load();
     }
 
     // Only attempt to play if we should be playing
     if (isPlaying) {
-      const playPromise = element.play();
-      if (playPromise) {
-        playPromise.catch(handlePlaybackRejection);
+      if (sourceChanged) {
+        // Wait for audio to be ready before playing
+        const handleCanPlay = () => {
+          element.play().catch(handlePlaybackRejection);
+          element.removeEventListener('canplaythrough', handleCanPlay);
+        };
+        element.addEventListener('canplaythrough', handleCanPlay);
+
+        // Also try playing immediately in case audio is already cached
+        element.play().catch(() => {
+          // Silently ignore - will be handled by canplaythrough event
+        });
+
+        return () => {
+          element.removeEventListener('canplaythrough', handleCanPlay);
+        };
+      } else {
+        const playPromise = element.play();
+        if (playPromise) {
+          playPromise.catch(handlePlaybackRejection);
+        }
       }
     }
   }, [currentTrack, ensureMusicElement, handlePlaybackRejection, isMusicEnabled, isPlaying]);
@@ -326,12 +349,34 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrackId(trackToPlay.id);
     }
 
-    if (musicSourceRef.current !== trackToPlay.url) {
+    const sourceChanged = musicSourceRef.current !== trackToPlay.url;
+    if (sourceChanged) {
       element.src = trackToPlay.url;
       musicSourceRef.current = trackToPlay.url;
+      element.load();
     }
 
     try {
+      // If source changed, wait for audio to be ready
+      if (sourceChanged && element.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        await new Promise<void>((resolve, reject) => {
+          const handleCanPlay = () => {
+            cleanup();
+            resolve();
+          };
+          const handleError = () => {
+            cleanup();
+            reject(new Error('Failed to load audio'));
+          };
+          const cleanup = () => {
+            element.removeEventListener('canplaythrough', handleCanPlay);
+            element.removeEventListener('error', handleError);
+          };
+          element.addEventListener('canplaythrough', handleCanPlay);
+          element.addEventListener('error', handleError);
+        });
+      }
+
       const promise = element.play();
       if (promise) {
         await promise;
@@ -401,12 +446,34 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
     setCurrentTrackId(randomTrackId);
 
-    if (musicSourceRef.current !== randomTrack.url) {
+    const sourceChanged = musicSourceRef.current !== randomTrack.url;
+    if (sourceChanged) {
       element.src = randomTrack.url;
       musicSourceRef.current = randomTrack.url;
+      element.load();
     }
 
     try {
+      // If source changed, wait for audio to be ready
+      if (sourceChanged && element.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        await new Promise<void>((resolve, reject) => {
+          const handleCanPlay = () => {
+            cleanup();
+            resolve();
+          };
+          const handleError = () => {
+            cleanup();
+            reject(new Error('Failed to load audio'));
+          };
+          const cleanup = () => {
+            element.removeEventListener('canplaythrough', handleCanPlay);
+            element.removeEventListener('error', handleError);
+          };
+          element.addEventListener('canplaythrough', handleCanPlay);
+          element.addEventListener('error', handleError);
+        });
+      }
+
       const promise = element.play();
       if (promise) {
         await promise;
