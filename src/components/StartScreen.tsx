@@ -8,13 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import logoImage from '@/assets/deep-regrets-logo.jpg';
 import backgroundImage from '@/assets/tentacle-background.png';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
 import { useLanguage } from '@/context/LanguageContext';
-import { GraduationCap, Lightbulb, X } from 'lucide-react';
+import { GraduationCap, Lightbulb, X, Anchor, Fish } from 'lucide-react';
 
 export interface GameSetup {
   humanPlayers: number;
@@ -188,58 +187,65 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       )}
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 py-4 flex flex-col justify-center">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          {/* Left column - Logo and info */}
-          <div className="flex flex-col items-center lg:items-start gap-4 text-center lg:text-left">
-            <div className="w-full max-w-sm">
-              <img
-                src={logoImage}
-                alt="Deep Regrets - An Unfortunate Fishing Game"
-                className="w-full rounded-xl shadow-2xl"
-              />
+      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col justify-center">
+        <div className="flex flex-col items-center gap-8">
+          {/* Fancy animated title */}
+          <div className="text-center space-y-3 animate-fade-in">
+            <div className="relative inline-block">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight menu-title">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 via-cyan-400 to-cyan-600 drop-shadow-[0_0_25px_rgba(34,211,238,0.4)] animate-pulse-slow">
+                  DEEP
+                </span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-b from-teal-200 via-emerald-400 to-teal-600 drop-shadow-[0_0_25px_rgba(45,212,191,0.4)]">
+                  REGRETS
+                </span>
+              </h1>
+              <div className="absolute -top-4 -left-8 text-cyan-400/30 animate-float-slow">
+                <Anchor className="w-8 h-8" />
+              </div>
+              <div className="absolute -bottom-2 -right-6 text-teal-400/30 animate-float-slow" style={{ animationDelay: '1s' }}>
+                <Fish className="w-6 h-6" />
+              </div>
             </div>
-            <div className="space-y-1 max-w-md">
-              <p className="text-sm text-muted-foreground italic">
-                {t('startScreen.subtitle')}
-              </p>
-              <p className="text-sm text-foreground/80">
-                {t('startScreen.description')}
-              </p>
-            </div>
+            <p className="text-lg md:text-xl text-cyan-200/80 italic font-light tracking-wide">
+              {t('startScreen.subtitle')}
+            </p>
+            <p className="text-sm text-foreground/60 max-w-md mx-auto">
+              {t('startScreen.description')}
+            </p>
           </div>
 
-          {/* Right column - Menu and game setup */}
-          <div className="flex flex-col gap-4">
-            <nav aria-label="Start screen menu" className="w-full max-w-md mx-auto lg:mx-0">
-              <ul className="flex flex-col items-stretch gap-2">
-                <li>
+          {/* Menu and game setup */}
+          <div className="flex flex-col gap-6 w-full max-w-md">
+            <nav aria-label="Start screen menu" className="w-full">
+              <ul className="flex flex-col items-stretch gap-3">
+                <li className="menu-item" style={{ animationDelay: '0.1s' }}>
                   <Button
                     type="button"
                     size="lg"
-                    className="btn-ocean w-full justify-center text-lg font-semibold"
+                    className="menu-button-primary w-full justify-center text-xl font-bold py-6 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                     onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty, aiSpeed })}
                   >
                     {t('startScreen.newGame')}
                   </Button>
                 </li>
-                <li>
+                <li className="menu-item" style={{ animationDelay: '0.2s' }}>
                   <Button
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="w-full justify-center text-lg"
+                    className="menu-button-secondary w-full justify-center text-lg py-5 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                     onClick={() => setIsOptionsOpen(true)}
                   >
                     {t('startScreen.options')}
                   </Button>
                 </li>
-                <li>
+                <li className="menu-item" style={{ animationDelay: '0.3s' }}>
                   <Button
                     type="button"
                     variant="ghost"
                     size="lg"
-                    className="w-full justify-center text-lg"
+                    className="menu-button-tertiary w-full justify-center text-lg py-5 rounded-xl hover:bg-cyan-950/30 text-cyan-200/70 hover:text-cyan-100 transition-all duration-300"
                     onClick={() => setIsHelpOpen(true)}
                   >
                     {t('startScreen.howToPlay')}
@@ -248,7 +254,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               </ul>
             </nav>
 
-            <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-4 space-y-3">
+            <div className="card-game w-full p-5 space-y-4 backdrop-blur-sm bg-card/80 border-cyan-500/20 menu-item" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
                 <p className="text-sm text-muted-foreground">
