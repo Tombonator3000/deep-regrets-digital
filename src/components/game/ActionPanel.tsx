@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { FishingActions } from './FishingActions';
-import { PortActions } from './PortActions';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -275,11 +274,6 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
               gameState={gameState}
               currentPlayer={currentPlayer}
               selectedShoal={selectedShoal}
-              onAction={onAction}
-            />
-            <PortActions
-              gameState={gameState}
-              currentPlayer={currentPlayer}
               onAction={onAction}
             />
           </div>
