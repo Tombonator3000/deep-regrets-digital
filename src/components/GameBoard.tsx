@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/sheet';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
+import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
 import { getSlotMultiplier } from '@/utils/mounting';
@@ -445,6 +446,24 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
             </div>
           ) : topFish ? (
             <div className="space-y-4">
+              {/* Fish image */}
+              <div className="relative h-40 rounded-lg overflow-hidden bg-black/30">
+                {(() => {
+                  const fishImage = getFishImage(topFish.id) || getDefaultFishImage(topFish.depth);
+                  return fishImage ? (
+                    <img
+                      src={fishImage}
+                      alt={topFish.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Fish className="h-16 w-16 text-cyan-300/50" />
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 <Badge className="bg-fishbuck/20 text-fishbuck">Value {topFish.value}</Badge>
                 <Badge variant="outline" className="border-destructive/40 text-destructive">
