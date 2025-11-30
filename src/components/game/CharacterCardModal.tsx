@@ -1,5 +1,6 @@
 import { CharacterOption } from '@/types/game';
 import { CHARACTERS } from '@/data/characters';
+import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import {
   Dialog,
   DialogContent,
@@ -28,8 +29,12 @@ export const CharacterCardModal = ({ characterId, open, onOpenChange }: Characte
       <DialogContent className="sm:max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-primary/30">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary/50 bg-gradient-to-br from-primary/20 to-primary/5 text-2xl font-bold text-primary-glow">
-              {character.name.charAt(0)}
+            <div className="h-16 w-16 rounded-full border-2 border-primary/50 overflow-hidden">
+              <img 
+                src={CHARACTER_PORTRAITS[character.id]} 
+                alt={character.name}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <DialogTitle className="text-xl text-primary-glow">

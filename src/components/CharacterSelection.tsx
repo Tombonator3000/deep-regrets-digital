@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CHARACTERS } from '@/data/characters';
+import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import { CharacterOption } from '@/types/game';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { GameSetup } from './StartScreen';
@@ -147,11 +148,13 @@ export const CharacterSelection = ({ playerCount, gameSetup, onCharactersSelecte
               onClick={() => handleCharacterSelect(character)}
             >
               <CardHeader className="text-center pb-2">
-                {/* Character Portrait Placeholder */}
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-sea-shallow to-sea-deep border-4 border-primary/30 flex items-center justify-center group-hover:border-primary transition-colors">
-                  <span className="text-3xl font-bold text-primary-glow">
-                    {character.name.charAt(0)}
-                  </span>
+                {/* Character Portrait */}
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full border-4 border-primary/30 overflow-hidden group-hover:border-primary transition-colors">
+                  <img 
+                    src={CHARACTER_PORTRAITS[character.id]} 
+                    alt={character.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <CardTitle className="text-lg text-card-foreground">
                   {character.name}
