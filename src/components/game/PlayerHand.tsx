@@ -334,8 +334,9 @@ export const PlayerHand = ({ player, isCurrentPlayer }: PlayerHandProps) => {
   }, [openCard]);
 
   const handleEnlargeDink = useCallback((dink: DinkCard) => {
-    openCard(dink, 'dink');
-  }, [openCard]);
+    // Pass canPlay: true when the current player opens their own dink card
+    openCard(dink, 'dink', 0, isCurrentPlayer);
+  }, [openCard, isCurrentPlayer]);
 
   const handleEnlargeSupply = useCallback((supply: UpgradeCard) => {
     openCard(supply, 'supply');

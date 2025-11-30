@@ -1291,6 +1291,42 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       }
       break;
 
+    case 'PLAY_DINK':
+      // Play a DINK card from hand, triggering its effect
+      if (player) {
+        const { dinkId, effect } = action.payload;
+        const dinkIndex = player.dinks.findIndex(d => d.id === dinkId);
+        if (dinkIndex !== -1) {
+          const dink = player.dinks[dinkIndex];
+
+          // Apply the effect based on the effect type
+          switch (effect) {
+            case 'gain_1_fishbuck':
+              addFishbucks(player, 1);
+              break;
+            case 'peek_shoal_top':
+              // Reveal all shoals at current depth
+              const depth = player.currentDepth;
+              const shoals = newState.sea.shoals[depth] ?? [];
+              shoals.forEach((_, shoalIndex) => {
+                const shoalKey = `${depth}-${shoalIndex}`;
+                newState.sea.revealedShoals[shoalKey] = true;
+              });
+              break;
+            // Add more effect handlers as needed
+            default:
+              // For effects that are passive or handled elsewhere, just log
+              console.log(`Playing DINK effect: ${effect}`);
+          }
+
+          // Remove one-shot cards from hand after use
+          if (dink.oneShot) {
+            player.dinks = player.dinks.filter((_, i) => i !== dinkIndex);
+          }
+        }
+      }
+      break;
+
     default:
       console.warn('Unknown action type:', (action as { type: string }).type);
   }

@@ -7,7 +7,7 @@ import { ActionPanel } from './game/ActionPanel';
 import { AnglerBoard } from './game/AnglerBoard';
 import { DayTracker } from './game/DayTracker';
 import { MadnessTracker } from './game/MadnessTracker';
-import { CardModalProvider } from './game/CardModal';
+import { CardModalProvider, useCardModal } from './game/CardModal';
 import { DiceRemovalModal } from './game/DiceRemovalModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +56,8 @@ interface GameBoardProps {
   onBackToStart: () => void;
 }
 
-export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }: GameBoardProps) => {
+// Inner component that sets up the DINK card play callback
+const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: GameBoardProps) => {
   const [selectedShoal, setSelectedShoal] = useState<{depth: number, shoal: number} | null>(null);
   const [shoalDialogOpen, setShoalDialogOpen] = useState(false);
   const [isPortOpen, setIsPortOpen] = useState(false);
@@ -66,8 +67,22 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
   const [isFullscreen, setIsFullscreen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const displaySettings = useDisplaySettings();
-
+  const { setOnPlayDink } = useCardModal();
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+  // Set up the DINK card play callback
+  useEffect(() => {
+    const handlePlayDink = (dinkId: string, effect: string) => {
+      onAction({
+        type: 'PLAY_DINK',
+        playerId: currentPlayer.id,
+        payload: { dinkId, effect },
+      });
+    };
+    setOnPlayDink(handlePlayDink);
+    return () => setOnPlayDink(null);
+  }, [setOnPlayDink, onAction, currentPlayer.id]);
+
   const isPlayerTurn = !currentPlayer.hasPassed;
   const {
     availableDiceTotal,
@@ -148,7 +163,6 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
 
   return (
     <FullscreenContext.Provider value={{ containerRef: boardRef, isFullscreen }}>
-    <CardModalProvider>
     <div ref={boardRef} className="relative h-dvh min-h-0 overflow-hidden bg-background">
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
@@ -599,7 +613,20 @@ export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }:
         onAction={onAction}
       />
     </div>
-    </CardModalProvider>
     </FullscreenContext.Provider>
+  );
+};
+
+// Main GameBoard component that provides the CardModalProvider
+export const GameBoard = ({ gameState, onAction, onRestartGame, onBackToStart }: GameBoardProps) => {
+  return (
+    <CardModalProvider>
+      <GameBoardInner
+        gameState={gameState}
+        onAction={onAction}
+        onRestartGame={onRestartGame}
+        onBackToStart={onBackToStart}
+      />
+    </CardModalProvider>
   );
 };
