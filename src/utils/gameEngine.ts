@@ -816,18 +816,11 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       // Per rulebook (p.17): Buy from the visible Market dice, refill from bag
       // Per rulebook (p.21): Port discount does NOT apply to Tackle Dice
       if (player && player.location === 'port') {
-        const { dieId } = action.payload;
+        const { dieId, count = 1 } = action.payload;
 
         // Per rulebook (p.17): "You may only visit each shop once on this turn"
         if (hasVisitedShop(player, 'tackle_dice')) {
           console.warn('BUY_TACKLE_DICE blocked: Already visited tackle dice shop this turn');
-          break;
-        }
-
-        // Check if the die is in the market
-        const marketIndex = newState.port.tackleDiceMarket.indexOf(dieId);
-        if (marketIndex === -1) {
-          console.warn('BUY_TACKLE_DICE blocked: Die not in market');
           break;
         }
 
@@ -837,31 +830,43 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         }
 
         // Per rulebook (p.21): Port discount does NOT apply to Tackle Dice
-        // Only Life Preserver discount applies
+        // Only Life Preserver discount applies (applied once per visit)
         let discount = 0;
-
-        // Apply Life Preserver shop discount (2$) per rulebook (p.9)
         if (hasActiveEffect(player, 'life_preserver_shop_discount')) {
           discount += 2;
           removeActiveEffect(player, 'life_preserver_shop_discount');
         }
 
-        const totalCost = Math.max(0, tackleDie.cost - discount);
-        if (player.fishbucks >= totalCost) {
-          player.fishbucks -= totalCost;
+        // Calculate total cost for all dice (discount only applies to first die)
+        const firstDieCost = Math.max(0, tackleDie.cost - discount);
+        const remainingDiceCost = tackleDie.cost * (count - 1);
+        const totalCost = firstDieCost + remainingDiceCost;
 
-          // Remove from market and add to player
-          newState.port.tackleDiceMarket = [
-            ...newState.port.tackleDiceMarket.slice(0, marketIndex),
-            ...newState.port.tackleDiceMarket.slice(marketIndex + 1)
-          ];
-          player.tackleDice = [...player.tackleDice, dieId];
+        // Check if enough dice are available in market
+        const availableCount = newState.port.tackleDiceMarket.filter(id => id === dieId).length;
+        const purchaseCount = Math.min(count, availableCount);
 
-          // Refill market from bag
-          if (newState.port.tackleDiceBag.length > 0) {
-            const newDie = newState.port.tackleDiceBag[0];
-            newState.port.tackleDiceBag = newState.port.tackleDiceBag.slice(1);
-            newState.port.tackleDiceMarket = [...newState.port.tackleDiceMarket, newDie];
+        if (purchaseCount > 0 && player.fishbucks >= (firstDieCost + tackleDie.cost * (purchaseCount - 1))) {
+          const actualCost = firstDieCost + tackleDie.cost * (purchaseCount - 1);
+          player.fishbucks -= actualCost;
+
+          // Remove purchased dice from market and add to player
+          for (let i = 0; i < purchaseCount; i++) {
+            const marketIndex = newState.port.tackleDiceMarket.indexOf(dieId);
+            if (marketIndex !== -1) {
+              newState.port.tackleDiceMarket = [
+                ...newState.port.tackleDiceMarket.slice(0, marketIndex),
+                ...newState.port.tackleDiceMarket.slice(marketIndex + 1)
+              ];
+              player.tackleDice = [...player.tackleDice, dieId];
+
+              // Refill market from bag after each die
+              if (newState.port.tackleDiceBag.length > 0) {
+                const newDie = newState.port.tackleDiceBag[0];
+                newState.port.tackleDiceBag = newState.port.tackleDiceBag.slice(1);
+                newState.port.tackleDiceMarket = [...newState.port.tackleDiceMarket, newDie];
+              }
+            }
           }
 
           // Record shop visit
@@ -997,20 +1002,11 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       break;
 
     case 'MOUNT_FISH':
-      // Per rulebook (p.17): Mounting costs 1 fresh die + 1 supply token
+      // Per rulebook (p.17): "Permanently place one of your Fish under any empty slot
+      // at the top of your Angler Board." - No cost mentioned, mounting is free.
       if (player && player.location === 'port') {
         const { fishId, slot } = action.payload;
         if (typeof slot !== 'number' || slot < 0 || slot >= player.maxMountSlots) {
-          break;
-        }
-
-        // Check requirements: 1 fresh die and at least 1 supply
-        if (player.freshDice.length === 0) {
-          console.warn('MOUNT_FISH blocked: No fresh dice available');
-          break;
-        }
-        if (player.supplies.length === 0) {
-          console.warn('MOUNT_FISH blocked: No supply tokens available');
           break;
         }
 
@@ -1018,21 +1014,6 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const slotOccupied = player.mountedFish.some(mount => mount.slot === slot);
         if (fishIndex >= 0 && !slotOccupied) {
           const fish = player.handFish[fishIndex];
-
-          // Spend 1 fresh die (lowest value)
-          const lowestDieIndex = player.freshDice.reduce(
-            (minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx,
-            0
-          );
-          const spentDie = player.freshDice[lowestDieIndex];
-          player.freshDice = [
-            ...player.freshDice.slice(0, lowestDieIndex),
-            ...player.freshDice.slice(lowestDieIndex + 1)
-          ];
-          player.spentDice = [...player.spentDice, spentDie];
-
-          // Consume 1 supply token (first available)
-          player.supplies = player.supplies.slice(1);
 
           player.mountedFish = [
             ...player.mountedFish,
