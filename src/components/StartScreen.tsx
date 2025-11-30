@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import logoImage from '@/assets/deep-regrets-logo.jpg';
+import headerImage from '@/assets/briny-deep-background.png';
 import { BubbleField } from '@/components/effects/BubbleField';
 import { OptionsMenu, useDisplaySettings } from '@/components/OptionsMenu';
 import { HelpSystem } from '@/components/HelpSystem';
@@ -117,21 +118,18 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      <div className="start-screen-scene" aria-hidden>
-        <div className="start-screen-sky">
-          <div className="start-screen-ship">
-            <span className="start-screen-ship-mast" />
-            <span className="start-screen-ship-sail" />
-            <span className="start-screen-ship-sail start-screen-ship-sail--aft" />
-          </div>
-        </div>
-        <div className="start-screen-waves">
-          <div className="start-screen-wave start-screen-wave--front" />
-          <div className="start-screen-wave start-screen-wave--mid" />
-          <div className="start-screen-wave start-screen-wave--back" />
-        </div>
+    <div className="h-screen flex flex-col relative overflow-hidden">
+      {/* Header image - fishing boat silhouette */}
+      <div className="relative w-full h-[140px] shrink-0 overflow-hidden">
+        <img
+          src={headerImage}
+          alt=""
+          className="w-full h-[400px] object-cover object-top"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[hsl(220,30%,8%)] to-transparent" />
       </div>
+
       {/* Animated background particles */}
       {displaySettings.particlesEnabled && (
         <div className="ocean-particles">
@@ -153,10 +151,10 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
       {/* Tentacle shadows */}
       <div className="tentacle-shadow" />
-      
+
       {/* First-time player banner */}
       {showFirstTimeBanner && (
-        <div className="fixed inset-x-0 top-0 z-50 p-4">
+        <div className="fixed inset-x-0 top-0 z-50 p-2">
           <Alert className="mx-auto max-w-2xl border-primary/50 bg-primary/10 backdrop-blur-md">
             <GraduationCap className="h-5 w-5 text-primary" />
             <AlertDescription className="flex items-center justify-between gap-4">
@@ -190,37 +188,31 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       )}
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-6xl px-6 py-12 lg:py-16">
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch">
-          <div className="flex flex-col items-center lg:items-start gap-6 text-center lg:text-left">
-            <div className="w-full max-w-lg">
+      <div className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 py-4 flex flex-col justify-center">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          {/* Left column - Logo and info */}
+          <div className="flex flex-col items-center lg:items-start gap-4 text-center lg:text-left">
+            <div className="w-full max-w-sm">
               <img
                 src={logoImage}
                 alt="Deep Regrets - An Unfortunate Fishing Game"
-                className="w-full rounded-xl shadow-2xl animate-tentacle-sway"
+                className="w-full rounded-xl shadow-2xl"
               />
             </div>
-            <div className="space-y-3 max-w-xl">
-              <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-b from-primary-glow to-primary bg-clip-text text-transparent">
-                {t('startScreen.title')}
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground italic">
+            <div className="space-y-1 max-w-md">
+              <p className="text-sm text-muted-foreground italic">
                 {t('startScreen.subtitle')}
               </p>
-              <p className="text-base lg:text-lg text-foreground/80">
+              <p className="text-sm text-foreground/80">
                 {t('startScreen.description')}
               </p>
             </div>
-            <div className="card-game w-full max-w-xl p-5 text-sm text-muted-foreground space-y-2">
-              <p><strong>{t('startScreen.gameTime')}</strong> {t('startScreen.gameTimeValue')}</p>
-              <p><strong>{t('startScreen.objective')}</strong> {t('startScreen.objectiveValue')}</p>
-              <p><strong>{t('startScreen.warning')}</strong> {t('startScreen.warningValue')}</p>
-            </div>
           </div>
 
-          <div className="flex flex-col justify-center gap-6 lg:gap-8">
+          {/* Right column - Menu and game setup */}
+          <div className="flex flex-col gap-4">
             <nav aria-label="Start screen menu" className="w-full max-w-md mx-auto lg:mx-0">
-              <ul className="flex flex-col items-stretch gap-3">
+              <ul className="flex flex-col items-stretch gap-2">
                 <li>
                   <Button
                     type="button"
@@ -256,16 +248,16 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               </ul>
             </nav>
 
-            <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-6 space-y-5">
+            <div className="card-game mx-auto lg:mx-0 w-full max-w-md p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
+                <h3 className="text-lg font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
                 <p className="text-sm text-muted-foreground">
                   {totalPlayers} {totalPlayers === 1 ? t('startScreen.player') : t('startScreen.players')} {t('startScreen.playersTotal').split(' ').slice(-1)[0]}
                 </p>
               </div>
 
               {/* Human Players */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="text-sm font-medium text-foreground/80">{t('startScreen.humanPlayers')}</label>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[1, 2, 3, 4, 5].map((count) => (
@@ -292,7 +284,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               </div>
 
               {/* AI Opponents */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiOpponents')}</label>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[0, 1, 2, 3, 4].filter(count => count <= maxAiPlayers).map((count) => (
@@ -315,7 +307,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
               {/* AI Difficulty */}
               {aiPlayers > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiDifficulty')}</label>
                   <div className="flex justify-center gap-2">
                     {(['easy', 'medium', 'hard'] as const).map((diff) => (
@@ -324,7 +316,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                         variant={aiDifficulty === diff ? "default" : "outline"}
                         size="sm"
                         onClick={() => setAiDifficulty(diff)}
-                        className={`px-4 h-9 ${
+                        className={`px-3 h-8 ${
                           aiDifficulty === diff
                             ? diff === 'easy' ? 'bg-green-600 hover:bg-green-700' :
                               diff === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' :
@@ -341,7 +333,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
 
               {/* AI Speed */}
               {aiPlayers > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiSpeed')}</label>
                   <div className="flex justify-center gap-2">
                     {(['slow', 'normal', 'fast'] as const).map((speed) => (
@@ -350,7 +342,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                         variant={aiSpeed === speed ? "default" : "outline"}
                         size="sm"
                         onClick={() => setAiSpeed(speed)}
-                        className={`px-4 h-9 ${
+                        className={`px-3 h-8 ${
                           aiSpeed === speed
                             ? speed === 'fast'
                               ? 'bg-blue-600 hover:bg-blue-700'
