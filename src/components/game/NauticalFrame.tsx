@@ -105,7 +105,7 @@ export const NauticalFrame = ({
       )}
 
       {/* Content */}
-      <div className="relative z-0">
+      <div className="relative z-0 h-full">
         {children}
       </div>
     </div>
