@@ -3,12 +3,24 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useFullscreenContainer } from "@/context/FullscreenContext";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
-const AlertDialogPortal = AlertDialogPrimitive.Portal;
+// Custom portal that uses fullscreen container when in fullscreen mode
+const AlertDialogPortal = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Portal>) => {
+  const { containerRef, isFullscreen } = useFullscreenContainer();
+  return (
+    <AlertDialogPrimitive.Portal
+      container={isFullscreen && containerRef?.current ? containerRef.current : undefined}
+      {...props}
+    >
+      {children}
+    </AlertDialogPrimitive.Portal>
+  );
+};
 
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,

@@ -2,16 +2,30 @@ import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
+import { useFullscreenContainer } from "@/context/FullscreenContext";
 
 const Popover = PopoverPrimitive.Root;
 
 const PopoverTrigger = PopoverPrimitive.Trigger;
 
+// Custom portal that uses fullscreen container when in fullscreen mode
+const PopoverPortal = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Portal>) => {
+  const { containerRef, isFullscreen } = useFullscreenContainer();
+  return (
+    <PopoverPrimitive.Portal
+      container={isFullscreen && containerRef?.current ? containerRef.current : undefined}
+      {...props}
+    >
+      {children}
+    </PopoverPrimitive.Portal>
+  );
+};
+
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
+  <PopoverPortal>
     <PopoverPrimitive.Content
       ref={ref}
       align={align}
@@ -22,8 +36,8 @@ const PopoverContent = React.forwardRef<
       )}
       {...props}
     />
-  </PopoverPrimitive.Portal>
+  </PopoverPortal>
 ));
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
-export { Popover, PopoverTrigger, PopoverContent };
+export { Popover, PopoverTrigger, PopoverContent, PopoverPortal };
