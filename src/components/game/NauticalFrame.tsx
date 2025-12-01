@@ -19,8 +19,8 @@ export const NauticalFrame = ({
 }: NauticalFrameProps) => {
   return (
     <div className={`relative ${className}`}>
-      {/* Corner decorations */}
-      <div className="pointer-events-none absolute inset-0 z-20">
+      {/* Corner decorations - z-[-1] to appear behind content */}
+      <div className="pointer-events-none absolute inset-0 z-[-1]">
         {/* Top-left corner */}
         <img 
           src={woodCorner} 
@@ -48,7 +48,7 @@ export const NauticalFrame = ({
       </div>
 
       {variant === 'full' && (
-        <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="pointer-events-none absolute inset-0 z-[-2]">
           {/* Top border */}
           <div 
             className="absolute left-12 right-12 top-0 h-6 opacity-60 sm:left-16 sm:right-16 sm:h-8 lg:left-20 lg:right-20"
@@ -88,9 +88,9 @@ export const NauticalFrame = ({
         </div>
       )}
 
-      {/* Fishing net overlay in corners */}
+      {/* Fishing net overlay in corners - z-[-3] to appear behind content */}
       {showNet && (
-        <div className="pointer-events-none absolute inset-0 z-[5] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-[-3] overflow-hidden">
           <img 
             src={fishingNetOverlay} 
             alt="" 
