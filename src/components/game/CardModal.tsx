@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Fish, Sparkles, Package, Skull, Star, Zap, X, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
+import { getDinkImage } from '@/data/dinkImages';
 
 type CardType = 'fish' | 'dink' | 'supply';
 type AnyCard = FishCard | DinkCard | UpgradeCard;
@@ -222,6 +223,7 @@ const EnlargedFishCard = ({ fish, onClose, rotation = 0 }: { fish: FishCard; onC
 
 const EnlargedDinkCard = ({ dink, onClose, rotation = 0, canPlay = false, onPlayDink }: { dink: DinkCard; onClose: () => void; rotation?: number; canPlay?: boolean; onPlayDink?: (dinkId: string, effect: string) => void }) => {
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+  const dinkImage = getDinkImage(dink.id);
 
   const handlePlayEffect = (effect: string) => {
     if (onPlayDink && canPlay) {
@@ -254,22 +256,32 @@ const EnlargedDinkCard = ({ dink, onClose, rotation = 0, canPlay = false, onPlay
       </div>
 
       {/* Illustration area */}
-      <div className="relative h-40 flex items-center justify-center bg-black/20">
-        <Sparkles className="h-24 w-24 text-amber-300 drop-shadow-lg" />
-        {/* Decorative sparkles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <Sparkles
-              key={i}
-              className="absolute h-4 w-4 text-amber-400/40 animate-pulse"
-              style={{
-                left: `${10 + i * 15}%`,
-                top: `${20 + (i % 3) * 25}%`,
-                animationDelay: `${i * 0.2}s`
-              }}
-            />
-          ))}
-        </div>
+      <div className="relative h-40 flex items-center justify-center bg-black/20 overflow-hidden">
+        {dinkImage ? (
+          <img 
+            src={dinkImage} 
+            alt={dink.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <>
+            <Sparkles className="h-24 w-24 text-amber-300 drop-shadow-lg" />
+            {/* Decorative sparkles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {[...Array(6)].map((_, i) => (
+                <Sparkles
+                  key={i}
+                  className="absolute h-4 w-4 text-amber-400/40 animate-pulse"
+                  style={{
+                    left: `${10 + i * 15}%`,
+                    top: `${20 + (i % 3) * 25}%`,
+                    animationDelay: `${i * 0.2}s`
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Card body */}

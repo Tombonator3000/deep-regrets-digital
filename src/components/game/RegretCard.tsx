@@ -1,6 +1,7 @@
 import { RegretCard as RegretCardType } from '@/types/game';
 import { Anchor } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { getRegretImage } from '@/data/regretImages';
 
 interface RegretCardProps {
   regret?: RegretCardType;
@@ -105,19 +106,37 @@ export const RegretCard = ({
   }
 
   // Show card front (revealed regret)
+  const regretImage = regret ? getRegretImage(regret.id) : undefined;
+
   return (
     <div
-      className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-destructive/50 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center p-1 cursor-pointer hover:scale-105 transition-transform ${className}`}
+      className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-destructive/50 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform ${className}`}
       style={rotationStyle}
       onClick={onClick}
     >
-      <div className="text-destructive text-[8px] font-bold mb-0.5">REGRET</div>
-      <div className="text-center text-[6px] text-white/80 leading-tight line-clamp-2 px-0.5">
-        {regret.frontText}
-      </div>
-      <div className="mt-auto text-sm font-bold text-destructive">
-        -{regret.value}
-      </div>
+      {regretImage ? (
+        <img 
+          src={regretImage} 
+          alt={regret?.frontText || 'Regret'} 
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <>
+          <div className="text-destructive text-[8px] font-bold mb-0.5">REGRET</div>
+          <div className="text-center text-[6px] text-white/80 leading-tight line-clamp-2 px-0.5">
+            {regret?.frontText}
+          </div>
+          <div className="mt-auto text-sm font-bold text-destructive">
+            -{regret?.value}
+          </div>
+        </>
+      )}
+      {/* Value badge overlay when using image */}
+      {regretImage && regret && (
+        <div className="absolute bottom-0.5 right-0.5 bg-destructive text-white text-[8px] font-bold rounded px-1 shadow">
+          -{regret.value}
+        </div>
+      )}
     </div>
   );
 };
