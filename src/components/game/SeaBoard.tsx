@@ -315,6 +315,44 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
             {/* Underwater particles */}
             <div className="underwater-particles hidden sm:block" />
 
+            {/* Depth fog effects on sides */}
+            <div className="depth-fog-left hidden sm:block" />
+            <div className="depth-fog-right hidden sm:block" />
+
+            {/* Edge glow effects */}
+            <div className="edge-glow-left hidden sm:block" />
+            <div className="edge-glow-right hidden sm:block" />
+
+            {/* Treasure chest decorations */}
+            <div className="treasure-chest-decoration hidden sm:block" style={{ left: '2%', bottom: '5%' }}>
+              <div className="treasure-glow" />
+            </div>
+            <div className="treasure-chest-decoration hidden sm:block" style={{ right: '3%', bottom: '8%' }}>
+              <div className="treasure-glow" />
+            </div>
+
+            {/* Old diving helmet */}
+            <div className="diving-helmet-decoration hidden sm:block" style={{ left: '5%', bottom: '35%' }} />
+
+            {/* Jellyfish decorations */}
+            <div className="jellyfish-decoration hidden sm:block" style={{ right: '8%', top: '15%' }} />
+            <div className="jellyfish-decoration hidden sm:block" style={{ left: '6%', top: '25%', animationDelay: '2s' }} />
+
+            {/* Starfish decorations */}
+            <div className="starfish-decoration hidden sm:block" style={{ left: '1%', bottom: '15%' }} />
+            <div className="starfish-decoration starfish-variant hidden sm:block" style={{ right: '2%', bottom: '25%' }} />
+
+            {/* Barnacle clusters */}
+            <div className="barnacle-cluster hidden sm:block" style={{ left: '0%', bottom: '45%' }} />
+            <div className="barnacle-cluster hidden sm:block" style={{ right: '1%', bottom: '55%' }} />
+
+            {/* Shell decorations */}
+            <div className="shell-decoration hidden sm:block" style={{ left: '4%', bottom: '2%' }} />
+            <div className="shell-decoration hidden sm:block" style={{ right: '6%', bottom: '3%' }} />
+
+            {/* Chain decoration */}
+            <div className="chain-decoration hidden sm:block" style={{ left: '1%', top: '10%' }} />
+
             {/* Fallback gradient overlay when no background image */}
             {!brinyDeepBackground && (
               <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950/80 rounded-lg" />

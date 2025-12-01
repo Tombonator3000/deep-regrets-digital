@@ -189,6 +189,55 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
           className="h-48 w-full object-cover object-center sm:h-56"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
+
+        {/* Port Decorations - Hidden on mobile */}
+        {/* Port ambient lighting */}
+        <div className="port-ambient-light hidden sm:block" />
+
+        {/* Water reflection at bottom */}
+        <div className="water-reflection hidden sm:block" />
+
+        {/* Ship wheel decorations */}
+        <div className="ship-wheel-decoration hidden sm:block" style={{ left: '5%', top: '10%' }} />
+        <div className="ship-wheel-decoration hidden sm:block" style={{ right: '5%', top: '15%', opacity: 0.4 }} />
+
+        {/* Nautical lanterns */}
+        <div className="lantern-decoration hidden sm:block" style={{ left: '2%', top: '30%' }}>
+          <div className="lantern-glow" />
+        </div>
+        <div className="lantern-decoration hidden sm:block" style={{ right: '3%', top: '25%' }}>
+          <div className="lantern-glow" />
+        </div>
+
+        {/* Dock posts */}
+        <div className="dock-post hidden sm:block" style={{ left: '8%', bottom: '5%' }} />
+        <div className="dock-post hidden sm:block" style={{ right: '10%', bottom: '5%' }} />
+
+        {/* Rope coils */}
+        <div className="rope-coil-decoration hidden sm:block" style={{ left: '15%', bottom: '8%' }} />
+        <div className="rope-coil-decoration hidden sm:block" style={{ right: '18%', bottom: '10%' }} />
+
+        {/* Seagulls flying */}
+        <div className="seagull-decoration hidden sm:block" style={{ left: '20%', top: '8%' }} />
+        <div className="seagull-decoration hidden sm:block" style={{ right: '25%', top: '12%', animationDelay: '3s' }} />
+        <div className="seagull-decoration hidden sm:block" style={{ left: '40%', top: '5%', animationDelay: '5s' }} />
+
+        {/* Nautical flags bunting */}
+        <div className="nautical-flags hidden sm:block">
+          <div className="flag" />
+          <div className="flag" />
+          <div className="flag" />
+          <div className="flag" />
+          <div className="flag" />
+          <div className="flag" />
+        </div>
+
+        {/* Compass rose */}
+        <div className="compass-rose hidden sm:block" style={{ right: '8%', bottom: '30%' }} />
+
+        {/* Mooring rope */}
+        <div className="mooring-rope hidden sm:block" />
+
         {portPlayers.length > 0 && (
           <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-20 flex flex-wrap gap-2">
             {portPlayers.map((player) => {
