@@ -505,6 +505,19 @@ export const DEPTH_3_FISH: FishCard[] = [
     quality: 'fair'
   },
   {
+    id: 'FISH-D3-WHALE-014',
+    name: 'Whale of Rocabarraigh',
+    depth: 3,
+    size: 'large',
+    value: 0,
+    baseValue: 0,
+    difficulty: 5,
+    abilities: ['all_discard_item', 'auto_discard', 'free_action'],
+    tags: ['large', 'mammal', 'event', 'dangerous'],
+    description: 'The whale does not like to be found. Its rage upends the sea. All players discard one item.',
+    quality: 'foul'
+  },
+  {
     id: 'FISH-D3-LEVIATHAN-002',
     name: 'Deep Leviathan',
     depth: 3,

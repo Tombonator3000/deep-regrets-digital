@@ -29,6 +29,7 @@ import voidOrca from '@/assets/fish/void-orca.png';
 import doomOarfish from '@/assets/fish/doom-oarfish.png';
 import cursedBarracuda from '@/assets/fish/cursed-barracuda.png';
 import stripedMarlin from '@/assets/fish/striped-marlin.png';
+import whaleOfRocabarraigh from '@/assets/fish/whale-of-rocabarraigh.png';
 
 // Map fish IDs to their illustration images
 export const FISH_IMAGE_MAP: Record<string, string> = {
@@ -86,6 +87,7 @@ export const FISH_IMAGE_MAP: Record<string, string> = {
   'FISH-D3-SQUID-006': colossalSquid,
   'FISH-D3-SERPENT-008': seaSerpent,
   'FISH-D3-WHALE-007': ghostWhale,
+  'FISH-D3-WHALE-014': whaleOfRocabarraigh,
   'FISH-D3-LEVIATHAN-002': deepLeviathan,
   'FISH-D3-DRAGON-013': abyssalDragon,
 };
