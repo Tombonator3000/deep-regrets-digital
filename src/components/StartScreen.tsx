@@ -186,13 +186,13 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
         </div>
       )}
 
-      {/* Main content */}
-      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-0 overflow-y-auto">
-        <div className="flex flex-col items-center gap-8 my-auto">
-          {/* Fancy animated title */}
-          <div className="text-center space-y-3 animate-fade-in">
+      {/* Main content - optimized for no-scroll, responsive layout */}
+      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex flex-col justify-center overflow-hidden">
+        <div className="flex flex-col items-center gap-2 sm:gap-4 lg:gap-6">
+          {/* Compact animated title */}
+          <div className="text-center space-y-1 sm:space-y-2 animate-fade-in">
             <div className="relative inline-block">
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight menu-title">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight menu-title leading-none">
                 <span className="block text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 via-cyan-400 to-cyan-600 drop-shadow-[0_0_25px_rgba(34,211,238,0.4)] animate-pulse-slow">
                   DEEP
                 </span>
@@ -200,30 +200,30 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                   REGRETS
                 </span>
               </h1>
-              <div className="absolute -top-4 -left-8 text-cyan-400/30 animate-float-slow">
-                <Anchor className="w-8 h-8" />
+              <div className="absolute -top-2 sm:-top-4 -left-6 sm:-left-8 text-cyan-400/30 animate-float-slow">
+                <Anchor className="w-5 h-5 sm:w-8 sm:h-8" />
               </div>
-              <div className="absolute -bottom-2 -right-6 text-teal-400/30 animate-float-slow" style={{ animationDelay: '1s' }}>
-                <Fish className="w-6 h-6" />
+              <div className="absolute -bottom-1 sm:-bottom-2 -right-4 sm:-right-6 text-teal-400/30 animate-float-slow" style={{ animationDelay: '1s' }}>
+                <Fish className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
             </div>
-            <p className="text-lg md:text-xl text-cyan-200/80 italic font-light tracking-wide">
+            <p className="text-sm sm:text-base md:text-lg text-cyan-200/80 italic font-light tracking-wide">
               {t('startScreen.subtitle')}
             </p>
-            <p className="text-sm text-foreground/60 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-foreground/60 max-w-md mx-auto hidden sm:block">
               {t('startScreen.description')}
             </p>
           </div>
 
-          {/* Menu and game setup */}
-          <div className="flex flex-col gap-6 w-full max-w-md">
+          {/* Menu and game setup - compact layout */}
+          <div className="flex flex-col gap-2 sm:gap-3 w-full max-w-md">
             <nav aria-label="Start screen menu" className="w-full">
-              <ul className="flex flex-col items-stretch gap-3">
+              <ul className="flex flex-col items-stretch gap-2">
                 <li className="menu-item" style={{ animationDelay: '0.1s' }}>
                   <Button
                     type="button"
                     size="lg"
-                    className="menu-button-primary w-full justify-center text-xl font-bold py-6 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    className="menu-button-primary w-full justify-center text-base sm:text-lg md:text-xl font-bold py-3 sm:py-4 md:py-5 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                     onClick={() => onStartGame(totalPlayers, { humanPlayers, aiPlayers, aiDifficulty, aiSpeed })}
                   >
                     {t('startScreen.newGame')}
@@ -234,7 +234,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="menu-button-secondary w-full justify-center text-lg py-5 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    className="menu-button-secondary w-full justify-center text-sm sm:text-base md:text-lg py-2.5 sm:py-3 md:py-4 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                     onClick={() => setIsOptionsOpen(true)}
                   >
                     {t('startScreen.options')}
@@ -245,7 +245,7 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
                     type="button"
                     variant="ghost"
                     size="lg"
-                    className="menu-button-tertiary w-full justify-center text-lg py-5 rounded-xl hover:bg-cyan-950/30 text-cyan-200/70 hover:text-cyan-100 transition-all duration-300"
+                    className="menu-button-tertiary w-full justify-center text-sm sm:text-base md:text-lg py-2 sm:py-3 rounded-xl hover:bg-cyan-950/30 text-cyan-200/70 hover:text-cyan-100 transition-all duration-300"
                     onClick={() => setIsHelpOpen(true)}
                   >
                     {t('startScreen.howToPlay')}
@@ -254,121 +254,118 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
               </ul>
             </nav>
 
-            <div className="card-game w-full p-5 space-y-4 backdrop-blur-sm bg-card/80 border-cyan-500/20 menu-item" style={{ animationDelay: '0.4s' }}>
+            <div className="card-game w-full p-3 sm:p-4 space-y-2 sm:space-y-3 backdrop-blur-sm bg-card/80 border-cyan-500/20 menu-item" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-sm sm:text-base font-semibold text-card-foreground">{t('startScreen.gameSetup')}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {totalPlayers} {totalPlayers === 1 ? t('startScreen.player') : t('startScreen.players')} {t('startScreen.playersTotal').split(' ').slice(-1)[0]}
                 </p>
               </div>
 
-              {/* Human Players */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/80">{t('startScreen.humanPlayers')}</label>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((count) => (
-                    <Button
-                      key={count}
-                      variant={humanPlayers === count ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setHumanPlayers(count);
-                        if (count + aiPlayers > 5) {
-                          setAiPlayers(5 - count);
-                        }
-                      }}
-                      className={`w-10 h-10 ${
-                        humanPlayers === count
-                          ? 'btn-ocean'
-                          : 'border-primary/30 hover:border-primary'
-                      }`}
-                    >
-                      {count}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Opponents */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiOpponents')}</label>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {[0, 1, 2, 3, 4].filter(count => count <= maxAiPlayers).map((count) => (
-                    <Button
-                      key={count}
-                      variant={aiPlayers === count ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setAiPlayers(count)}
-                      className={`w-10 h-10 ${
-                        aiPlayers === count
-                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                          : 'border-purple-400/30 hover:border-purple-400'
-                      }`}
-                    >
-                      {count}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Difficulty */}
-              {aiPlayers > 0 && (
+              {/* Human Players and AI Opponents in a row on larger screens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                {/* Human Players */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiDifficulty')}</label>
-                  <div className="flex justify-center gap-2">
-                    {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                  <label className="text-xs sm:text-sm font-medium text-foreground/80">{t('startScreen.humanPlayers')}</label>
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {[1, 2, 3, 4, 5].map((count) => (
                       <Button
-                        key={diff}
-                        variant={aiDifficulty === diff ? "default" : "outline"}
+                        key={count}
+                        variant={humanPlayers === count ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setAiDifficulty(diff)}
-                        className={`px-3 h-8 ${
-                          aiDifficulty === diff
-                            ? diff === 'easy' ? 'bg-green-600 hover:bg-green-700' :
-                              diff === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                              'bg-red-600 hover:bg-red-700'
+                        onClick={() => {
+                          setHumanPlayers(count);
+                          if (count + aiPlayers > 5) {
+                            setAiPlayers(5 - count);
+                          }
+                        }}
+                        className={`w-8 h-8 sm:w-9 sm:h-9 text-xs sm:text-sm ${
+                          humanPlayers === count
+                            ? 'btn-ocean'
                             : 'border-primary/30 hover:border-primary'
                         }`}
                       >
-                        {t(`startScreen.${diff}`)}
+                        {count}
                       </Button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* AI Speed */}
-              {aiPlayers > 0 && (
+                {/* AI Opponents */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-foreground/80">{t('startScreen.aiSpeed')}</label>
-                  <div className="flex justify-center gap-2">
-                    {(['slow', 'normal', 'fast'] as const).map((speed) => (
+                  <label className="text-xs sm:text-sm font-medium text-foreground/80">{t('startScreen.aiOpponents')}</label>
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {[0, 1, 2, 3, 4].filter(count => count <= maxAiPlayers).map((count) => (
                       <Button
-                        key={speed}
-                        variant={aiSpeed === speed ? "default" : "outline"}
+                        key={count}
+                        variant={aiPlayers === count ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setAiSpeed(speed)}
-                        className={`px-3 h-8 ${
-                          aiSpeed === speed
-                            ? speed === 'fast'
-                              ? 'bg-blue-600 hover:bg-blue-700'
-                              : speed === 'normal'
-                                ? 'bg-primary hover:bg-primary/90'
-                                : 'bg-slate-600 hover:bg-slate-700'
-                            : 'border-primary/30 hover:border-primary'
+                        onClick={() => setAiPlayers(count)}
+                        className={`w-8 h-8 sm:w-9 sm:h-9 text-xs sm:text-sm ${
+                          aiPlayers === count
+                            ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                            : 'border-purple-400/30 hover:border-purple-400'
                         }`}
                       >
-                        {t(`startScreen.${speed}`)}
+                        {count}
                       </Button>
                     ))}
                   </div>
-                  <p className="text-xs text-center text-muted-foreground">
-                    {aiSpeed === 'fast'
-                      ? t('startScreen.aiSpeedFast')
-                      : aiSpeed === 'slow'
-                        ? t('startScreen.aiSpeedSlow')
-                        : t('startScreen.aiSpeedNormal')}
-                  </p>
+                </div>
+              </div>
+
+              {/* AI Difficulty and Speed in a row when AI is enabled */}
+              {aiPlayers > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  {/* AI Difficulty */}
+                  <div className="space-y-1">
+                    <label className="text-xs sm:text-sm font-medium text-foreground/80">{t('startScreen.aiDifficulty')}</label>
+                    <div className="flex justify-center gap-1">
+                      {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                        <Button
+                          key={diff}
+                          variant={aiDifficulty === diff ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setAiDifficulty(diff)}
+                          className={`px-2 sm:px-3 h-7 sm:h-8 text-xs ${
+                            aiDifficulty === diff
+                              ? diff === 'easy' ? 'bg-green-600 hover:bg-green-700' :
+                                diff === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                                'bg-red-600 hover:bg-red-700'
+                              : 'border-primary/30 hover:border-primary'
+                          }`}
+                        >
+                          {t(`startScreen.${diff}`)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI Speed */}
+                  <div className="space-y-1">
+                    <label className="text-xs sm:text-sm font-medium text-foreground/80">{t('startScreen.aiSpeed')}</label>
+                    <div className="flex justify-center gap-1">
+                      {(['slow', 'normal', 'fast'] as const).map((speed) => (
+                        <Button
+                          key={speed}
+                          variant={aiSpeed === speed ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setAiSpeed(speed)}
+                          className={`px-2 sm:px-3 h-7 sm:h-8 text-xs ${
+                            aiSpeed === speed
+                              ? speed === 'fast'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : speed === 'normal'
+                                  ? 'bg-primary hover:bg-primary/90'
+                                  : 'bg-slate-600 hover:bg-slate-700'
+                              : 'border-primary/30 hover:border-primary'
+                          }`}
+                        >
+                          {t(`startScreen.${speed}`)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
