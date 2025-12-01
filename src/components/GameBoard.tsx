@@ -327,7 +327,6 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
             </div>
             <ActionPanel
               gameState={gameState}
-              selectedShoal={selectedShoal}
               onAction={onAction}
             />
             {/* Show madness tracker and day tracker on mobile */}

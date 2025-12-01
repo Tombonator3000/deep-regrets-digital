@@ -1,7 +1,6 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { FishingActions } from './FishingActions';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,12 +23,10 @@ import {
   Anchor,
   Fish,
   HelpCircle,
-  Lightbulb,
   RefreshCw,
   Sunrise,
   Waves
 } from 'lucide-react';
-import { FishingWizard, getFishingStep } from './FishingWizard';
 import { LastToPassWarning } from './LastToPassWarning';
 import { DeclarationChoice } from './DeclarationChoice';
 import { CanOfWormsStatus } from './CanOfWormsPeek';
@@ -39,7 +36,6 @@ import { PassingReward } from './PassingReward';
 
 interface ActionPanelProps {
   gameState: GameState;
-  selectedShoal: {depth: number, shoal: number} | null;
   onAction: (action: any) => void;
 }
 
@@ -96,7 +92,7 @@ const phaseGuidance: Record<string, { title: string; description: string; icon: 
 // Auto-advance timer duration in milliseconds
 const AUTO_ADVANCE_DELAY = 2000;
 
-export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelProps) => {
+export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
 
@@ -115,23 +111,6 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
   const playerWithPendingReward = gameState.pendingPassingReward
     ? gameState.players.find(p => p.id === gameState.pendingPassingReward?.playerId)
     : null;
-
-  // Calculate fishing step for the wizard
-  const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
-  const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
-  const revealedFish = useMemo(() => {
-    if (!selectedShoal || !isShoalRevealed) return null;
-    const shoalFish = gameState.sea.shoals[selectedShoal.depth]?.[selectedShoal.shoal];
-    return shoalFish?.[0] || null;
-  }, [selectedShoal, isShoalRevealed, gameState.sea.shoals]);
-
-  const fishingStep = getFishingStep(
-    selectedShoal,
-    isShoalRevealed,
-    revealedFish,
-    currentPlayer.currentDepth,
-    revealedFish?.depth
-  );
 
   // Check Can of Worms status - uses canOfWormsFaceUp boolean
   const hasCanOfWorms = currentPlayer.canOfWormsFaceUp ?? false;
@@ -358,20 +337,6 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
                 </div>
               </Card>
             )}
-            {/* Fishing Wizard - shows step progress when at sea */}
-            {currentPlayer.location === 'sea' && selectedShoal && (
-              <FishingWizard
-                currentStep={fishingStep}
-                canDescend={revealedFish ? revealedFish.depth > currentPlayer.currentDepth : false}
-                hasTriggerAbility={revealedFish?.abilities?.some(a => a.includes('reveal')) || false}
-              />
-            )}
-            <FishingActions
-              gameState={gameState}
-              currentPlayer={currentPlayer}
-              selectedShoal={selectedShoal}
-              onAction={onAction}
-            />
           </div>
         )}
       </div>
