@@ -64,6 +64,7 @@ export interface Player {
   character: string;
   location: Location;
   currentDepth: Depth;
+  currentShoal?: number; // Which shoal the player last interacted with (0, 1, or 2)
   freshDice: number[];
   spentDice: number[];
   tackleDice: string[];

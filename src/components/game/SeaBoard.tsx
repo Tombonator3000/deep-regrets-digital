@@ -322,9 +322,10 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                     {canAscend && <ArrowUp className="h-3 w-3 text-primary" />}
                   </div>
 
-                  {playersAtDepth.length > 0 && (
+                  {/* Show players without a specific shoal position in the depth header */}
+                  {playersAtDepth.filter(p => p.currentShoal === undefined).length > 0 && (
                     <div className="pointer-events-none absolute top-0 left-16 right-1 z-20 flex flex-wrap items-center gap-1 px-1 pt-1">
-                      {playersAtDepth.map((player) => {
+                      {playersAtDepth.filter(p => p.currentShoal === undefined).map((player) => {
                         const playerIndex = gameState.players.findIndex((p) => p.id === player.id);
                         const isCurrentTurn = playerIndex === gameState.currentPlayerIndex;
                         const color = playerColors[player.id] ?? 'primary';
@@ -389,6 +390,11 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                       const shoalKey = `${depth}-${shoalIndex}`;
                       const isRevealed = gameState.sea.revealedShoals?.[shoalKey] ?? false;
                       const fishCount = shoal.length;
+
+                      // Get players at this specific shoal
+                      const playersAtShoal = playersAtDepth.filter(
+                        (p) => p.currentShoal === shoalIndex
+                      );
 
                       return (
                         <div
@@ -456,6 +462,42 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                                 <Badge className="bg-slate-700/90 text-white/90 text-[9px] px-1 py-0 min-w-[1rem] text-center font-bold">
                                   {fishCount}
                                 </Badge>
+                              </div>
+                            )}
+
+                            {/* Players at this shoal */}
+                            {playersAtShoal.length > 0 && (
+                              <div className="absolute bottom-0.5 left-0.5 z-20 flex flex-wrap gap-0.5 max-w-[90%]">
+                                {playersAtShoal.map((player) => {
+                                  const playerIdx = gameState.players.findIndex((p) => p.id === player.id);
+                                  const isCurrentTurn = playerIdx === gameState.currentPlayerIndex;
+                                  const color = playerColors[player.id] ?? 'primary';
+
+                                  return (
+                                    <div
+                                      key={player.id}
+                                      className={`flex items-center gap-0.5 rounded-full border bg-slate-900/90 px-1 py-0.5 shadow-sm transition-all ${
+                                        isCurrentTurn
+                                          ? 'border-primary/60 ring-1 ring-primary/40 shadow-md shadow-primary/30'
+                                          : 'border-white/20'
+                                      }`}
+                                      title={`${player.name}${player.isAI ? ' (AI)' : ''}`}
+                                    >
+                                      <BoatToken
+                                        size="sm"
+                                        color={color}
+                                        animated
+                                        highlight={isCurrentTurn}
+                                        className={isCurrentTurn ? 'animate-boat-bob-active' : 'animate-boat-bob'}
+                                      />
+                                      <span className={`text-[8px] sm:text-[9px] font-semibold leading-none truncate max-w-[40px] ${
+                                        isCurrentTurn ? 'text-primary-glow' : 'text-white/90'
+                                      }`}>
+                                        {player.name}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
 
