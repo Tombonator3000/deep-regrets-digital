@@ -180,8 +180,11 @@ const Index = () => {
       setTimeout(() => {
         dispatch(aiDecision.action);
 
-        // After AI action, move to next player
-        dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
+        // After AI action, move to next player (only during action phase)
+        // During declaration phase, DECLARE_LOCATION already handles player advancement
+        if (gameState.phase === 'action') {
+          dispatch({ type: 'END_TURN', playerId: 'system', payload: {} });
+        }
 
         // Clear the action display after a brief moment
         setTimeout(() => {
