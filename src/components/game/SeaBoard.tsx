@@ -276,20 +276,10 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
         {...touchHandlers}
       >
         {/* Wooden Frame Wrapper */}
-        <div className="briny-deep-frame relative h-full mx-auto w-full max-w-4xl">
-          {/* Fishing Net Decorations */}
-          <div className="fishing-net-left hidden sm:block" />
-          <div className="fishing-net-right hidden sm:block" />
-
-          {/* Rope Decorations */}
+        <div className="briny-deep-frame relative h-full mx-auto w-full max-w-4xl overflow-visible">
+          {/* Rope Decorations - Outside frame for visibility */}
           <div className="rope-decoration-top hidden sm:block" />
           <div className="rope-decoration-bottom hidden sm:block" />
-
-          {/* Decorative Elements */}
-          <div className="seaweed-decoration hidden sm:block" style={{ left: '5%' }} />
-          <div className="seaweed-decoration hidden sm:block" style={{ right: '8%' }} />
-          <div className="coral-decoration hidden sm:block" style={{ left: '15%' }} />
-          <div className="coral-decoration hidden sm:block" style={{ right: '12%' }} />
 
           {/* Inner Board Area */}
           <div
@@ -302,6 +292,28 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
           >
             {/* Underwater Caustics Effect */}
             <div className="underwater-caustics" />
+
+            {/* Fishing Net Decorations - Inside inner for proper clipping */}
+            <div className="fishing-net-left hidden sm:block" />
+            <div className="fishing-net-right hidden sm:block" />
+
+            {/* Seaweed and Coral Decorations at bottom */}
+            <div className="seaweed-decoration hidden sm:block" style={{ left: '3%', bottom: 0 }} />
+            <div className="seaweed-decoration hidden sm:block" style={{ left: '8%', bottom: 0 }} />
+            <div className="seaweed-decoration hidden sm:block" style={{ right: '5%', bottom: 0 }} />
+            <div className="seaweed-decoration hidden sm:block" style={{ right: '10%', bottom: 0 }} />
+            <div className="coral-decoration hidden sm:block" style={{ left: '12%', bottom: 0 }} />
+            <div className="coral-decoration hidden sm:block" style={{ right: '15%', bottom: 0 }} />
+            <div className="coral-decoration coral-variant hidden sm:block" style={{ left: '25%', bottom: 0 }} />
+
+            {/* Bubble effects */}
+            <div className="bubbles-container hidden sm:block" />
+
+            {/* Light rays from surface */}
+            <div className="light-rays hidden sm:block" />
+
+            {/* Underwater particles */}
+            <div className="underwater-particles hidden sm:block" />
 
             {/* Fallback gradient overlay when no background image */}
             {!brinyDeepBackground && (
