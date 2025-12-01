@@ -1471,8 +1471,22 @@ const drawRegret = (player: Player, gameState: GameState) => {
       const previousRegretCount = player.regrets.length;
       player.regrets = [...player.regrets, stolenRegret];
       recalculateMadness(player, { previousRegretCount, gameState });
+
+      // Set flag indicating regret was stolen from another player
+      gameState.lastRegretAction = {
+        type: 'stolen',
+        fromPlayerId: targetPlayer.id,
+        toPlayerId: player.id
+      };
+    } else {
+      // SAFETY: No regrets available anywhere - all regrets are distributed among players
+      // This is an edge case but per rulebook, player is lucky and gets no regret
+      console.warn('[GameEngine] Regret deck exhausted and no other players have regrets. No regret drawn.');
+      gameState.lastRegretAction = {
+        type: 'exhausted',
+        toPlayerId: player.id
+      };
     }
-    // If no other players have regrets either, no regret is drawn (all regrets are distributed)
   }
 };
 
