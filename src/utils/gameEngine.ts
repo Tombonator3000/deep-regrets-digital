@@ -399,7 +399,51 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
     throw new Error('Game state has not been initialized.');
   }
 
-  const newState = { ...state };
+  // CRITICAL: Deep copy players array and port to ensure React detects state changes
+  // Shallow copy was causing buy/sell actions to mutate original state without triggering re-renders
+  const newState: GameState = {
+    ...state,
+    players: state.players.map(p => ({
+      ...p,
+      freshDice: [...p.freshDice],
+      spentDice: [...p.spentDice],
+      tackleDice: [...p.tackleDice],
+      handFish: [...p.handFish],
+      mountedFish: [...p.mountedFish],
+      regrets: [...p.regrets],
+      supplies: [...p.supplies],
+      dinks: [...p.dinks],
+      activeEffects: [...p.activeEffects],
+      shopVisits: [...(p.shopVisits || [])]
+    })),
+    sea: {
+      ...state.sea,
+      shoals: {
+        1: state.sea.shoals[1]?.map(shoal => [...shoal]) || [],
+        2: state.sea.shoals[2]?.map(shoal => [...shoal]) || [],
+        3: state.sea.shoals[3]?.map(shoal => [...shoal]) || []
+      },
+      graveyards: {
+        1: [...(state.sea.graveyards[1] || [])],
+        2: [...(state.sea.graveyards[2] || [])],
+        3: [...(state.sea.graveyards[3] || [])]
+      },
+      revealedShoals: { ...state.sea.revealedShoals }
+    },
+    port: {
+      ...state.port,
+      shops: {
+        rods: [...state.port.shops.rods],
+        reels: [...state.port.shops.reels],
+        supplies: [...state.port.shops.supplies]
+      },
+      tackleDiceMarket: [...state.port.tackleDiceMarket],
+      tackleDiceBag: [...state.port.tackleDiceBag],
+      dinksDeck: [...state.port.dinksDeck],
+      regretsDeck: [...state.port.regretsDeck],
+      regretsDiscard: [...state.port.regretsDiscard]
+    }
+  };
   const player = newState.players.find(p => p.id === action.playerId);
   
   if (!player && action.playerId !== 'system') {

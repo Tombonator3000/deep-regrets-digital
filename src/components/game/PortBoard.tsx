@@ -40,12 +40,24 @@ interface UpgradeOptionProps {
   };
   canInteract: boolean;
   funds: number;
-  hasDiscount: boolean;
+  hasPortDiscount: boolean;
+  hasLifePreserverDiscount: boolean;
+  hasDinkDiscount: boolean;
   onConfirm: (upgradeId: string, cost: number) => void;
 }
 
-const UpgradeOption = ({ item, canInteract, funds, hasDiscount, onConfirm }: UpgradeOptionProps) => {
-  const effectiveCost = hasDiscount ? Math.max(0, item.cost - 1) : item.cost;
+const UpgradeOption = ({ item, canInteract, funds, hasPortDiscount, hasLifePreserverDiscount, hasDinkDiscount, onConfirm }: UpgradeOptionProps) => {
+  // Calculate all applicable discounts per rulebook
+  // Port discount: -$1 for 13+ regrets
+  // Life Preserver discount: -$2 (one time use)
+  // Dink discount: -$2 (from certain dink cards)
+  let totalDiscount = 0;
+  if (hasPortDiscount) totalDiscount += 1;
+  if (hasLifePreserverDiscount) totalDiscount += 2;
+  if (hasDinkDiscount) totalDiscount += 2;
+
+  const effectiveCost = Math.max(0, item.cost - totalDiscount);
+  const hasAnyDiscount = totalDiscount > 0;
 
   return (
     <Card className="card-game border border-border/60">
@@ -53,10 +65,10 @@ const UpgradeOption = ({ item, canInteract, funds, hasDiscount, onConfirm }: Upg
         <CardTitle className="text-sm font-semibold flex items-center justify-between">
           <span>{item.name}</span>
           <span className="flex items-center gap-1">
-            {hasDiscount && item.cost > 0 && (
+            {hasAnyDiscount && item.cost > 0 && (
               <span className="text-muted-foreground line-through text-xs">${item.cost}</span>
             )}
-            <span className={hasDiscount ? 'text-green-400' : 'text-primary-glow'}>${effectiveCost}</span>
+            <span className={hasAnyDiscount ? 'text-green-400' : 'text-primary-glow'}>${effectiveCost}</span>
           </span>
         </CardTitle>
       </CardHeader>
@@ -76,8 +88,8 @@ const UpgradeOption = ({ item, canInteract, funds, hasDiscount, onConfirm }: Upg
             <DialogHeader>
               <DialogTitle>Confirm Purchase</DialogTitle>
               <DialogDescription>
-                Spend <span className={hasDiscount ? 'text-green-400 font-semibold' : 'text-primary-glow font-semibold'}>${effectiveCost}</span>
-                {hasDiscount && <span className="text-green-400 text-xs ml-1">(rabatt!)</span>} to acquire the {item.name}.
+                Spend <span className={hasAnyDiscount ? 'text-green-400 font-semibold' : 'text-primary-glow font-semibold'}>${effectiveCost}</span>
+                {hasAnyDiscount && <span className="text-green-400 text-xs ml-1">(rabatt!)</span>} to acquire the {item.name}.
               </DialogDescription>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
@@ -140,13 +152,14 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
 
   const mountingSlots = Array.from({ length: currentPlayer.maxMountSlots }, (_, i) => i);
 
-  const handleBuyTackleDie = (dieId: string) => {
+  const handleBuyTackleDie = (dieId: string, effectiveCost: number) => {
     const selectedDie = TACKLE_DICE_LOOKUP[dieId];
     if (!selectedDie) {
       return;
     }
 
-    if (currentPlayer.fishbucks >= selectedDie.cost) {
+    // Use effective cost that accounts for Life Preserver discount
+    if (currentPlayer.fishbucks >= effectiveCost) {
       onAction({
         type: 'BUY_TACKLE_DICE',
         playerId: currentPlayer.id,
@@ -154,6 +167,14 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
       });
     }
   };
+
+  // Check if player has Life Preserver shop discount active
+  const hasLifePreserverDiscount = currentPlayer.activeEffects?.includes('life_preserver_shop_discount') ?? false;
+
+  // Check if player has Dink shop discount available (from dink cards with 'shop_discount' effect)
+  const hasDinkDiscount = currentPlayer.dinks?.some(dink =>
+    dink.effects?.includes('shop_discount') && dink.timing?.includes('port')
+  ) ?? false;
 
   // Get market dice with their info
   const marketDice = gameState.port.tackleDiceMarket.map(dieId => ({
@@ -168,7 +189,8 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
     orange: 'bg-orange-500 border-orange-400'
   };
 
-  const hasDiscount = hasPortDiscount(currentPlayer.regrets.length);
+  // Port discount for 13+ regrets per rulebook
+  const hasPortDiscountFlag = hasPortDiscount(currentPlayer.regrets.length);
 
   return (
     <div className={cn('flex h-full flex-col', className)}>
@@ -263,7 +285,7 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
           <div className="flex items-center gap-2">
             <CircleDollarSign className="h-4 w-4 text-primary-glow" />
             <span className="text-sm font-bold text-primary-glow">${currentPlayer.fishbucks}</span>
-            {hasDiscount && (
+            {hasPortDiscountFlag && (
               <span className="flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] text-green-400 font-medium">
                 -$1 rabatt
               </span>
@@ -577,7 +599,10 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {marketDice.map((item, index) => {
-                  const canAfford = currentPlayer.fishbucks >= item.die.cost;
+                  // Life Preserver discount applies to tackle dice (but NOT port discount)
+                  const tackleDieDiscount = hasLifePreserverDiscount ? 2 : 0;
+                  const effectiveTackleCost = Math.max(0, item.die.cost - tackleDieDiscount);
+                  const canAfford = currentPlayer.fishbucks >= effectiveTackleCost;
                   return (
                     <Dialog key={`${item.id}-${index}`}>
                       <DialogTrigger asChild>
@@ -591,7 +616,12 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
                           <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center ${tackleDieColors[item.die.color]}`}>
                             <Zap className="h-4 w-4 text-white" />
                           </div>
-                          <span className="text-xs text-fishbuck font-semibold">${item.die.cost}</span>
+                          <span className="text-xs text-fishbuck font-semibold">
+                            {hasLifePreserverDiscount && item.die.cost > 0 && (
+                              <span className="text-muted-foreground line-through mr-1">${item.die.cost}</span>
+                            )}
+                            <span className={hasLifePreserverDiscount ? 'text-green-400' : ''}>${effectiveTackleCost}</span>
+                          </span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
@@ -607,16 +637,23 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
                           </div>
                           <div>
                             <p className="font-semibold">{item.die.name}</p>
-                            <p className="text-sm text-muted-foreground">Koster <span className="text-primary-glow font-semibold">${item.die.cost}</span></p>
+                            <p className="text-sm text-muted-foreground">
+                              Koster{' '}
+                              {hasLifePreserverDiscount && item.die.cost > 0 && (
+                                <span className="text-muted-foreground line-through mr-1">${item.die.cost}</span>
+                              )}
+                              <span className={hasLifePreserverDiscount ? 'text-green-400 font-semibold' : 'text-primary-glow font-semibold'}>${effectiveTackleCost}</span>
+                              {hasLifePreserverDiscount && <span className="text-green-400 text-xs ml-1">(Life Preserver)</span>}
+                            </p>
                           </div>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Gjenstående: <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - item.die.cost, 0)}</span>
+                          Gjenstående: <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - effectiveTackleCost, 0)}</span>
                         </p>
                         <DialogFooter className="pt-4">
                           <DialogClose asChild><Button variant="outline">Avbryt</Button></DialogClose>
                           <DialogClose asChild>
-                            <Button className="btn-ocean" disabled={!canInteract || !canAfford} onClick={() => handleBuyTackleDie(item.id)}>
+                            <Button className="btn-ocean" disabled={!canInteract || !canAfford} onClick={() => handleBuyTackleDie(item.id, effectiveTackleCost)}>
                               Bekreft Kjøp
                             </Button>
                           </DialogClose>
@@ -645,7 +682,7 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.rods.length > 0 ? (
                   gameState.port.shops.rods.map((rod) => (
-                    <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={rod.id} item={rod} canInteract={canInteract} funds={currentPlayer.fishbucks} hasPortDiscount={hasPortDiscountFlag} hasLifePreserverDiscount={hasLifePreserverDiscount} hasDinkDiscount={hasDinkDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
@@ -667,7 +704,7 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.reels.length > 0 ? (
                   gameState.port.shops.reels.map((reel) => (
-                    <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={reel.id} item={reel} canInteract={canInteract} funds={currentPlayer.fishbucks} hasPortDiscount={hasPortDiscountFlag} hasLifePreserverDiscount={hasLifePreserverDiscount} hasDinkDiscount={hasDinkDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
@@ -689,7 +726,7 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
               <div className="grid grid-cols-2 gap-2">
                 {gameState.port.shops.supplies.length > 0 ? (
                   gameState.port.shops.supplies.map((supply) => (
-                    <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} hasDiscount={hasDiscount} onConfirm={handleBuyUpgrade} />
+                    <UpgradeOption key={supply.id} item={supply} canInteract={canInteract} funds={currentPlayer.fishbucks} hasPortDiscount={hasPortDiscountFlag} hasLifePreserverDiscount={hasLifePreserverDiscount} hasDinkDiscount={hasDinkDiscount} onConfirm={handleBuyUpgrade} />
                   ))
                 ) : (
                   <p className="col-span-2 text-sm text-muted-foreground text-center py-4">Sold out!</p>
