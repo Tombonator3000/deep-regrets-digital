@@ -2,9 +2,17 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { calculatePlayerScoreBreakdown } from "@/utils/gameEngine";
-import { GameState } from "@/types/game";
-import { Trophy, RefreshCw, Home, Anchor } from "lucide-react";
+import { GameState, RegretCard as RegretCardType, Player } from "@/types/game";
+import { Trophy, RefreshCw, Home, Anchor, Skull, ChevronDown, ChevronUp } from "lucide-react";
 import { ConfettiBurst, AnimatedCounter } from "./ParticleEffects";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { RegretCard } from "./RegretCard";
 
 interface EndGameScreenProps {
   gameState: GameState;
@@ -14,6 +22,8 @@ interface EndGameScreenProps {
 
 export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGameScreenProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
+  const [expandedRegrets, setExpandedRegrets] = useState<string | null>(null);
+  const [selectedRegret, setSelectedRegret] = useState<{ regret: RegretCardType; player: Player } | null>(null);
 
   const finalScores = gameState.players.map(player => ({
     player,
@@ -33,10 +43,10 @@ export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGa
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 overflow-y-auto">
       {/* Winner confetti celebration */}
       <ConfettiBurst active={showConfetti} />
-      <div className="card-game w-full max-w-3xl space-y-5 p-6 sm:p-8 border border-primary/30 shadow-xl shadow-primary/20">
+      <div className="card-game w-full max-w-3xl space-y-5 p-6 sm:p-8 border border-primary/30 shadow-xl shadow-primary/20 my-4 max-h-[95vh] overflow-y-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-primary">Expedition Complete</p>
@@ -130,6 +140,81 @@ export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGa
           </div>
         </div>
 
+        {/* Regrets Section - The funny part! */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Skull className="h-5 w-5 text-destructive" />
+              Regrets
+            </h3>
+            <p className="text-xs text-muted-foreground">Klikk for å se detaljene</p>
+          </div>
+          <div className="space-y-2">
+            {sortedFinalScores.map(({ player, breakdown }) => {
+              const isExpanded = expandedRegrets === player.id;
+              const totalRegretValue = player.regrets.reduce((sum, r) => sum + r.value, 0);
+
+              return (
+                <div
+                  key={`regrets-${player.id}`}
+                  className="rounded-lg border border-destructive/30 bg-gradient-to-b from-slate-900/80 to-red-950/20 overflow-hidden"
+                >
+                  <button
+                    onClick={() => setExpandedRegrets(isExpanded ? null : player.id)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-destructive/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground">{player.name}</span>
+                      {player.isAI && (
+                        <Badge variant="outline" className="border-purple-400/60 text-purple-200 text-xs">AI</Badge>
+                      )}
+                      <Badge variant="destructive" className="text-xs">
+                        {player.regrets.length} {player.regrets.length === 1 ? 'regret' : 'regrets'}
+                      </Badge>
+                      {totalRegretValue > 0 && (
+                        <span className="text-xs text-destructive">(-{totalRegretValue} poeng)</span>
+                      )}
+                    </div>
+                    {player.regrets.length > 0 && (
+                      isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )
+                    )}
+                  </button>
+
+                  {isExpanded && player.regrets.length > 0 && (
+                    <div className="px-3 pb-3 border-t border-destructive/20">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-3">
+                        {player.regrets.map((regret, index) => (
+                          <div
+                            key={`${regret.id}-${index}`}
+                            onClick={() => setSelectedRegret({ regret, player })}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg bg-black/30 border border-white/10 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors"
+                          >
+                            <RegretCard regret={regret} faceUp={true} size="sm" />
+                            <div className="text-[10px] text-center text-white/70 line-clamp-2">{regret.frontText}</div>
+                            <div className="text-xs font-bold text-destructive">-{regret.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isExpanded && player.regrets.length === 0 && (
+                    <div className="px-3 pb-3 border-t border-destructive/20 pt-3">
+                      <p className="text-center text-sm text-muted-foreground italic">
+                        Ingen regrets! En ren samvittighet... eller bare flaks?
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Button
             onClick={onRestartGame}
@@ -148,6 +233,33 @@ export const EndGameScreen = ({ gameState, onRestartGame, onBackToStart }: EndGa
           </Button>
         </div>
       </div>
+
+      {/* Regret Detail Dialog */}
+      <Dialog open={selectedRegret !== null} onOpenChange={(open) => !open && setSelectedRegret(null)}>
+        <DialogContent className="sm:max-w-md bg-gradient-to-b from-slate-900 to-red-950/80 border-destructive/30">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-destructive flex items-center gap-2">
+              <Skull className="h-5 w-5" />
+              {selectedRegret?.player.name}'s Regret
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRegret && (
+            <div className="space-y-4 pt-2">
+              <div className="flex justify-center">
+                <RegretCard regret={selectedRegret.regret} faceUp={true} size="lg" />
+              </div>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                <p className="text-base text-white/90 italic text-center">
+                  "{selectedRegret.regret.frontText}"
+                </p>
+              </div>
+              <DialogDescription className="text-sm text-muted-foreground text-center">
+                Denne regret ga <span className="text-destructive font-bold">-{selectedRegret.regret.value}</span> poeng.
+              </DialogDescription>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
