@@ -170,131 +170,115 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
 
   const hasDiscount = hasPortDiscount(currentPlayer.regrets.length);
 
-  const summaryHeader = (
-    <div className="flex items-center justify-between rounded border border-border/60 bg-background/60 px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">
-      <span>
-        Funds: <span className="text-primary-glow font-semibold">${currentPlayer.fishbucks}</span>
-      </span>
-      <div className="flex items-center gap-3">
-        {hasDiscount && (
-          <span className="flex items-center gap-1 rounded bg-green-500/20 px-2 py-0.5 text-green-400">
-            <CircleDollarSign className="h-3 w-3" />
-            -$1 rabatt
-          </span>
-        )}
-        <span>
-          Madness: <span className="text-destructive font-semibold">{currentPlayer.madnessLevel}</span>
-        </span>
-      </div>
-    </div>
-  );
-
   return (
-    <div className={cn('flex h-full flex-col space-y-6', className)}>
-      {summaryHeader}
+    <div className={cn('flex h-full flex-col', className)}>
+      {/* Hero Section with Port Image as Background */}
+      <div className="relative mb-4">
+        {/* Port Background Image */}
+        <div className="relative h-32 sm:h-40 overflow-hidden rounded-t-lg">
+          <img
+            src={harborPortBoard}
+            alt="Harbor Port board"
+            className="h-full w-full object-cover object-center"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/30 to-slate-950/95" />
 
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-slate-950/60">
-        <img
-          src={harborPortBoard}
-          alt="Harbor Port board"
-          className="h-48 w-full object-cover object-center sm:h-56"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-slate-950/40 to-slate-950/80" />
+          {/* Title Overlay */}
+          <div className="absolute top-3 left-4 sm:top-4 sm:left-6 z-20">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary-glow drop-shadow-lg">Havnhandlinger</h2>
+            <p className="text-[10px] sm:text-xs text-white/70">Trygge farvann for handel og hvile</p>
+          </div>
 
-        {/* Port Decorations - Hidden on mobile */}
-        {/* Port ambient lighting */}
-        <div className="port-ambient-light hidden sm:block" />
+          {/* Port Decorations - Hidden on mobile */}
+          <div className="port-ambient-light hidden sm:block" />
+          <div className="water-reflection hidden sm:block" />
+          <div className="ship-wheel-decoration hidden sm:block" style={{ left: '5%', top: '10%' }} />
+          <div className="ship-wheel-decoration hidden sm:block" style={{ right: '5%', top: '15%', opacity: 0.4 }} />
+          <div className="lantern-decoration hidden sm:block" style={{ left: '2%', top: '30%' }}>
+            <div className="lantern-glow" />
+          </div>
+          <div className="lantern-decoration hidden sm:block" style={{ right: '3%', top: '25%' }}>
+            <div className="lantern-glow" />
+          </div>
+          <div className="seagull-decoration hidden sm:block" style={{ left: '20%', top: '8%' }} />
+          <div className="seagull-decoration hidden sm:block" style={{ right: '25%', top: '12%', animationDelay: '3s' }} />
+          <div className="nautical-flags hidden sm:block">
+            <div className="flag" />
+            <div className="flag" />
+            <div className="flag" />
+            <div className="flag" />
+            <div className="flag" />
+            <div className="flag" />
+          </div>
 
-        {/* Water reflection at bottom */}
-        <div className="water-reflection hidden sm:block" />
+          {/* Players at Port - Positioned at bottom left */}
+          {portPlayers.length > 0 && (
+            <div className="pointer-events-none absolute bottom-2 left-2 z-20 flex flex-wrap gap-1.5">
+              {portPlayers.map((player) => {
+                const playerIndex = gameState.players.findIndex((p) => p.id === player.id);
+                const isCurrentTurn = playerIndex === gameState.currentPlayerIndex;
+                const color = playerColors[player.id] ?? 'primary';
 
-        {/* Ship wheel decorations */}
-        <div className="ship-wheel-decoration hidden sm:block" style={{ left: '5%', top: '10%' }} />
-        <div className="ship-wheel-decoration hidden sm:block" style={{ right: '5%', top: '15%', opacity: 0.4 }} />
-
-        {/* Nautical lanterns */}
-        <div className="lantern-decoration hidden sm:block" style={{ left: '2%', top: '30%' }}>
-          <div className="lantern-glow" />
-        </div>
-        <div className="lantern-decoration hidden sm:block" style={{ right: '3%', top: '25%' }}>
-          <div className="lantern-glow" />
-        </div>
-
-        {/* Dock posts */}
-        <div className="dock-post hidden sm:block" style={{ left: '8%', bottom: '5%' }} />
-        <div className="dock-post hidden sm:block" style={{ right: '10%', bottom: '5%' }} />
-
-        {/* Rope coils */}
-        <div className="rope-coil-decoration hidden sm:block" style={{ left: '15%', bottom: '8%' }} />
-        <div className="rope-coil-decoration hidden sm:block" style={{ right: '18%', bottom: '10%' }} />
-
-        {/* Seagulls flying */}
-        <div className="seagull-decoration hidden sm:block" style={{ left: '20%', top: '8%' }} />
-        <div className="seagull-decoration hidden sm:block" style={{ right: '25%', top: '12%', animationDelay: '3s' }} />
-        <div className="seagull-decoration hidden sm:block" style={{ left: '40%', top: '5%', animationDelay: '5s' }} />
-
-        {/* Nautical flags bunting */}
-        <div className="nautical-flags hidden sm:block">
-          <div className="flag" />
-          <div className="flag" />
-          <div className="flag" />
-          <div className="flag" />
-          <div className="flag" />
-          <div className="flag" />
-        </div>
-
-        {/* Compass rose */}
-        <div className="compass-rose hidden sm:block" style={{ right: '8%', bottom: '30%' }} />
-
-        {/* Mooring rope */}
-        <div className="mooring-rope hidden sm:block" />
-
-        {portPlayers.length > 0 && (
-          <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-20 flex flex-wrap gap-2">
-            {portPlayers.map((player) => {
-              const playerIndex = gameState.players.findIndex((p) => p.id === player.id);
-              const isCurrentTurn = playerIndex === gameState.currentPlayerIndex;
-              const color = playerColors[player.id] ?? 'primary';
-
-              return (
-                <div
-                  key={player.id}
-                  className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/15 bg-slate-900/85 px-2 py-1 shadow-sm"
-                >
-                  <BoatToken
-                    size="sm"
-                    color={color}
-                    animated
-                    highlight={isCurrentTurn}
-                    className={isCurrentTurn ? 'animate-[boat-bob_1.6s_ease-in-out_infinite]' : ''}
-                  />
-                  <div className="leading-tight">
-                    <div className="text-xs font-semibold text-white">{player.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{player.isAI ? 'AI' : 'Spiller'}</div>
+                return (
+                  <div
+                    key={player.id}
+                    className="pointer-events-auto flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-900/90 px-2 py-1 shadow-sm"
+                  >
+                    <BoatToken
+                      size="sm"
+                      color={color}
+                      animated
+                      highlight={isCurrentTurn}
+                      className={isCurrentTurn ? 'animate-[boat-bob_1.6s_ease-in-out_infinite]' : ''}
+                    />
+                    <div className="leading-tight">
+                      <div className="text-[11px] font-semibold text-white">{player.name}</div>
+                      <div className="text-[9px] text-muted-foreground">{player.isAI ? 'AI' : 'Spiller'}</div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {/* Show anchor/ship when player is at port */}
-        {currentPlayer.location === 'port' && (
-          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2 rounded-lg bg-slate-900/80 px-3 py-2 backdrop-blur-sm border border-primary/30">
-            <BoatToken
-              size="sm"
-              color={playerColors[currentPlayer.id] ?? 'primary'}
-              animated
-              highlight
-            />
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-primary">{currentPlayer.name}</span>
-              <span className="text-[10px] text-muted-foreground">I havnen</span>
+                );
+              })}
             </div>
+          )}
+
+          {/* Current player indicator - Bottom right */}
+          {currentPlayer.location === 'port' && (
+            <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 rounded-md bg-slate-900/90 px-2 py-1 backdrop-blur-sm border border-primary/40">
+              <BoatToken
+                size="sm"
+                color={playerColors[currentPlayer.id] ?? 'primary'}
+                animated
+                highlight
+              />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold text-primary">{currentPlayer.name}</span>
+                <span className="text-[9px] text-muted-foreground">I havnen</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Bar */}
+        <div className="flex items-center justify-between border-t border-white/10 bg-slate-900/95 px-4 py-2 sm:px-6">
+          <div className="flex items-center gap-2">
+            <CircleDollarSign className="h-4 w-4 text-primary-glow" />
+            <span className="text-sm font-bold text-primary-glow">${currentPlayer.fishbucks}</span>
+            {hasDiscount && (
+              <span className="flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] text-green-400 font-medium">
+                -$1 rabatt
+              </span>
+            )}
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <Skull className="h-4 w-4 text-destructive" />
+            <span className="text-sm font-bold text-destructive">{currentPlayer.madnessLevel}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Madness</span>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="catch" className="space-y-4">
+      {/* Tabs Content */}
+      <Tabs defaultValue="catch" className="flex-1 space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
         <TabsList className="grid grid-cols-3 gap-2">
           <TabsTrigger value="catch" className="flex items-center gap-2">
             <FishIcon className="h-4 w-4 text-primary-glow" />

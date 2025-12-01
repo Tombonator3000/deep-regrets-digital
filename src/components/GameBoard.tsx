@@ -601,16 +601,12 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
 
       {/* Port Operations Modal */}
       <Dialog open={isPortOpen} onOpenChange={setIsPortOpen}>
-        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-4xl flex-col overflow-hidden border border-white/20 bg-background/95 p-0 backdrop-blur-xl">
-          <DialogHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
-            <div className="space-y-1">
-              <DialogTitle className="text-xl font-bold text-primary-glow sm:text-2xl">Havnhandlinger</DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground sm:text-sm">
-                Trygge farvann for handel og hvile.
-              </DialogDescription>
-            </div>
+        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-4xl flex-col overflow-hidden border border-white/20 bg-slate-950 p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Havnhandlinger</DialogTitle>
+            <DialogDescription>Port operations modal for trading and services</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+          <div className="flex-1 overflow-y-auto">
             <PortBoard
               className="h-full"
               gameState={gameState}
