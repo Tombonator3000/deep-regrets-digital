@@ -12,7 +12,7 @@ import { FishCard, GameState, Player, UpgradeCard, MAX_FISHBUCKS, ShopType } fro
 import { useToast } from '@/hooks/use-toast';
 import { calculateFishSaleValue } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
-import { TACKLE_DICE } from '@/data/tackleDice';
+import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 import { Anchor, Coins, Dice1, Heart, HelpCircle, Lightbulb, Package, ShoppingBag, Trophy } from 'lucide-react';
 
 interface PortActionsProps {
@@ -189,11 +189,16 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
 
   // Color mapping for tackle dice
   const dieColors: Record<string, string> = {
-    slate: 'bg-slate-500',
-    emerald: 'bg-emerald-500',
-    rose: 'bg-rose-500',
-    violet: 'bg-violet-500'
+    green: 'bg-green-500',
+    blue: 'bg-blue-500',
+    orange: 'bg-orange-500'
   };
+
+  // Get market dice from game state
+  const marketDice = gameState.port.tackleDiceMarket.map(dieId => ({
+    id: dieId,
+    die: TACKLE_DICE_LOOKUP[dieId]
+  })).filter(item => item.die);
 
   return (
     <TooltipProvider>
@@ -389,11 +394,36 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
           </div>
         )}
 
-        {/* Tackle Dice Shop */}
+        {/* Player's Owned Tackle Dice */}
+        {currentPlayer.tackleDice.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Dice1 className="h-4 w-4 text-red-400" />
+              <h4 className="font-medium text-red-400">Dine Tackle Dice</h4>
+            </div>
+            <div className="flex flex-wrap gap-2 p-2 rounded-lg border-2 border-red-500/40 bg-red-950/20">
+              {currentPlayer.tackleDice.map((dieId, index) => {
+                const die = TACKLE_DICE_LOOKUP[dieId];
+                if (!die) return null;
+                return (
+                  <div
+                    key={`owned-${dieId}-${index}`}
+                    className={`w-8 h-8 rounded-lg ${dieColors[die.color] || 'bg-gray-500'} flex items-center justify-center`}
+                    title={`${die.name} - ${die.description}`}
+                  >
+                    <Dice1 className="h-4 w-4 text-white" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Tackle Dice Market */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Dice1 className="h-4 w-4 text-violet-400" />
-            <h4 className="font-medium">Spesialterninger</h4>
+            <h4 className="font-medium">Tackle Dice Marked</h4>
             {hasVisitedShop('tackle_dice') && (
               <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
                 ✓ Besøkt
@@ -404,44 +434,48 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
                 <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Spesialterninger med bedre odds. Lei dem for dagen!</p>
+                <p>Spesialterninger med bedre odds. Kjøp dem til fiske!</p>
                 <p className="text-xs mt-1 text-muted-foreground">Du kan kun besøke hver butikk én gang per tur.</p>
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {TACKLE_DICE.map((die) => (
-              <Card key={die.id} className={`card-game p-2 ${hasVisitedShop('tackle_dice') ? 'opacity-50' : ''}`}>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-4 h-4 rounded ${dieColors[die.color] || 'bg-gray-500'}`} />
-                    <span className="text-sm font-medium">{die.name}</span>
+          {marketDice.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Utsolgt!</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {marketDice.map((item, index) => (
+                <Card key={`market-${item.id}-${index}`} className={`card-game p-2 ${hasVisitedShop('tackle_dice') ? 'opacity-50' : ''}`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded ${dieColors[item.die.color] || 'bg-gray-500'}`} />
+                      <span className="text-sm font-medium">{item.die.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{item.die.description}</p>
+                    <p className="text-xs">Sider: [{item.die.faces.join(', ')}]</p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => handleBuyTackleDie(item.id, item.die.cost)}
+                          disabled={currentPlayer.fishbucks < item.die.cost || hasVisitedShop('tackle_dice')}
+                          size="sm"
+                          className="w-full btn-ocean text-xs"
+                        >
+                          {hasVisitedShop('tackle_dice') ? '🔒 Besøkt' : `Kjøp ($${item.die.cost})`}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {hasVisitedShop('tackle_dice')
+                          ? 'Du har allerede besøkt denne butikken denne turen'
+                          : currentPlayer.fishbucks < item.die.cost
+                            ? `Du trenger ${item.die.cost - currentPlayer.fishbucks} Fishbucks mer`
+                            : `Kjøp denne terningen for $${item.die.cost}`}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
-                  <p className="text-xs text-muted-foreground">{die.description}</p>
-                  <p className="text-xs">Sider: [{die.faces.join(', ')}]</p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => handleBuyTackleDie(die.id, die.cost)}
-                        disabled={currentPlayer.fishbucks < die.cost || hasVisitedShop('tackle_dice')}
-                        size="sm"
-                        className="w-full btn-ocean text-xs"
-                      >
-                        {hasVisitedShop('tackle_dice') ? '🔒 Besøkt' : `Kjøp (${die.cost} FB)`}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {hasVisitedShop('tackle_dice')
-                        ? 'Du har allerede besøkt denne butikken denne turen'
-                        : currentPlayer.fishbucks < die.cost
-                          ? `Du trenger ${die.cost - currentPlayer.fishbucks} Fishbucks mer`
-                          : `Lei denne terningen for ${die.cost} Fishbucks`}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Buy Upgrades */}
