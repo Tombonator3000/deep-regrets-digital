@@ -415,6 +415,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       if (player) {
         player.location = action.payload.location;
         player.hasPassed = false;
+        // Reset shoal position when changing location
+        player.currentShoal = undefined;
       }
       break;
 
@@ -422,6 +424,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
       if (player && newState.phase === 'declaration') {
         player.location = action.payload.location;
         player.hasPassed = true; // Mark as having declared
+        // Reset shoal position when declaring location
+        player.currentShoal = undefined;
 
         if (player.location === 'port') {
           player.currentDepth = 1;
@@ -476,6 +480,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const shoalArray = newState.sea.shoals[depth]?.[shoal];
         const shoalKey = `${depth}-${shoal}`;
 
+        // Track which shoal the player is interacting with
+        player.currentShoal = shoal;
+
         // Reveal is free - just flip the top card if not already revealed
         if (shoalArray && shoalArray.length > 0 && !newState.sea.revealedShoals[shoalKey]) {
           // Mark the shoal as revealed (no die cost)
@@ -495,6 +502,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const spentDice = spendDiceForDescent(player, steps);
           if (spentDice) {
             player.currentDepth = targetDepth as Depth;
+            // Reset shoal position when changing depth
+            player.currentShoal = undefined;
           }
         }
       }
@@ -507,6 +516,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const spentDice = spendDiceForDescent(player, 1);
           if (spentDice) {
             player.currentDepth = newDepth as Depth;
+            // Reset shoal position when changing depth
+            player.currentShoal = undefined;
           }
         }
       }
@@ -515,6 +526,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
     case 'CATCH_FISH':
       if (player && player.location === 'sea') {
         const { fish, depth, shoal, diceIndices, tackleDiceIndices } = action.payload;
+
+        // Track which shoal the player is interacting with
+        player.currentShoal = shoal;
 
         // Validate that the shoal has been revealed before allowing catch
         const catchShoalKey = `${depth}-${shoal}`;
@@ -1270,6 +1284,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         player.lifeboatFlipped = true;
         player.location = 'port';
         player.currentDepth = 1;
+        // Reset shoal position when abandoning ship
+        player.currentShoal = undefined;
 
         // Make Port benefits per rulebook (p.17):
         // 1. Muster Your Courage again (reroll dice)
