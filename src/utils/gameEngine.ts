@@ -95,6 +95,8 @@ export const initializeGame = (selectedCharacters: CharacterOption[]): GameState
       supplies: [], // Starting supplies handled by character bonuses
       dinks: [],
       activeEffects: [],
+      dinkBonus: 0,
+      extraActions: 0,
       madnessLevel: 0,
       madnessOffset: 0,
       lifeboatFlipped: false,
@@ -427,6 +429,12 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         // Reset shoal position when declaring location
         player.currentShoal = undefined;
 
+        if (player.location === 'sea') {
+          // Check for Pocket Compass effect (start at Depth 2)
+          const hasStartAtDepth2 = player.dinks.some(dink => hasEffect(dink.effects, 'start_at_depth_2'));
+          player.currentDepth = hasStartAtDepth2 ? 2 : 1;
+        }
+
         if (player.location === 'port') {
           player.currentDepth = 1;
           // Make Port benefits per rulebook (p.17):
@@ -474,8 +482,8 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
 
     case 'REVEAL_FISH':
       // Per rulebook (p.11): Revealing is FREE - the cost is in the PAY step when catching
-      // However, player must have at least 1 fresh die to fish at all
-      if (player && player.location === 'sea' && player.freshDice.length > 0) {
+      // However, player must have at least 1 fresh die to fish at all (or have extra actions from Tide Reader)
+      if (player && player.location === 'sea' && (player.freshDice.length > 0 || player.extraActions > 0)) {
         const { depth, shoal } = action.payload;
         const shoalArray = newState.sea.shoals[depth]?.[shoal];
         const shoalKey = `${depth}-${shoal}`;
@@ -569,6 +577,9 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         const hasAutoCatch = playerHasEquippedEffect(player, 'auto_catch_difficulty_3');
         const isAutoCatch = hasAutoCatch && fishDifficulty <= 3 && !requiresMinimumDice;
 
+        // Tide Reader extra action - allows catching without dice if player has extra actions
+        const usingExtraAction = player.freshDice.length === 0 && player.extraActions > 0;
+
         const requestedIndices = Array.isArray(diceIndices) ? diceIndices : [];
         const uniqueValidIndices = Array.from(
           new Set(
@@ -608,18 +619,29 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           (uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length) ||
           uniqueTackleIndices.length > 0 ||
           isAutoCatch ||
-          isZeroCostFish;
-        const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0) + tackleTotal;
+          isZeroCostFish ||
+          (usingExtraAction && isZeroCostFish); // Extra action can catch zero-cost fish
+
+        // Apply Salt-Cured Worms bonus (+1 die value once)
+        const dieValueBonus = hasActiveEffect(player, '+1_die_value_once') ? 1 : 0;
+        const selectedTotal = selectedDiceValues.reduce((sum, die) => sum + die, 0) + tackleTotal + dieValueBonus;
 
         // Per rulebook (p.27): Eels/Octopuses/Kraken require spending dice equal to their printed difficulty
         const meetsMinimumDiceRequirement = !requiresMinimumDice || selectedTotal >= minimumDiceRequired;
-        const meetsDifficulty = (isZeroCostFish || isAutoCatch || (hasUsableSelection && selectedTotal >= fishDifficulty)) && meetsMinimumDiceRequirement;
+        // Extra action allows catching zero-cost fish without dice
+        const extraActionCatch = usingExtraAction && isZeroCostFish;
+        const meetsDifficulty = (isZeroCostFish || isAutoCatch || extraActionCatch || (hasUsableSelection && selectedTotal >= fishDifficulty)) && meetsMinimumDiceRequirement;
 
         if (meetsDifficulty) {
           // Remove fresh dice (immutable)
           const indexSetToRemove = new Set(uniqueValidIndices);
           player.freshDice = player.freshDice.filter((_, idx) => !indexSetToRemove.has(idx));
           player.spentDice = [...player.spentDice, ...selectedDiceValues];
+
+          // Consume extra action if used
+          if (usingExtraAction) {
+            player.extraActions = Math.max(0, player.extraActions - 1);
+          }
 
           // Per rulebook (p.17): "Tackle Dice are returned to the bag when they are spent"
           const tackleIndexSetToRemove = new Set(uniqueTackleIndices);
@@ -715,6 +737,11 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           // Reset regret reduction effect for next catch
           removeActiveEffect(player, 'regret_reduction_used');
 
+          // Consume Salt-Cured Worms bonus after use
+          if (dieValueBonus > 0) {
+            removeActiveEffect(player, '+1_die_value_once');
+          }
+
           applyMadnessAbilities(player, fish, newState);
 
           // Clear Life Preserver difficulty reduction after use
@@ -750,8 +777,12 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
           const fish = player.handFish[fishIndex];
           // Use regret count for madness-based value calculation per rulebook
           const { adjustedValue } = calculateFishSaleValue(fish, player.regrets.length);
+
+          // Apply Brass Fish Hook bonus (+1 Fishbuck when selling fish)
+          const sellBonus = player.dinks.filter(dink => hasEffect(dink.effects, 'sell_bonus_1')).length;
+
           // Per rulebook (p.17): "You cannot have more than 10$ at one time. Any additional income is lost."
-          addFishbucks(player, adjustedValue);
+          addFishbucks(player, adjustedValue + sellBonus);
           player.handFish = [
             ...player.handFish.slice(0, fishIndex),
             ...player.handFish.slice(fishIndex + 1)
@@ -1310,7 +1341,7 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
     case 'PLAY_DINK':
       // Play a DINK card from hand, triggering its effect
       if (player) {
-        const { dinkId, effect } = action.payload;
+        const { dinkId, effect, dieIndex } = action.payload;
         const dinkIndex = player.dinks.findIndex(d => d.id === dinkId);
         if (dinkIndex !== -1) {
           const dink = player.dinks[dinkIndex];
@@ -1322,12 +1353,46 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
               break;
             case 'peek_shoal_top':
               // Reveal all shoals at current depth
-              const depth = player.currentDepth;
-              const shoals = newState.sea.shoals[depth] ?? [];
+              const peekDepth = player.currentDepth;
+              const shoals = newState.sea.shoals[peekDepth] ?? [];
               shoals.forEach((_, shoalIndex) => {
-                const shoalKey = `${depth}-${shoalIndex}`;
+                const shoalKey = `${peekDepth}-${shoalIndex}`;
                 newState.sea.revealedShoals[shoalKey] = true;
               });
+              break;
+            case 'convert_one_to_six':
+              // Lucky Clamshell: Change one die to 6
+              if (typeof dieIndex === 'number' && dieIndex >= 0 && dieIndex < player.freshDice.length) {
+                player.freshDice = [
+                  ...player.freshDice.slice(0, dieIndex),
+                  6,
+                  ...player.freshDice.slice(dieIndex + 1)
+                ];
+              }
+              break;
+            case 'ready_spent_die':
+              // Coffee Thermos: Move one spent die back to fresh pool
+              if (player.spentDice.length > 0) {
+                const dieToReady = player.spentDice[player.spentDice.length - 1];
+                player.spentDice = player.spentDice.slice(0, -1);
+                player.freshDice = [...player.freshDice, dieToReady];
+              }
+              break;
+            case '+1_die_value_once':
+              // Salt-Cured Worms: Add +1 to catch total (set as active effect)
+              player.activeEffects = [...player.activeEffects, '+1_die_value_once'];
+              break;
+            case 'reroll_failed_catch':
+              // Sturdy Net: Reroll spent dice and move them back to fresh pool
+              if (player.spentDice.length > 0) {
+                let rerolledDice = rollDice(player.spentDice.length);
+                // Apply reroll 1s ability if player has it
+                if (player.rerollOnes) {
+                  rerolledDice = rerolledDice.map(value => (value === 1 ? rollDice(1)[0] : value));
+                }
+                player.freshDice = [...player.freshDice, ...rerolledDice];
+                player.spentDice = [];
+              }
               break;
             // Add more effect handlers as needed
             default:
@@ -1379,6 +1444,7 @@ export interface PlayerScoreBreakdown {
   handScore: number;
   mountedScore: number;
   fishbuckScore: number;
+  dinkBonusScore: number;
   totalScore: number;
   regretValue: number;
 }
@@ -1416,6 +1482,7 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
   const handScore = calculateHandFishScore(player);
   const mountedScore = calculateMountedFishScore(player);
   const fishbuckScore = calculateFishbuckScore(player);
+  const dinkBonusScore = player.dinkBonus ?? 0;
   const regretValue = calculatePlayerRegretValue(player);
   // Per rulebook (p.22): Score = Fish in hand + Mounted Fish + Fishbucks
   // Regret value is NOT subtracted - the penalty is only losing a mounted fish at game end
@@ -1423,7 +1490,8 @@ export const calculatePlayerScoreBreakdown = (player: Player): PlayerScoreBreakd
     handScore,
     mountedScore,
     fishbuckScore,
-    totalScore: handScore + mountedScore + fishbuckScore,
+    dinkBonusScore,
+    totalScore: handScore + mountedScore + fishbuckScore + dinkBonusScore,
     regretValue
   };
 };
@@ -1786,6 +1854,16 @@ const advanceDay = (gameState: GameState) => {
   // Reset player states for new day
   gameState.players.forEach(p => {
     p.hasPassed = false;
+
+    // Apply Fisherman's Tale bonus (+2 glory at end of each day)
+    const scoreBonusCount = p.dinks.filter(dink => hasEffect(dink.effects, 'score_bonus_2')).length;
+    if (scoreBonusCount > 0) {
+      p.dinkBonus += 2 * scoreBonusCount;
+    }
+
+    // Grant extra actions from Tide Reader
+    const extraActionCount = p.dinks.filter(dink => hasEffect(dink.effects, 'gain_extra_action')).length;
+    p.extraActions = extraActionCount;
   });
 
   // Reset revealed shoals at day change - fish "swim away" and new ones appear
