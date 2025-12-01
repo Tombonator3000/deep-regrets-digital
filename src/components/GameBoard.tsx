@@ -283,6 +283,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
               isCurrentPlayer={isPlayerTurn}
               gameState={gameState}
               onMountFish={handleMountFish}
+              onViewCaptainSheet={() => setIsPlayerOpen(true)}
             />
             <MadnessTracker player={currentPlayer} />
             <DayTracker
@@ -320,6 +321,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
                 isCurrentPlayer={isPlayerTurn}
                 gameState={gameState}
                 onMountFish={handleMountFish}
+                onViewCaptainSheet={() => setIsPlayerOpen(true)}
                 compact
               />
             </div>

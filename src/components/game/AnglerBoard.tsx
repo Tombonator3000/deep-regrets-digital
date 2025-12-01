@@ -13,10 +13,11 @@ interface AnglerBoardProps {
   isCurrentPlayer: boolean;
   gameState?: GameState;
   onMountFish?: (fish: FishCard, slotIndex: number) => void;
+  onViewCaptainSheet?: () => void;
   compact?: boolean;
 }
 
-export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, compact = false }: AnglerBoardProps) => {
+export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, onViewCaptainSheet, compact = false }: AnglerBoardProps) => {
   const hasLifePreserver = gameState?.lifePreserverOwner === player.id;
   const hasFishCoin = gameState?.fishCoinOwner === player.id;
   const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
@@ -66,7 +67,7 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
           <div className="flex items-center gap-1.5">
             <Anchor className="h-3.5 w-3.5 text-primary" />
             <button
-              onClick={() => setShowCharacterCard(true)}
+              onClick={() => onViewCaptainSheet ? onViewCaptainSheet() : setShowCharacterCard(true)}
               className="text-xs font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors"
             >
               {player.name}
@@ -113,7 +114,7 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, c
           <Anchor className="h-4 w-4 text-primary" />
           <div>
             <button
-              onClick={() => setShowCharacterCard(true)}
+              onClick={() => onViewCaptainSheet ? onViewCaptainSheet() : setShowCharacterCard(true)}
               className="text-sm font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors text-left"
             >
               {player.name}
