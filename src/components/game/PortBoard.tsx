@@ -20,7 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { calculateFishSaleValue, hasPortDiscount } from '@/utils/gameEngine';
 import { getSlotMultiplier } from '@/utils/mounting';
-import { TACKLE_DICE } from '@/data/tackleDice';
+import { TACKLE_DICE, TACKLE_DICE_LOOKUP, getTackleDieColor } from '@/data/tackleDice';
 import { GameState, GameAction } from '@/types/game';
 import { cn } from '@/lib/utils';
 
@@ -138,23 +138,34 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
     });
   };
 
-  const standardTackleDie = TACKLE_DICE[0];
   const mountingSlots = Array.from({ length: currentPlayer.maxMountSlots }, (_, i) => i);
 
-  const handleBuyTackleDice = (dieId: string, count: number) => {
-    const selectedDie = TACKLE_DICE.find(die => die.id === dieId);
+  const handleBuyTackleDie = (dieId: string) => {
+    const selectedDie = TACKLE_DICE_LOOKUP[dieId];
     if (!selectedDie) {
       return;
     }
 
-    const totalCost = selectedDie.cost * count;
-    if (currentPlayer.fishbucks >= totalCost) {
+    if (currentPlayer.fishbucks >= selectedDie.cost) {
       onAction({
         type: 'BUY_TACKLE_DICE',
         playerId: currentPlayer.id,
-        payload: { dieId, count }
+        payload: { dieId, count: 1 }
       });
     }
+  };
+
+  // Get market dice with their info
+  const marketDice = gameState.port.tackleDiceMarket.map(dieId => ({
+    id: dieId,
+    die: TACKLE_DICE_LOOKUP[dieId]
+  })).filter(item => item.die);
+
+  // Color classes for tackle dice
+  const tackleDieColors: Record<string, string> = {
+    green: 'bg-green-500 border-green-400',
+    blue: 'bg-blue-500 border-blue-400',
+    orange: 'bg-orange-500 border-orange-400'
   };
 
   const hasDiscount = hasPortDiscount(currentPlayer.regrets.length);
@@ -536,59 +547,102 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
         </TabsContent>
 
         <TabsContent value="upgrades" className="space-y-4">
-          {/* Tackle Dice Shop */}
+          {/* Player's Owned Tackle Dice */}
+          {currentPlayer.tackleDice.length > 0 && (
+            <div className="rounded-xl border-2 border-red-500/40 bg-gradient-to-b from-red-950/20 to-slate-950/90 p-4 ring-2 ring-red-500/30 ring-offset-2 ring-offset-slate-950">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20">
+                  <Zap className="h-4 w-4 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-red-400">Dine Tackle Dice</h3>
+                  <p className="text-xs text-muted-foreground">Bruk disse når du fisker for ekstra terninger</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {currentPlayer.tackleDice.map((dieId, index) => {
+                  const die = TACKLE_DICE_LOOKUP[dieId];
+                  if (!die) return null;
+                  return (
+                    <div
+                      key={`${dieId}-${index}`}
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 text-white font-bold shadow-lg ${tackleDieColors[die.color] || 'bg-gray-500'}`}
+                      title={`${die.name} - ${die.description}`}
+                    >
+                      <Zap className="h-5 w-5" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Tackle Dice Market */}
           <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4">
             <div className="mb-3 flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
                 <Zap className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-primary-glow">Tackle Dice</h3>
-                <p className="text-xs text-muted-foreground">Extra dice for daring catches</p>
+                <h3 className="font-bold text-primary-glow">Tackle Dice Marked</h3>
+                <p className="text-xs text-muted-foreground">Kjøp ekstra terninger til fiske</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((count) => {
-                if (!standardTackleDie) return null;
-                const cost = count * standardTackleDie.cost;
-                const canAfford = currentPlayer.fishbucks >= cost;
-                return (
-                  <Dialog key={count}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={`h-16 flex flex-col items-center justify-center gap-1 ${
-                          canAfford ? 'border-primary/40 hover:border-primary hover:bg-primary/10' : 'opacity-50'
-                        }`}
-                        disabled={!canInteract || !canAfford}
-                      >
-                        <span className="text-lg font-bold">{count}x</span>
-                        <span className="text-xs text-fishbuck">${cost}</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
-                      <DialogHeader>
-                        <DialogTitle>Buy {count} Tackle Dice</DialogTitle>
-                        <DialogDescription>
-                          This purchase costs <span className="text-primary-glow font-semibold">${cost}</span>.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <p className="text-sm text-muted-foreground">
-                        Remaining funds: <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - cost, 0)}</span>
-                      </p>
-                      <DialogFooter className="pt-4">
-                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                        <DialogClose asChild>
-                          <Button className="btn-ocean" disabled={!canInteract || !canAfford} onClick={() => handleBuyTackleDice(standardTackleDie.id, count)}>
-                            Confirm Purchase
-                          </Button>
-                        </DialogClose>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                );
-              })}
-            </div>
+            {marketDice.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Utsolgt!</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {marketDice.map((item, index) => {
+                  const canAfford = currentPlayer.fishbucks >= item.die.cost;
+                  return (
+                    <Dialog key={`${item.id}-${index}`}>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`h-20 flex flex-col items-center justify-center gap-1 p-2 ${
+                            canAfford ? 'border-primary/40 hover:border-primary hover:bg-primary/10' : 'opacity-50'
+                          }`}
+                          disabled={!canInteract || !canAfford}
+                        >
+                          <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center ${tackleDieColors[item.die.color]}`}>
+                            <Zap className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="text-xs text-fishbuck font-semibold">${item.die.cost}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
+                        <DialogHeader>
+                          <DialogTitle>Kjøp {item.die.name}</DialogTitle>
+                          <DialogDescription>
+                            {item.die.description}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center gap-3 py-2">
+                          <div className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center ${tackleDieColors[item.die.color]}`}>
+                            <Zap className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{item.die.name}</p>
+                            <p className="text-sm text-muted-foreground">Koster <span className="text-primary-glow font-semibold">${item.die.cost}</span></p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Gjenstående: <span className="text-primary-glow font-semibold">${Math.max(currentPlayer.fishbucks - item.die.cost, 0)}</span>
+                        </p>
+                        <DialogFooter className="pt-4">
+                          <DialogClose asChild><Button variant="outline">Avbryt</Button></DialogClose>
+                          <DialogClose asChild>
+                            <Button className="btn-ocean" disabled={!canInteract || !canAfford} onClick={() => handleBuyTackleDie(item.id)}>
+                              Bekreft Kjøp
+                            </Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Shop Sections - Like Physical Board Game Shops */}
