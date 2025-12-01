@@ -187,8 +187,8 @@ export const StartScreen = ({ onStartGame }: StartScreenProps) => {
       )}
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col justify-center">
-        <div className="flex flex-col items-center gap-8">
+      <div className="relative z-10 flex-1 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex flex-col items-center gap-8 my-auto">
           {/* Fancy animated title */}
           <div className="text-center space-y-3 animate-fade-in">
             <div className="relative inline-block">
