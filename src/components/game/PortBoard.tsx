@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull, Ship } from 'lucide-react';
+import { Anchor, Fish as FishIcon, Wrench, Sparkles, ShoppingBag, Store, Package, CircleDollarSign, Trophy, Zap, Skull, Ship, Waves } from 'lucide-react';
 import { RegretDeck } from './RegretCard';
 import { AnchorToken, BoatToken, BoatColor } from './GameTokens';
 
@@ -298,6 +298,77 @@ export const PortBoard = ({ gameState, playerColors, onAction, className }: Port
           </div>
         </div>
       </div>
+
+      {/* Go to Sea Call-to-Action */}
+      {canInteract && (
+        <div className="mx-4 mb-4 sm:mx-6">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="w-full group relative overflow-hidden rounded-xl border-2 border-blue-500/50 bg-gradient-to-r from-blue-950/80 via-cyan-950/60 to-blue-950/80 p-4 transition-all hover:border-blue-400/70 hover:shadow-lg hover:shadow-blue-500/20">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
+                      <Waves className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-bold text-blue-300 group-hover:text-blue-200 transition-colors">Dra til sjøs</h3>
+                      <p className="text-xs text-blue-400/70">Avslutt havnebesøket og gjør deg klar til å fiske</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-blue-400 group-hover:text-blue-300 transition-colors">
+                    <FishIcon className="h-5 w-5 animate-pulse" />
+                    <span className="text-sm font-medium hidden sm:inline">Fiskelykke venter!</span>
+                  </div>
+                </div>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-background/85 backdrop-blur-lg border-border/60">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Waves className="h-5 w-5 text-blue-400" />
+                  Dra til sjøs?
+                </DialogTitle>
+                <DialogDescription>
+                  Når du avslutter dagen i havnen, kan du velge å dra til sjøs neste dag for å fiske.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <div className="flex items-start gap-3 rounded-lg bg-blue-500/10 border border-blue-500/30 p-3">
+                  <FishIcon className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-300">Fiskemuligheter venter!</p>
+                    <p className="text-muted-foreground mt-1">
+                      Ute på havet kan du fange fisk, utforske dypet, og bygge opp fangsten din.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Trykk &quot;Avslutt dagen&quot; for å gjøre deg ferdig i havnen. Ved starten av neste dag velger du om du vil til sjøs eller bli i havnen.
+                </p>
+              </div>
+              <DialogFooter className="pt-4">
+                <DialogClose asChild>
+                  <Button variant="outline">Bli i havnen</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    className="btn-ocean"
+                    onClick={() => onAction({
+                      type: 'PASS',
+                      playerId: currentPlayer.id,
+                      payload: {}
+                    })}
+                  >
+                    <Waves className="h-4 w-4 mr-2" />
+                    Avslutt dagen
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
 
       {/* Tabs Content */}
       <Tabs defaultValue="catch" className="flex-1 space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
