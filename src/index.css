@@ -870,13 +870,26 @@ All colors MUST be HSL for consistency.
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 4px 10px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-radius: 4px;
   backdrop-filter: blur(4px);
+  min-height: 28px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Enhanced touch-friendly depth indicators on mobile */
+@media (max-width: 767px) {
+  .depth-indicator {
+    padding: 6px 12px;
+    min-height: 32px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
 }
 
 .depth-indicator-d1 {

@@ -376,8 +376,33 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                   key={depth}
                   className={`relative flex flex-col depth-row depth-row-d${depth}`}
                 >
-                  {/* Depth indicator overlay - Enhanced styling */}
-                  <div className={`absolute top-0 left-0 z-20 flex items-center gap-1 depth-indicator depth-indicator-d${depth}`}>
+                  {/* Depth indicator overlay - Enhanced styling, clickable on mobile */}
+                  <div
+                    className={`absolute top-0 left-0 z-20 flex items-center gap-1 depth-indicator depth-indicator-d${depth} ${
+                      (canDescend || canAscend)
+                        ? 'cursor-pointer touch-manipulation active:scale-95 hover:brightness-110 transition-all'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (canDescend) handleDescend(depth);
+                      else if (canAscend) handleAscend(depth);
+                    }}
+                    role={(canDescend || canAscend) ? 'button' : undefined}
+                    tabIndex={(canDescend || canAscend) ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        if (canDescend) handleDescend(depth);
+                        else if (canAscend) handleAscend(depth);
+                      }
+                    }}
+                    aria-label={
+                      canDescend
+                        ? `Descend to depth ${depth}`
+                        : canAscend
+                          ? `Ascend to depth ${depth}`
+                          : `Depth ${depth}`
+                    }
+                  >
                     {isCurrentDepth && currentPlayer.location === 'sea' && (
                       <BoatToken
                         size="sm"
