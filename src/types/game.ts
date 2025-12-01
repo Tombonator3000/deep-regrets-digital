@@ -86,6 +86,8 @@ export interface Player {
   supplies: UpgradeCard[];
   dinks: DinkCard[];
   activeEffects: string[];
+  dinkBonus: number; // Accumulated score bonuses from dinks like Fisherman's Tale
+  extraActions: number; // Extra actions from Tide Reader (reset each day)
   madnessLevel: number;
   madnessOffset: number;
   lifeboatFlipped: boolean;
@@ -247,6 +249,7 @@ export interface AbandonShipPayload {
 export interface PlayDinkPayload {
   dinkId: string;
   effect: string;
+  dieIndex?: number; // For effects that target a specific die (e.g., convert_one_to_six)
 }
 
 // Union type for all game actions
