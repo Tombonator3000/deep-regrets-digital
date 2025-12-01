@@ -9,6 +9,7 @@ import { DayTracker } from './game/DayTracker';
 import { MadnessTracker } from './game/MadnessTracker';
 import { CardModalProvider, useCardModal } from './game/CardModal';
 import { DiceRemovalModal } from './game/DiceRemovalModal';
+import { NauticalFrame, WoodCornerAccent } from './game/NauticalFrame';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FullscreenContext } from '@/context/FullscreenContext';
@@ -197,9 +198,12 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
       )}
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2">
+      <NauticalFrame showNet className="relative z-10 mx-auto h-full w-full max-w-[1600px]" variant="corners-only">
+        <div className="grid h-full w-full grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 pt-3 sm:pt-4 lg:pt-5">
         {/* Compact Header */}
-        <div className="flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
+        <div className="relative flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
+          <WoodCornerAccent position="top-left" size="sm" />
+          <WoodCornerAccent position="top-right" size="sm" />
           <div className="flex items-center gap-1 sm:gap-4">
             <h1 className="text-sm font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
             <Badge
@@ -277,7 +281,9 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
         {/* Responsive Board Game Layout - NO SCROLLING */}
         <div className="grid h-full min-h-0 gap-0.5 sm:gap-2 grid-cols-1 grid-rows-[1fr,auto] md:grid-cols-[minmax(200px,240px),1fr] md:grid-rows-1 lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
-          <div className="hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
+          <div className="relative hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
+            <WoodCornerAccent position="top-left" size="sm" />
+            <WoodCornerAccent position="bottom-left" size="sm" />
             <AnglerBoard
               player={currentPlayer}
               isCurrentPlayer={isPlayerTurn}
@@ -293,7 +299,11 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
           </div>
 
           {/* Center Column - The Briny Deep (Sea Board) */}
-          <div className="min-h-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 backdrop-blur sm:rounded-xl">
+          <div className="relative min-h-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 backdrop-blur sm:rounded-xl">
+            <WoodCornerAccent position="top-left" size="md" />
+            <WoodCornerAccent position="top-right" size="md" />
+            <WoodCornerAccent position="bottom-left" size="md" />
+            <WoodCornerAccent position="bottom-right" size="md" />
             <div className="h-full min-h-0 overflow-hidden p-0.5 sm:p-2">
               <SeaBoard
                 gameState={gameState}
@@ -313,7 +323,9 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
           </div>
 
           {/* Right Column - Actions Panel */}
-          <div className="flex min-h-0 flex-col gap-0.5 overflow-hidden rounded-lg border border-white/10 bg-background/50 p-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:p-2 lg:flex">
+          <div className="relative flex min-h-0 flex-col gap-0.5 overflow-hidden rounded-lg border border-white/10 bg-background/50 p-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:p-2 lg:flex">
+            <WoodCornerAccent position="top-left" size="sm" />
+            <WoodCornerAccent position="top-right" size="sm" />
             {/* Show compact player info on mobile/tablet */}
             <div className="md:hidden">
               <AnglerBoard
@@ -339,7 +351,8 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </NauticalFrame>
 
       <Dialog
         open={shoalDialogOpen && Boolean(selectedShoal)}
