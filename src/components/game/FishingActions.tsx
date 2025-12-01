@@ -11,7 +11,7 @@ import { GameState, Player } from '@/types/game';
 import { useToast } from '@/hooks/use-toast';
 import { useDiceSelection } from '@/hooks/useDiceSelection';
 import { getAbilityDescription } from '@/utils/abilityDescriptions';
-import { AlertTriangle, ArrowDown, Eye, Fish, HelpCircle, Lightbulb } from 'lucide-react';
+import { AlertTriangle, Eye, Fish, HelpCircle, Lightbulb } from 'lucide-react';
 import { OverfishingWarning } from './OverfishingWarning';
 
 interface FishingActionsProps {
@@ -40,8 +40,6 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
     return null;
   }
 
-  const canMoveDeeper = currentPlayer.currentDepth < 3;
-
   // Check if selected shoal has fish and if it's revealed
   const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
   const isShoalRevealed = selectedShoalKey ? (gameState.sea.revealedShoals?.[selectedShoalKey] ?? false) : false;
@@ -57,19 +55,6 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
   const revealedFish = (selectedShoal && isShoalRevealed)
     ? gameState.sea.shoals[selectedShoal.depth][selectedShoal.shoal][0]
     : null;
-  const handleMoveDeeper = () => {
-    if (canMoveDeeper) {
-      onAction({
-        type: 'MOVE_DEEPER',
-        playerId: currentPlayer.id,
-        payload: { newDepth: currentPlayer.currentDepth + 1 }
-      });
-      toast({
-        title: "Descending",
-        description: `${currentPlayer.name} descends to depth ${currentPlayer.currentDepth + 1}`,
-      });
-    }
-  };
 
   const handleRevealFish = () => {
     if (selectedShoal && canRevealFish) {
@@ -162,44 +147,6 @@ export const FishingActions = ({ gameState, currentPlayer, selectedShoal, onActi
             </TooltipContent>
           </Tooltip>
         </div>
-
-        {/* Current Depth Info */}
-        <Card className="card-game p-3 bg-blue-900/20 border-blue-500/30">
-          <div className="flex items-center justify-between text-sm">
-            <span>Nåværende dybde:</span>
-            <Badge className="bg-blue-600">
-              Dybde {currentPlayer.currentDepth}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {currentPlayer.currentDepth === 1 && "Grunt vann - enkel fisk, lav risiko"}
-            {currentPlayer.currentDepth === 2 && "Middels dyp - mer verdifull fisk, moderat risiko"}
-            {currentPlayer.currentDepth === 3 && "Dypet - sjelden fisk, høy risiko og belønning"}
-          </p>
-        </Card>
-
-        {/* Move Deeper */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleMoveDeeper}
-              disabled={!canMoveDeeper}
-              className="w-full min-h-[44px] btn-ocean flex items-center gap-2 touch-manipulation active:scale-95"
-            >
-              <ArrowDown className="h-4 w-4" />
-              {canMoveDeeper
-                ? `Dykk til Dybde ${currentPlayer.currentDepth + 1}`
-                : "Maks Dybde Nådd"}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {canMoveDeeper ? (
-              <p>Gå dypere for å finne mer verdifull fisk. Krever en terning med verdi ≥3.</p>
-            ) : (
-              <p>Du er allerede på dypeste nivå (Dybde 3).</p>
-            )}
-          </TooltipContent>
-        </Tooltip>
 
         {/* Reveal Fish */}
         {selectedShoal && shoalHasFish && !isShoalRevealed && (
