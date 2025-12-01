@@ -613,7 +613,27 @@ export const gameReducer = (state: GameState | null, action: GameAction): GameSt
         });
         const tackleTotal = tackleDiceValues.reduce((sum, val) => sum + val, 0);
 
-        const selectedDiceValues = uniqueValidIndices.map(index => player.freshDice[index]);
+        let selectedDiceValues = uniqueValidIndices.map(index => player.freshDice[index]);
+
+        // Glass Rod effect: reroll 1 die when fishing
+        const { rerollDieIndex } = action.payload;
+        if (playerHasEquippedEffect(player, 'reroll_1_die') &&
+            typeof rerollDieIndex === 'number' &&
+            rerollDieIndex >= 0 &&
+            rerollDieIndex < selectedDiceValues.length) {
+          // Reroll the specified die
+          let newValue = rollDice(1)[0];
+          // Apply reroll 1s ability if player has it
+          if (player.rerollOnes && newValue === 1) {
+            newValue = rollDice(1)[0];
+          }
+          selectedDiceValues = [
+            ...selectedDiceValues.slice(0, rerollDieIndex),
+            newValue,
+            ...selectedDiceValues.slice(rerollDieIndex + 1)
+          ];
+        }
+
         const totalDiceUsed = uniqueValidIndices.length + uniqueTackleIndices.length;
         const hasUsableSelection =
           (uniqueValidIndices.length > 0 && selectedDiceValues.length === uniqueValidIndices.length) ||
