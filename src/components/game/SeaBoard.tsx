@@ -376,8 +376,35 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                   key={depth}
                   className={`relative flex flex-col depth-row depth-row-d${depth}`}
                 >
-                  {/* Depth indicator overlay - Enhanced styling */}
-                  <div className={`absolute top-0 left-0 z-20 flex items-center gap-1 depth-indicator depth-indicator-d${depth}`}>
+                  {/* Depth indicator overlay - Clickable for depth navigation */}
+                  <div
+                    className={`absolute top-0 left-0 z-20 flex items-center gap-1 depth-indicator depth-indicator-d${depth} ${
+                      (canDescend || canAscend)
+                        ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform touch-manipulation'
+                        : ''
+                    }`}
+                    role={(canDescend || canAscend) ? 'button' : undefined}
+                    tabIndex={(canDescend || canAscend) ? 0 : -1}
+                    aria-label={
+                      canDescend
+                        ? `Descend to depth ${depth}`
+                        : canAscend
+                          ? `Ascend to depth ${depth}`
+                          : `Depth ${depth}${isCurrentDepth ? ' (current)' : ''}`
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (canDescend) handleDescend(depth);
+                      else if (canAscend) handleAscend(depth);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (canDescend) handleDescend(depth);
+                        else if (canAscend) handleAscend(depth);
+                      }
+                    }}
+                  >
                     {isCurrentDepth && currentPlayer.location === 'sea' && (
                       <BoatToken
                         size="sm"
@@ -387,8 +414,8 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                       />
                     )}
                     <span className="text-[10px] sm:text-xs font-bold">D{depth}</span>
-                    {canDescend && <ArrowDown className="h-3 w-3" />}
-                    {canAscend && <ArrowUp className="h-3 w-3" />}
+                    {canDescend && <ArrowDown className="h-3 w-3 animate-bounce" />}
+                    {canAscend && <ArrowUp className="h-3 w-3 animate-bounce" />}
                   </div>
 
                   {/* Show players without a specific shoal position in the depth header */}
