@@ -152,6 +152,11 @@ export interface GameState {
   };
   pendingSkippedRewards?: string[]; // Queue of player IDs who were skipped and need to claim rewards
   lifePreserverDifficultyReduction?: number; // Current difficulty reduction from Life Preserver (0 or 2)
+  lastRegretAction?: {
+    type: 'stolen' | 'exhausted';
+    fromPlayerId?: string; // Only set when type is 'stolen'
+    toPlayerId: string;
+  };
 }
 
 // Specific action payload types for type safety

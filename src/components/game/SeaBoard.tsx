@@ -2,7 +2,7 @@ import { GameState, DinkCard } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles, Ship } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Fish, Skull, Eye, Waves, Sparkles, Ship, AlertTriangle } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
 import { PlugMarker, DepthMarker, LighthouseToken, BoatToken, BoatColor } from './GameTokens';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
@@ -456,12 +456,37 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                               </div>
                             )}
 
-                            {/* Fish count badge */}
-                            {!shoalEmpty && fishCount > 1 && (
-                              <div className="absolute top-0.5 right-0.5 z-10">
-                                <Badge className="bg-slate-700/90 text-white/90 text-[9px] px-1 py-0 min-w-[1rem] text-center font-bold">
-                                  {fishCount}
-                                </Badge>
+                            {/* Fish count badge with overfishing warning */}
+                            {!shoalEmpty && (
+                              <div className="absolute top-0.5 right-0.5 z-10 flex items-center gap-0.5">
+                                {/* Overfishing warning - show when 1-2 fish remain */}
+                                {fishCount <= 2 && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge className="bg-yellow-500/90 text-slate-900 text-[9px] px-0.5 py-0 animate-pulse cursor-help">
+                                        <AlertTriangle className="h-2.5 w-2.5" />
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-yellow-400 flex items-center gap-1">
+                                          <AlertTriangle className="h-3 w-3" />
+                                          Advarsel: Overfiske!
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {fishCount === 1
+                                            ? 'Kun 1 fisk igjen! Å fange den siste fisken gir deg en Regret.'
+                                            : 'Kun 2 fisk igjen! Vær forsiktig med overfiske.'}
+                                        </div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {fishCount > 1 && (
+                                  <Badge className="bg-slate-700/90 text-white/90 text-[9px] px-1 py-0 min-w-[1rem] text-center font-bold">
+                                    {fishCount}
+                                  </Badge>
+                                )}
                               </div>
                             )}
 

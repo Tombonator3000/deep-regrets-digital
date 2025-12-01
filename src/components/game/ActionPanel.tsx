@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import { GameState } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { FishingActions } from './FishingActions';
@@ -10,6 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Anchor,
   Fish,
@@ -83,14 +93,28 @@ const phaseGuidance: Record<string, { title: string; description: string; icon: 
   },
 };
 
+// Auto-advance timer duration in milliseconds
+const AUTO_ADVANCE_DELAY = 2000;
+
 export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
+
+  // State for confirmation dialog
+  const [pendingLocation, setPendingLocation] = useState<'sea' | 'port' | null>(null);
+
+  // State for auto-advance timer
+  const [autoAdvanceProgress, setAutoAdvanceProgress] = useState(0);
 
   // Calculate if this player is the last active (all others have passed)
   const activePlayers = gameState.players.filter(p => !p.hasPassed);
   const isLastActive = activePlayers.length === 1 && activePlayers[0].id === currentPlayer.id;
   const turnsRemaining = currentPlayer.location === 'sea' ? 2 : 4; // Sea=2, Port=4 turns
+
+  // Find player with pending passing reward (may not be current player)
+  const playerWithPendingReward = gameState.pendingPassingReward
+    ? gameState.players.find(p => p.id === gameState.pendingPassingReward?.playerId)
+    : null;
 
   // Calculate fishing step for the wizard
   const selectedShoalKey = selectedShoal ? `${selectedShoal.depth}-${selectedShoal.shoal}` : null;
@@ -113,13 +137,13 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
   const hasCanOfWorms = currentPlayer.canOfWormsFaceUp ?? false;
   const canOfWormsUsed = false; // Can of Worms can only be used once per day when face-up
 
-  const handleNextPhase = () => {
+  const handleNextPhase = useCallback(() => {
     onAction({
       type: 'NEXT_PHASE',
       playerId: 'system',
       payload: {}
     });
-  };
+  }, [onAction]);
 
   const handlePass = () => {
     onAction({
@@ -130,12 +154,55 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
   };
 
   const handleDeclareLocation = (location: 'sea' | 'port') => {
-    onAction({
-      type: 'DECLARE_LOCATION',
-      playerId: currentPlayer.id,
-      payload: { location }
-    });
+    // Show confirmation dialog instead of immediately declaring
+    setPendingLocation(location);
   };
+
+  const confirmLocation = () => {
+    if (pendingLocation) {
+      onAction({
+        type: 'DECLARE_LOCATION',
+        playerId: currentPlayer.id,
+        payload: { location: pendingLocation }
+      });
+      setPendingLocation(null);
+    }
+  };
+
+  const cancelLocationChoice = () => {
+    setPendingLocation(null);
+  };
+
+  // Auto-advance timer for START and REFRESH phases
+  useEffect(() => {
+    if (gameState.phase !== 'start' && gameState.phase !== 'refresh') {
+      setAutoAdvanceProgress(0);
+      return;
+    }
+
+    // Don't auto-advance if there's a pending reward or other blocking state
+    if (gameState.pendingPassingReward || gameState.pendingLifePreserverGift || gameState.pendingDiceRemoval) {
+      setAutoAdvanceProgress(0);
+      return;
+    }
+
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / AUTO_ADVANCE_DELAY) * 100, 100);
+      setAutoAdvanceProgress(progress);
+
+      if (elapsed >= AUTO_ADVANCE_DELAY) {
+        clearInterval(interval);
+        handleNextPhase();
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(interval);
+      setAutoAdvanceProgress(0);
+    };
+  }, [gameState.phase, gameState.pendingPassingReward, gameState.pendingLifePreserverGift, gameState.pendingDiceRemoval, handleNextPhase]);
 
   const guidance = phaseGuidance[gameState.phase] || phaseGuidance.action;
 
@@ -181,10 +248,11 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
         )}
 
         {/* Passing Reward - Choose reward when first to pass */}
-        {gameState.pendingPassingReward?.playerId === currentPlayer.id && (
+        {/* Show for any player with pending reward to ensure modal always displays */}
+        {playerWithPendingReward && (
           <PassingReward
             gameState={gameState}
-            currentPlayer={currentPlayer}
+            currentPlayer={playerWithPendingReward}
             onAction={onAction}
           />
         )}
@@ -253,9 +321,23 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
           )}
 
           {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
-            <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[40px] sm:min-h-[44px] btn-ocean text-[10px] sm:text-xs touch-manipulation active:scale-95">
-              Next Phase →
-            </Button>
+            <div className="relative">
+              <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[40px] sm:min-h-[44px] btn-ocean text-[10px] sm:text-xs touch-manipulation active:scale-95 overflow-hidden">
+                <span className="relative z-10">Next Phase →</span>
+                {/* Auto-advance progress bar */}
+                {autoAdvanceProgress > 0 && (
+                  <div
+                    className="absolute inset-0 bg-white/20 transition-all duration-50"
+                    style={{ width: `${autoAdvanceProgress}%` }}
+                  />
+                )}
+              </Button>
+              {autoAdvanceProgress > 0 && (
+                <p className="text-[9px] text-center text-foreground/60 mt-0.5">
+                  Auto-advancing in {Math.ceil((100 - autoAdvanceProgress) / 100 * 2)}s...
+                </p>
+              )}
+            </div>
           )}
         </Card>
 
@@ -293,6 +375,58 @@ export const ActionPanel = ({ gameState, selectedShoal, onAction }: ActionPanelP
           </div>
         )}
       </div>
+
+      {/* Location Confirmation Dialog */}
+      <AlertDialog open={pendingLocation !== null} onOpenChange={(open) => !open && cancelLocationChoice()}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingLocation === 'sea' ? (
+                <>
+                  <Waves className="h-5 w-5 text-blue-400" />
+                  Bekreft Havet
+                </>
+              ) : (
+                <>
+                  <Anchor className="h-5 w-5 text-amber-400" />
+                  Bekreft Havnen
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Er du sikker på at du vil tilbringe dagen {pendingLocation === 'sea' ? 'på havet' : 'i havnen'}?
+              </p>
+              <p className="text-xs text-destructive/80">
+                Du kan ikke endre valg etter at du har bekreftet!
+              </p>
+              {pendingLocation === 'sea' && (
+                <ul className="text-xs text-foreground/70 list-disc list-inside mt-2">
+                  <li>Fang fisk og få belønninger</li>
+                  <li>Risiko for Regrets ved overfiske</li>
+                  <li>Siste spiller får kun 2 turer</li>
+                </ul>
+              )}
+              {pendingLocation === 'port' && (
+                <ul className="text-xs text-foreground/70 list-disc list-inside mt-2">
+                  <li>Selg eller monter fisk</li>
+                  <li>Kjøp oppgraderinger og terninger</li>
+                  <li>Siste spiller får 4 turer</li>
+                </ul>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelLocationChoice}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmLocation}
+              className={pendingLocation === 'sea' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700'}
+            >
+              Bekreft {pendingLocation === 'sea' ? 'Havet' : 'Havnen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };
