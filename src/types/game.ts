@@ -197,6 +197,7 @@ export interface CatchFishPayload {
   shoal: number;
   diceIndices: number[];
   tackleDiceIndices?: number[];
+  rerollDieIndex?: number; // Glass Rod effect: index of die to reroll (from diceIndices)
 }
 
 export interface SellFishPayload {
