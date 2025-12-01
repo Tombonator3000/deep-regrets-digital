@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import boatImage from '@/assets/boat.png';
 
 interface TokenProps {
   className?: string;
@@ -162,6 +163,15 @@ export const LighthouseToken = ({
   </div>
 );
 
+// Color filter values to shift the cyan boat to other colors
+const boatColorFilters = {
+  primary: '', // Original cyan color
+  blue: 'hue-rotate(30deg)',
+  red: 'hue-rotate(150deg) saturate(1.5)',
+  green: 'hue-rotate(-60deg)',
+  orange: 'hue-rotate(180deg) saturate(1.3)',
+};
+
 // Boat / Båt - spillerposisjon på sjøen
 export const BoatToken = ({
   className,
@@ -182,40 +192,12 @@ export const BoatToken = ({
       className
     )}
   >
-    <svg viewBox="0 0 24 24" className="w-full h-full">
-      {/* Hull */}
-      <path
-        d="M2 16l2 4h16l2-4c-4-1-7-1-11-1s-6 0-9 1z"
-        className={cn(
-          color === 'primary' && 'fill-primary',
-          color === 'red' && 'fill-red-500',
-          color === 'blue' && 'fill-blue-500',
-          color === 'green' && 'fill-green-500',
-          color === 'orange' && 'fill-orange-500'
-        )}
-      />
-      {/* Cabin */}
-      <rect
-        x="8"
-        y="11"
-        width="8"
-        height="5"
-        rx="1"
-        className="fill-slate-700"
-      />
-      {/* Mast */}
-      <rect x="11" y="4" width="2" height="8" className="fill-slate-600" />
-      {/* Sail */}
-      <path
-        d="M13 5l6 5h-6V5z"
-        className="fill-slate-300"
-      />
-      {/* Flag */}
-      <path
-        d="M12 4l-3 1.5L12 7V4z"
-        className="fill-red-400"
-      />
-    </svg>
+    <img
+      src={boatImage}
+      alt="Boat"
+      className="w-full h-full object-contain"
+      style={{ filter: boatColorFilters[color] }}
+    />
   </div>
 );
 
