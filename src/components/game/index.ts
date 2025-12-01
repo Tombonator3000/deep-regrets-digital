@@ -7,6 +7,7 @@ export { DailyEventsPopup } from './DailyEventsPopup';
 export { CanOfWormsPeek, CanOfWormsStatus } from './CanOfWormsPeek';
 export { ShoalIndicator, ShoalSummary } from './ShoalIndicator';
 export { ScoringBreakdown, CompactScoreboard } from './ScoringBreakdown';
+export { NauticalFrame, WoodCornerAccent, RopeAccent } from './NauticalFrame';
 export {
   HintProvider,
   useHints,
