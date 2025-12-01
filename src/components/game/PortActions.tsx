@@ -39,7 +39,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
   const isAtMaxFishbucks = currentPlayer.fishbucks >= MAX_FISHBUCKS;
 
   const handleSellFish = (fish: FishCard) => {
-    const saleDetails = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+    const saleDetails = calculateFishSaleValue(fish, currentPlayer.regrets.length);
     const potentialTotal = currentPlayer.fishbucks + saleDetails.adjustedValue;
     const actualGain = Math.min(saleDetails.adjustedValue, MAX_FISHBUCKS - currentPlayer.fishbucks);
     const excessLost = saleDetails.adjustedValue - actualGain;
@@ -284,7 +284,7 @@ export const PortActions = ({ gameState, currentPlayer, onAction }: PortActionsP
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {currentPlayer.handFish.map((fish) => {
-                const saleValue = calculateFishSaleValue(fish, currentPlayer.madnessLevel);
+                const saleValue = calculateFishSaleValue(fish, currentPlayer.regrets.length);
                 return (
                   <Card key={fish.id} className="card-game p-3">
                     <div className="flex justify-between items-center">
