@@ -17,7 +17,7 @@ const sizeClasses = {
   lg: 'w-14 h-14',
 };
 
-// Lifebuoy / Livbøye - redningstokenet
+// Lifebuoy / Livbøye - redningstokenet (matches the physical game piece)
 export const LifebuoyToken = ({
   className,
   size = 'md',
@@ -28,25 +28,84 @@ export const LifebuoyToken = ({
   <div
     onClick={onClick}
     className={cn(
-      'relative flex items-center justify-center rounded-full cursor-default',
+      'relative flex items-center justify-center cursor-default',
       sizeClasses[size],
       animated && 'animate-pulse',
-      highlight && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+      highlight && 'drop-shadow-[0_0_10px_hsl(var(--primary))]',
       onClick && 'cursor-pointer hover:scale-110 transition-transform',
       className
     )}
   >
-    {/* Outer ring */}
-    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-lg" />
-    {/* White stripes */}
-    <div className="absolute inset-[15%] rounded-full bg-white/90" />
-    {/* Inner hole */}
-    <div className="absolute inset-[35%] rounded-full bg-slate-900/80" />
-    {/* Stripe accents */}
-    <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[12%] h-[30%] bg-white/90 rounded-full" />
-    <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[12%] h-[30%] bg-white/90 rounded-full" />
-    <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-[30%] h-[12%] bg-white/90 rounded-full" />
-    <div className="absolute right-[10%] top-1/2 -translate-y-1/2 w-[30%] h-[12%] bg-white/90 rounded-full" />
+    <svg viewBox="0 0 100 100" className="w-full h-full">
+      <defs>
+        {/* Weathered texture filter */}
+        <filter id="lifebuoy-texture" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" />
+        </filter>
+        {/* Brownish-red gradient for the ring */}
+        <linearGradient id="lifebuoy-red" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#9B5049" />
+          <stop offset="50%" stopColor="#7B3B35" />
+          <stop offset="100%" stopColor="#6B2F2A" />
+        </linearGradient>
+        {/* Light blue-white for stripes */}
+        <linearGradient id="lifebuoy-stripe" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#E8F0F8" />
+          <stop offset="100%" stopColor="#C8D8E8" />
+        </linearGradient>
+      </defs>
+
+      {/* Main ring - outer circle */}
+      <circle cx="50" cy="50" r="46" fill="url(#lifebuoy-red)" filter="url(#lifebuoy-texture)" />
+
+      {/* Inner hole */}
+      <circle cx="50" cy="50" r="22" fill="transparent" stroke="#1a1a2e" strokeWidth="2" />
+      <circle cx="50" cy="50" r="20" fill="#1a1a2e" opacity="0.9" />
+
+      {/* White/light blue stripes - 4 sections */}
+      {/* Top stripe */}
+      <path
+        d="M 38 10 A 40 40 0 0 1 62 10 L 56 26 A 24 24 0 0 0 44 26 Z"
+        fill="url(#lifebuoy-stripe)"
+        filter="url(#lifebuoy-texture)"
+      />
+      {/* Right stripe */}
+      <path
+        d="M 90 38 A 40 40 0 0 1 90 62 L 74 56 A 24 24 0 0 0 74 44 Z"
+        fill="url(#lifebuoy-stripe)"
+        filter="url(#lifebuoy-texture)"
+      />
+      {/* Bottom stripe */}
+      <path
+        d="M 62 90 A 40 40 0 0 1 38 90 L 44 74 A 24 24 0 0 0 56 74 Z"
+        fill="url(#lifebuoy-stripe)"
+        filter="url(#lifebuoy-texture)"
+      />
+      {/* Left stripe */}
+      <path
+        d="M 10 62 A 40 40 0 0 1 10 38 L 26 44 A 24 24 0 0 0 26 56 Z"
+        fill="url(#lifebuoy-stripe)"
+        filter="url(#lifebuoy-texture)"
+      />
+
+      {/* Highlight lines (rope texture) */}
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.3" />
+      <circle cx="50" cy="50" r="24" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.3" />
+
+      {/* -2 text on the ring */}
+      <text
+        x="50"
+        y="82"
+        textAnchor="middle"
+        fontSize="12"
+        fontWeight="bold"
+        fill="#C8D8E8"
+        fontFamily="sans-serif"
+      >
+        -2
+      </text>
+    </svg>
   </div>
 );
 
