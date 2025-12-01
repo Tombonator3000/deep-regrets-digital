@@ -162,11 +162,11 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-0.5 sm:gap-1 overflow-hidden">
       {/* Briny Deep Header Image - Smaller on mobile */}
       <TooltipProvider delayDuration={200}>
-        <div className="shrink-0 relative">
+        <div className="shrink-0 relative briny-deep-header">
           <img
             src={brinyDeepHeader}
             alt="The Briny Deep"
-            className="w-full h-auto max-h-[80px] sm:max-h-none object-cover object-top rounded-lg border border-border/40"
+            className="w-full h-auto max-h-[80px] sm:max-h-none object-cover object-top rounded-lg"
           />
           {/* Dink Cards overlay - positioned over DINKS label in header */}
           <div className="absolute top-[15%] right-[8%] sm:right-[10%] flex items-start gap-1">
@@ -270,24 +270,43 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
         </div>
       )}
 
-      {/* The Deep Sea Board with Background Image */}
+      {/* The Deep Sea Board with Background Image and Wooden Frame */}
       <div
         className="flex-1 min-h-0 overflow-hidden touch-pan-y"
         {...touchHandlers}
       >
-        <div
-          className={`relative h-full mx-auto w-full max-w-4xl rounded-lg border border-primary/20 shadow-xl transition-opacity ${isSwiping ? 'opacity-80' : ''}`}
-          style={{
-            backgroundImage: brinyDeepBackground ? `url(${brinyDeepBackground})` : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: brinyDeepBackground ? undefined : 'rgb(15, 23, 42)',
-          }}
-        >
-          {/* Fallback gradient overlay when no background image */}
-          {!brinyDeepBackground && (
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950/80 rounded-lg" />
-          )}
+        {/* Wooden Frame Wrapper */}
+        <div className="briny-deep-frame relative h-full mx-auto w-full max-w-4xl">
+          {/* Fishing Net Decorations */}
+          <div className="fishing-net-left hidden sm:block" />
+          <div className="fishing-net-right hidden sm:block" />
+
+          {/* Rope Decorations */}
+          <div className="rope-decoration-top hidden sm:block" />
+          <div className="rope-decoration-bottom hidden sm:block" />
+
+          {/* Decorative Elements */}
+          <div className="seaweed-decoration hidden sm:block" style={{ left: '5%' }} />
+          <div className="seaweed-decoration hidden sm:block" style={{ right: '8%' }} />
+          <div className="coral-decoration hidden sm:block" style={{ left: '15%' }} />
+          <div className="coral-decoration hidden sm:block" style={{ right: '12%' }} />
+
+          {/* Inner Board Area */}
+          <div
+            className={`briny-deep-inner relative h-full transition-opacity ${isSwiping ? 'opacity-80' : ''}`}
+            style={{
+              backgroundImage: brinyDeepBackground ? `url(${brinyDeepBackground})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            {/* Underwater Caustics Effect */}
+            <div className="underwater-caustics" />
+
+            {/* Fallback gradient overlay when no background image */}
+            {!brinyDeepBackground && (
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950/80 rounded-lg" />
+            )}
 
           {/* 3x3 Grid of Cards positioned over background */}
           <div className="absolute inset-0 grid grid-rows-3 gap-0 p-[3%]" style={{ paddingTop: '2%', paddingBottom: '2%' }}>
@@ -305,10 +324,10 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
               return (
                 <div
                   key={depth}
-                  className="relative flex flex-col"
+                  className={`relative flex flex-col depth-row depth-row-d${depth}`}
                 >
-                  {/* Depth indicator overlay */}
-                  <div className="absolute top-0 left-0 z-20 flex items-center gap-1 bg-black/40 rounded px-1 py-0.5">
+                  {/* Depth indicator overlay - Enhanced styling */}
+                  <div className={`absolute top-0 left-0 z-20 flex items-center gap-1 depth-indicator depth-indicator-d${depth}`}>
                     {isCurrentDepth && currentPlayer.location === 'sea' && (
                       <BoatToken
                         size="sm"
@@ -317,9 +336,9 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                         color={playerColors[currentPlayer.id] ?? 'primary'}
                       />
                     )}
-                    <span className="text-[10px] sm:text-xs font-bold text-white/90">D{depth}</span>
-                    {canDescend && <ArrowDown className="h-3 w-3 text-primary" />}
-                    {canAscend && <ArrowUp className="h-3 w-3 text-primary" />}
+                    <span className="text-[10px] sm:text-xs font-bold">D{depth}</span>
+                    {canDescend && <ArrowDown className="h-3 w-3" />}
+                    {canAscend && <ArrowUp className="h-3 w-3" />}
                   </div>
 
                   {/* Show players without a specific shoal position in the depth header */}
@@ -360,10 +379,11 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                     </div>
                   )}
 
-                  {/* Fish count indicator */}
-                  <div className="absolute top-0 right-0 z-20 bg-black/40 rounded px-1 py-0.5">
-                    <span className="text-[9px] sm:text-xs text-white/70">
-                      {shoals.reduce((acc, s) => acc + s.length, 0)} fish
+                  {/* Fish count indicator - Enhanced styling */}
+                  <div className="absolute top-0 right-0 z-20 fish-count-badge">
+                    <Fish className="h-3 w-3 opacity-60" />
+                    <span className="text-[9px] sm:text-xs">
+                      {shoals.reduce((acc, s) => acc + s.length, 0)}
                     </span>
                   </div>
 
@@ -437,14 +457,14 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                                 onShoalSelect({ depth, shoal: shoalIndex });
                               }
                             }}
-                            className={`shoal-card relative overflow-hidden rounded-lg border-2 bg-slate-950/60 backdrop-blur-sm p-1 sm:p-1.5 text-white shadow-lg transition-all h-full flex flex-col ${
-                              isSelected ? 'border-primary ring-2 ring-primary/70 animate-shoal-glow' : 'border-white/20'
+                            className={`shoal-card shoal-card-enhanced relative overflow-hidden rounded-lg border-2 backdrop-blur-sm p-1 sm:p-1.5 text-white shadow-lg transition-all h-full flex flex-col ${
+                              isSelected ? 'selected border-primary ring-2 ring-primary/70 animate-shoal-glow' : ''
                             } ${
                               hasPlug ? 'border-destructive/70 ring-2 ring-destructive/50 animate-plug-erosion' : ''
                             } ${
-                              shoalEmpty ? 'opacity-30 bg-transparent border-dashed' : ''
+                              shoalEmpty ? 'opacity-30 !bg-transparent border-dashed !border-white/10' : ''
                             } ${
-                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 hover:bg-slate-900/70 hover:shadow-[0_0_15px_hsl(var(--primary)/0.4)] active:scale-[0.97]' : ''
+                              canInteract && !shoalEmpty ? 'cursor-pointer hover:border-primary/70 active:scale-[0.97]' : ''
                             } ${
                               !isAccessible ? 'opacity-40' : ''
                             }`}
@@ -576,7 +596,7 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                                     </>
                                   )}
                                 </div>
-                                <span className="text-[8px] sm:text-[9px] text-white/60 mt-auto font-medium">Tap</span>
+                                <span className="tap-indicator mt-auto">Tap</span>
                               </div>
                             )}
                           </Card>
@@ -588,11 +608,12 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
               );
             })}
           </div>
+          </div>
         </div>
       </div>
 
-      {/* Compact Graveyards */}
-      <div className="shrink-0 flex items-center justify-center gap-1 sm:gap-2 rounded-lg border border-destructive/20 bg-slate-950/60 px-1.5 sm:px-2 py-0.5 sm:py-1">
+      {/* Compact Graveyards - Enhanced styling */}
+      <div className="graveyard-bar shrink-0 flex items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-2 py-0.5 sm:py-1">
         <Skull className="h-3 w-3 text-destructive/60" />
         <span className="text-[10px] sm:text-xs text-destructive/60">Graveyard:</span>
         {[1, 2, 3].map((depth) => (
