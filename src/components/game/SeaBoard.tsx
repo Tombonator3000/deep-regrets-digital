@@ -235,40 +235,6 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
         </div>
       </TooltipProvider>
 
-      {/* Compact Depth Navigation - Hidden on mobile, using depth rows directly */}
-      {currentPlayer.location === 'sea' && (
-        <div className="shrink-0 hidden sm:flex items-center justify-center gap-1">
-          {[1, 2, 3].map((depth) => {
-            const isCurrentDepth = currentPlayer.currentDepth === depth;
-            const canDescend = depth > currentPlayer.currentDepth && !currentPlayer.hasPassed;
-            const canAscend = depth < currentPlayer.currentDepth && !currentPlayer.hasPassed;
-
-            return (
-              <Button
-                key={depth}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (canDescend) handleDescend(depth);
-                  else if (canAscend) handleAscend(depth);
-                }}
-                disabled={currentPlayer.hasPassed || isCurrentDepth}
-                className={`h-8 px-3 touch-manipulation ${
-                  isCurrentDepth
-                    ? 'btn-ocean ring-1 ring-primary/50'
-                    : canDescend || canAscend
-                      ? 'border-primary/50 hover:border-primary hover:bg-primary/10 active:scale-95'
-                      : 'opacity-40'
-                }`}
-              >
-                <span className="text-xs font-bold">D{depth}</span>
-                {canDescend && <ArrowDown className="ml-1 h-3 w-3" />}
-                {canAscend && <ArrowUp className="ml-1 h-3 w-3" />}
-              </Button>
-            );
-          })}
-        </div>
-      )}
 
       {/* The Deep Sea Board with Background Image and Wooden Frame */}
       <div
