@@ -459,6 +459,9 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
             <ActionPanel
               gameState={gameState}
               onAction={onAction}
+              onOpenOptions={() => setIsOptionsOpen(true)}
+              onToggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
             />
             {/* Show madness tracker and day tracker on mobile */}
             <div className="md:hidden space-y-1">

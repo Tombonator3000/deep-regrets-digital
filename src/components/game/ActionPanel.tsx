@@ -24,8 +24,11 @@ import {
   ArrowRight,
   Fish,
   HelpCircle,
+  Maximize2,
+  Minimize2,
   Moon,
   RefreshCw,
+  Settings2,
   Sunrise,
   Waves
 } from 'lucide-react';
@@ -38,6 +41,9 @@ import { PassingReward } from './PassingReward';
 interface ActionPanelProps {
   gameState: GameState;
   onAction: (action: any) => void;
+  onOpenOptions?: () => void;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 // Phase guidance information
@@ -93,7 +99,7 @@ const phaseGuidance: Record<string, { title: string; description: string; icon: 
 // Auto-advance timer duration in milliseconds
 const AUTO_ADVANCE_DELAY = 2000;
 
-export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
+export const ActionPanel = ({ gameState, onAction, onOpenOptions, onToggleFullscreen, isFullscreen }: ActionPanelProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
 
@@ -185,6 +191,59 @@ export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-1 sm:gap-2 min-h-0 overflow-hidden">
+        {/* Options and Fullscreen buttons */}
+        {(onOpenOptions || onToggleFullscreen) && (
+          <div className="flex gap-1 shrink-0">
+            {onOpenOptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onOpenOptions}
+                    className="flex-1 min-h-[32px] sm:min-h-[36px] text-[10px] sm:text-xs border-primary/30 hover:bg-primary/20 touch-manipulation active:scale-95"
+                  >
+                    <Settings2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                    <span>Options</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Åpne innstillinger</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {onToggleFullscreen && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onToggleFullscreen}
+                    className="flex-1 min-h-[32px] sm:min-h-[36px] text-[10px] sm:text-xs border-primary/30 hover:bg-primary/20 touch-manipulation active:scale-95"
+                  >
+                    {isFullscreen ? (
+                      <>
+                        <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Avslutt Fullskjerm</span>
+                        <span className="sm:hidden">Avslutt</span>
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Fullskjerm</span>
+                        <span className="sm:hidden">Full</span>
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isFullscreen ? 'Avslutt fullskjermmodus' : 'Gå til fullskjermmodus'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        )}
+
         {/* Compact Phase Banner */}
         <Card className="card-game border-primary/40 bg-primary/5 p-1.5 sm:p-2 shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
