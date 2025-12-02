@@ -12,6 +12,12 @@ import { DiceRemovalModal } from './game/DiceRemovalModal';
 import { NauticalFrame, WoodCornerAccent } from './game/NauticalFrame';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { FullscreenContext } from '@/context/FullscreenContext';
 import {
   DropdownMenu,
@@ -27,9 +33,12 @@ import {
   Minimize2,
   MoreHorizontal,
   Settings2,
+  Skull,
+  Sparkles,
   UserRound,
   X,
 } from 'lucide-react';
+import brinyDeepHeader from '@/assets/briny-deep-header.png';
 import {
   Dialog,
   DialogClose,
@@ -86,6 +95,23 @@ const useDepthCardBacks = () => {
   return cardBacks;
 };
 
+// Hook to load dink card back image
+const useDinkCardBack = () => {
+  const [cardBackUrl, setCardBackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    import('@/assets/dink-card-back.png')
+      .then((module) => {
+        setCardBackUrl(module.default);
+      })
+      .catch(() => {
+        setCardBackUrl(null);
+      });
+  }, []);
+
+  return cardBackUrl;
+};
+
 interface GameBoardProps {
   gameState: GameState;
   onAction: (action: GameAction) => void;
@@ -107,6 +133,8 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
   const { setOnPlayDink } = useCardModal();
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const depthCardBacks = useDepthCardBacks();
+  const dinkCardBackUrl = useDinkCardBack();
+  const dinksDeck = gameState.port.dinksDeck;
 
   // Set up the DINK card play callback
   useEffect(() => {
@@ -236,7 +264,82 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
       <NauticalFrame showNet className="relative z-10 mx-auto h-full w-full max-w-[1600px]" variant="corners-only">
-        <div className="grid h-full w-full grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 pt-3 sm:pt-4 lg:pt-5">
+        <div className="grid h-full w-full grid-rows-[auto,auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 pt-1 sm:pt-2 lg:pt-2">
+        {/* Briny Deep Header Banner - Top of screen */}
+        <TooltipProvider delayDuration={200}>
+          <div className="shrink-0 relative briny-deep-header mx-0.5 sm:mx-0" style={{ maxHeight: '80px' }}>
+            <img
+              src={brinyDeepHeader}
+              alt="The Briny Deep"
+              className="w-full h-full object-cover object-center rounded-lg"
+            />
+            {/* Dink Cards overlay - positioned among the flags on the right */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-[2%] flex items-center gap-1">
+              {dinksDeck.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-0.5 cursor-pointer">
+                      {/* Show stacked dink card backs */}
+                      <div className="relative" style={{ transform: 'rotate(-3deg)' }}>
+                        {dinksDeck.slice(0, Math.min(3, dinksDeck.length)).map((_, index) => (
+                          <div
+                            key={index}
+                            className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-10 w-7 sm:h-12 sm:w-8 rounded border-2 border-amber-600/80 shadow-lg overflow-hidden`}
+                            style={{
+                              transform: `translateX(${index * 2}px) translateY(${index * 1.5}px)`,
+                              zIndex: 3 - index,
+                            }}
+                          >
+                            {dinkCardBackUrl ? (
+                              <img
+                                src={dinkCardBackUrl}
+                                alt="Dink card"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-b from-amber-900/80 to-amber-950/90 flex items-center justify-center">
+                                <Sparkles className="h-3 w-3 text-amber-300" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {/* Deck count badge */}
+                        <Badge className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-900 text-[10px] px-1.5 py-0 shadow-md z-10 font-bold">
+                          {dinksDeck.length}
+                        </Badge>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <div className="space-y-1">
+                      <div className="font-semibold text-amber-400 flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Dink Deck
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {dinksDeck.length} trinkets remaining in deck
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            {/* Depth and status overlay at bottom */}
+            <div className="absolute bottom-0.5 left-1 right-1 flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs text-white/95 bg-slate-900/80 px-1.5 py-0.5 rounded font-medium">
+                Depth: <span className="font-bold text-cyan-300">{currentPlayer.currentDepth}</span>
+                {currentPlayer.location === 'port' && ' (In Port)'}
+              </span>
+              {gameState.sea.plugActive && (
+                <Badge className="bg-red-900/80 text-red-200 animate-pulse text-[10px] sm:text-xs px-1.5 py-0">
+                  <Skull className="mr-1 h-3 w-3" />
+                  Plug Active!
+                </Badge>
+              )}
+            </div>
+          </div>
+        </TooltipProvider>
+
         {/* Compact Header */}
         <div className="relative flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
           <WoodCornerAccent position="top-left" size="sm" />
