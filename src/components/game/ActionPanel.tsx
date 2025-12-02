@@ -24,11 +24,22 @@ import {
   ArrowRight,
   Fish,
   HelpCircle,
+  Maximize2,
+  Minimize2,
   Moon,
+  MoreHorizontal,
   RefreshCw,
+  Settings2,
   Sunrise,
+  UserRound,
   Waves
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { LastToPassWarning } from './LastToPassWarning';
 import { DeclarationChoice } from './DeclarationChoice';
 import { LifePreserverGift } from './LifePreserverGift';
@@ -38,6 +49,12 @@ import { PassingReward } from './PassingReward';
 interface ActionPanelProps {
   gameState: GameState;
   onAction: (action: any) => void;
+  onOpenPort?: () => void;
+  onOpenHelp?: () => void;
+  onOpenPlayer?: () => void;
+  onOpenOptions?: () => void;
+  toggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 // Phase guidance information
@@ -93,7 +110,16 @@ const phaseGuidance: Record<string, { title: string; description: string; icon: 
 // Auto-advance timer duration in milliseconds
 const AUTO_ADVANCE_DELAY = 2000;
 
-export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
+export const ActionPanel = ({
+  gameState,
+  onAction,
+  onOpenPort,
+  onOpenHelp,
+  onOpenPlayer,
+  onOpenOptions,
+  toggleFullscreen,
+  isFullscreen
+}: ActionPanelProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isPlayerTurn = !currentPlayer.hasPassed;
 
@@ -185,6 +211,75 @@ export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-1 sm:gap-2 min-h-0 overflow-hidden">
+        {/* Control Buttons Row */}
+        <div className="flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
+          {onOpenPort && (
+            <Button
+              size="sm"
+              className="btn-ocean flex items-center gap-0.5 px-1 min-h-[28px] text-[9px] touch-manipulation active:scale-95 sm:gap-1.5 sm:px-2 sm:min-h-[32px] sm:text-xs"
+              onClick={onOpenPort}
+            >
+              <Anchor className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Havnhandlinger</span>
+              <span className="sm:hidden">Havn</span>
+            </Button>
+          )}
+          {toggleFullscreen && (
+            <Button
+              size="sm"
+              type="button"
+              variant="ghost"
+              className="min-h-[28px] min-w-[28px] p-1 text-white/80 hover:text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
+              onClick={toggleFullscreen}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+            </Button>
+          )}
+          {(onOpenHelp || onOpenPlayer || onOpenOptions) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  className="min-h-[28px] min-w-[28px] border-white/30 bg-white/10 p-1 text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {onOpenHelp && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onSelect={onOpenHelp}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    Hjelp & Regler
+                  </DropdownMenuItem>
+                )}
+                {onOpenPlayer && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onSelect={onOpenPlayer}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    View Captain Sheet
+                  </DropdownMenuItem>
+                )}
+                {onOpenOptions && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onSelect={onOpenOptions}
+                  >
+                    <Settings2 className="h-4 w-4" />
+                    Options
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
         {/* Compact Phase Banner */}
         <Card className="card-game border-primary/40 bg-primary/5 p-1.5 sm:p-2 shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
