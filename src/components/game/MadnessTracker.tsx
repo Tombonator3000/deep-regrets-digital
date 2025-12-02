@@ -93,8 +93,8 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
       <>
         <div
           className={`madness-tracker-compact relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-950/80 via-slate-900/90 to-red-950/60 cursor-pointer hover:border-madness/60 transition-colors ${
-            isNearThreshold ? 'animate-madness-warning border-destructive/60' : 'border-madness/40'
-          } ${isHighMadness ? 'ring-1 ring-destructive/30' : ''}`}
+            isNearThreshold ? 'madness-critical border-destructive/60' : 'border-madness/40'
+          } ${isHighMadness ? 'ring-1 ring-destructive/30 madness-high' : ''}`}
           onClick={() => setShowRegrets(true)}
         >
           {/* Background video or image */}
@@ -115,7 +115,7 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
             />
           )}
           <div className="relative z-10 flex items-center gap-2 p-2">
-            <Brain className="h-4 w-4 text-madness animate-pulse" style={{ filter: 'drop-shadow(0 0 4px rgba(168, 85, 247, 0.5))' }} />
+            <Brain className="h-4 w-4 text-madness animate-pulse madness-icon" style={{ filter: 'drop-shadow(0 0 4px rgba(168, 85, 247, 0.5))' }} />
             <div className="flex-1">
               <div className="text-xs font-bold text-madness" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{tier.name}</div>
               <div className="h-1.5 w-full rounded-full bg-black/40 overflow-hidden">
@@ -171,8 +171,8 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
     <>
       <div
         className={`madness-tracker relative overflow-hidden rounded-xl border bg-gradient-to-br from-purple-950/90 via-slate-900 to-red-950/70 shadow-lg shadow-madness/20 cursor-pointer hover:border-madness/50 transition-colors ${
-          isNearThreshold ? 'animate-madness-warning border-destructive/50' : 'border-madness/30'
-        } ${isHighMadness ? 'ring-2 ring-destructive/40' : ''}`}
+          isNearThreshold ? 'madness-critical border-destructive/50' : 'border-madness/30'
+        } ${isHighMadness ? 'ring-2 ring-destructive/40 madness-high' : ''}`}
         onClick={() => setShowRegrets(true)}
       >
         {/* Background video or image with swirling eyes effect */}
@@ -201,7 +201,7 @@ export const MadnessTracker = ({ player, compact = false }: MadnessTrackerProps)
           {/* Header with title */}
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-madness animate-pulse" style={{ filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.6))' }} />
+              <Brain className="h-5 w-5 text-madness animate-pulse madness-icon" style={{ filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.6))' }} />
               <span className="text-sm font-bold tracking-wide text-white" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5)' }}>OCEAN MADNESS</span>
             </div>
             <div className="flex items-center gap-1 rounded-full bg-madness/30 px-2 py-0.5 border border-madness/20">
