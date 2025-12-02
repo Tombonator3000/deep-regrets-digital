@@ -839,7 +839,7 @@ All colors MUST be HSL for consistency.
 /* Depth row styling - enhanced underwater atmosphere with dynamic lighting */
 .depth-row {
   position: relative;
-  padding: 8px;
+  padding: 4px 8px;
   border-radius: 8px;
   transition: all 0.3s ease;
 }

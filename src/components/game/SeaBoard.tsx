@@ -160,13 +160,13 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
 
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-0.5 sm:gap-1 overflow-hidden">
-      {/* Briny Deep Header Banner */}
+      {/* Briny Deep Header Banner - Compact */}
       <TooltipProvider delayDuration={200}>
-        <div className="shrink-0 relative briny-deep-header">
+        <div className="shrink-0 relative briny-deep-header" style={{ maxHeight: '80px' }}>
           <img
             src={brinyDeepHeader}
             alt="The Briny Deep"
-            className="w-full h-auto object-contain rounded-lg"
+            className="w-full h-full object-cover object-center rounded-lg"
           />
           {/* Dink Cards overlay - positioned among the flags on the right */}
           <div className="absolute top-1/2 -translate-y-1/2 right-[2%] flex items-center gap-1">
@@ -179,9 +179,9 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                       {dinksDeck.slice(0, Math.min(3, dinksDeck.length)).map((_, index) => (
                         <div
                           key={index}
-                          className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-12 w-8 sm:h-14 sm:w-10 rounded border-2 border-amber-600/80 shadow-lg overflow-hidden`}
+                          className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-10 w-7 sm:h-12 sm:w-8 rounded border-2 border-amber-600/80 shadow-lg overflow-hidden`}
                           style={{
-                            transform: `translateX(${index * 3}px) translateY(${index * 2}px)`,
+                            transform: `translateX(${index * 2}px) translateY(${index * 1.5}px)`,
                             zIndex: 3 - index,
                           }}
                         >
@@ -341,7 +341,7 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
           </div>
 
           {/* 3x3 Grid of Cards positioned over background */}
-          <div className="absolute inset-0 grid grid-rows-3 gap-0 p-[3%]" style={{ paddingTop: '2%', paddingBottom: '2%' }}>
+          <div className="absolute inset-0 grid grid-rows-3 gap-0 p-[2%]" style={{ paddingTop: '1%', paddingBottom: '1%' }}>
             {[1, 2, 3].map((depth) => {
               const depthInfo = DEPTH_INFO[depth as 1 | 2 | 3];
               const shoals = gameState.sea.shoals[depth] ?? [];
