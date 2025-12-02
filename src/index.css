@@ -2501,3 +2501,603 @@ All colors MUST be HSL for consistency.
     transform: translateY(-15px) translateX(3px);
   }
 }
+
+/* ============================================
+   BOARD GAME STYLED CAPTAIN INFO PANEL
+   Inspired by the physical Deep Regrets board
+   ============================================ */
+
+/* Custom font for board game feel - hand-drawn comic style */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Patrick+Hand&display=swap');
+
+/* Board game panel base styles */
+.captain-info-panel {
+  --char-primary: 180 55% 45%;
+  --char-primary-glow: 180 65% 55%;
+  --char-secondary: 190 45% 35%;
+  --char-background: 185 30% 11%;
+  --char-border: 180 45% 35%;
+
+  position: relative;
+  font-family: 'Patrick Hand', cursive, sans-serif;
+}
+
+/* Wood texture background overlay */
+.captain-info-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    /* Wood grain pattern */
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(139, 90, 43, 0.03) 2px,
+      rgba(139, 90, 43, 0.03) 4px
+    ),
+    /* Aged paper texture effect */
+    radial-gradient(ellipse at 30% 20%, rgba(255, 248, 220, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(255, 248, 220, 0.03) 0%, transparent 50%),
+    /* Base tinted background */
+    linear-gradient(
+      145deg,
+      hsl(var(--char-background)) 0%,
+      hsl(var(--char-background) / 0.95) 50%,
+      hsl(var(--char-background) / 0.9) 100%
+    );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hand-drawn ink border effect */
+.board-game-frame {
+  position: relative;
+  border: 3px solid hsl(var(--char-border) / 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    /* Inner shadow for depth */
+    inset 0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.05),
+    /* Outer glow in character color */
+    0 0 20px hsl(var(--char-primary) / 0.15),
+    /* Drop shadow */
+    0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Decorative corner accents (ink flourish) */
+.board-game-frame::before,
+.board-game-frame::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid hsl(var(--char-primary) / 0.4);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.board-game-frame::before {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 8px 0 0 0;
+}
+
+.board-game-frame::after {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 8px 0;
+}
+
+/* Character portrait frame - larger and more prominent */
+.portrait-frame-board {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border: 4px solid hsl(var(--char-border) / 0.7);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.5),
+    0 0 0 2px hsl(var(--char-primary) / 0.3);
+  background: linear-gradient(145deg, hsl(var(--char-background)), hsl(220 30% 8%));
+}
+
+.portrait-frame-board img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.05) saturate(1.1);
+}
+
+/* Decorative rope border around portrait */
+.portrait-frame-board::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 3px dashed hsl(35 45% 40% / 0.4);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Board game section headers */
+.board-section-header {
+  font-family: 'Bangers', cursive, sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  color: hsl(var(--char-primary-glow));
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 10px hsl(var(--char-primary) / 0.3);
+  text-transform: uppercase;
+}
+
+/* Hand-drawn section dividers */
+.board-divider {
+  height: 2px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      hsl(var(--char-border) / 0.4) 0px,
+      hsl(var(--char-border) / 0.4) 8px,
+      transparent 8px,
+      transparent 12px
+    );
+  margin: 12px 0;
+}
+
+/* Trophy wall slots - board game style */
+.trophy-slot-board {
+  position: relative;
+  min-height: 70px;
+  border: 2px dashed hsl(var(--char-border) / 0.4);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+  transition: all 0.2s ease;
+}
+
+.trophy-slot-board.filled {
+  border-style: solid;
+  border-color: hsl(var(--fishbuck) / 0.5);
+  background:
+    linear-gradient(145deg,
+      hsl(var(--fishbuck) / 0.1),
+      hsl(var(--fishbuck) / 0.05)
+    );
+}
+
+/* Multiplier badge - coin style */
+.multiplier-badge-board {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: 'Bangers', cursive;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.multiplier-badge-board.x1 {
+  background: linear-gradient(145deg, hsl(220 20% 45%), hsl(220 20% 35%));
+  color: white;
+  border: 2px solid hsl(220 15% 50%);
+}
+
+.multiplier-badge-board.x2 {
+  background: linear-gradient(145deg, hsl(180 60% 50%), hsl(180 60% 40%));
+  color: hsl(180 80% 15%);
+  border: 2px solid hsl(180 50% 60%);
+}
+
+.multiplier-badge-board.x3 {
+  background: linear-gradient(145deg, hsl(45 90% 55%), hsl(45 85% 45%));
+  color: hsl(35 80% 15%);
+  border: 2px solid hsl(45 80% 65%);
+}
+
+/* Fishbuck coin styling */
+.fishbuck-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background:
+    linear-gradient(145deg,
+      hsl(45 85% 50%),
+      hsl(40 80% 40%)
+    );
+  border: 3px solid hsl(35 70% 35%);
+  border-radius: 20px;
+  color: hsl(35 80% 15%);
+  font-family: 'Bangers', cursive;
+  font-size: 1.2rem;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Character name in board game style */
+.captain-name-board {
+  font-family: 'Bangers', cursive, sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  color: hsl(var(--char-primary-glow));
+  text-shadow:
+    2px 2px 0 hsl(var(--char-primary) / 0.3),
+    0 0 20px hsl(var(--char-primary) / 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+/* Character title badge */
+.captain-title-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  background: hsl(var(--char-primary) / 0.2);
+  border: 2px solid hsl(var(--char-primary) / 0.4);
+  border-radius: 15px;
+  color: hsl(var(--char-primary-glow));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Stats display - board game style */
+.stat-box-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 2px solid;
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
+  overflow: hidden;
+}
+
+.stat-box-board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, currentColor, transparent 60%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.stat-box-board.stat-regrets {
+  border-color: hsl(var(--destructive) / 0.5);
+  color: hsl(var(--destructive));
+}
+
+.stat-box-board.stat-madness {
+  border-color: hsl(var(--madness) / 0.5);
+  color: hsl(var(--madness));
+}
+
+.stat-box-board.stat-trophy {
+  border-color: hsl(var(--fishbuck) / 0.5);
+  color: hsl(var(--fishbuck));
+}
+
+.stat-value-board {
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.stat-label-board {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Equipment cards - board game style */
+.equipment-card-board {
+  position: relative;
+  padding: 12px;
+  border: 2px solid hsl(var(--char-border) / 0.4);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+}
+
+.equipment-card-board::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px dashed hsl(var(--char-border) / 0.2);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.equipment-label-board {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.8rem;
+  color: hsl(var(--char-primary) / 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.equipment-name-board {
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+/* Dice tray - board game style */
+.dice-tray-board {
+  position: relative;
+  padding: 16px;
+  border: 2px solid hsl(var(--char-border) / 0.4);
+  border-radius: 12px;
+  background:
+    /* Felt texture */
+    radial-gradient(circle at 20% 80%, rgba(0, 100, 80, 0.1) 0%, transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(0, 100, 80, 0.08) 0%, transparent 30%),
+    linear-gradient(145deg, rgba(0, 50, 40, 0.3), rgba(0, 30, 25, 0.4));
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Dice styling - board game feel */
+.die-board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  font-family: 'Bangers', cursive;
+  font-size: 1.3rem;
+  border-radius: 8px;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.die-board:hover {
+  transform: translateY(-2px) rotate(5deg);
+  box-shadow:
+    0 6px 15px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.die-board.die-fresh {
+  background: linear-gradient(145deg, hsl(var(--char-primary)), hsl(var(--char-secondary)));
+  border: 2px solid hsl(var(--char-primary-glow) / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.die-board.die-spent {
+  background: linear-gradient(145deg, hsl(220 15% 25%), hsl(220 15% 20%));
+  border: 2px solid hsl(220 10% 30%);
+  color: hsl(220 10% 50%);
+  opacity: 0.6;
+}
+
+/* Captain Info toggle button - board game style */
+.captain-info-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1rem;
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+  border: 2px solid hsl(var(--char-border) / 0.3);
+  border-radius: 8px;
+  color: hsl(var(--char-primary) / 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.captain-info-toggle:hover {
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
+  border-color: hsl(var(--char-primary) / 0.5);
+  color: hsl(var(--char-primary-glow));
+}
+
+/* Location badge - board game style */
+.location-badge-board {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  border-radius: 15px;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.location-badge-board.at-sea {
+  background: linear-gradient(145deg, hsl(var(--char-primary) / 0.3), hsl(var(--char-primary) / 0.2));
+  border: 2px solid hsl(var(--char-primary) / 0.5);
+  color: hsl(var(--char-primary-glow));
+}
+
+.location-badge-board.at-port {
+  background: linear-gradient(145deg, hsl(var(--fishbuck) / 0.3), hsl(var(--fishbuck) / 0.2));
+  border: 2px solid hsl(var(--fishbuck) / 0.5);
+  color: hsl(var(--fishbuck));
+}
+
+/* Turn indicator - board game style */
+.turn-badge-board {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  padding: 4px 10px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  background: linear-gradient(145deg, hsl(var(--char-primary)), hsl(var(--char-secondary)));
+  border: 2px solid hsl(var(--char-primary-glow) / 0.6);
+  border-radius: 10px;
+  color: hsl(220 30% 10%);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 0 10px hsl(var(--char-primary) / 0.4);
+  animation: turn-pulse 2s ease-in-out infinite;
+}
+
+@keyframes turn-pulse {
+  0%, 100% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.4),
+      0 0 10px hsl(var(--char-primary) / 0.4);
+  }
+  50% {
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.5),
+      0 0 20px hsl(var(--char-primary) / 0.6);
+  }
+}
+
+/* Starting bonus box - board game style */
+.starting-bonus-board {
+  padding: 12px;
+  background:
+    linear-gradient(145deg, hsl(var(--fishbuck) / 0.15), hsl(var(--fishbuck) / 0.08));
+  border: 2px solid hsl(var(--fishbuck) / 0.4);
+  border-radius: 10px;
+}
+
+.starting-bonus-board .bonus-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  color: hsl(var(--fishbuck));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.starting-bonus-board .bonus-text {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  color: hsl(var(--fishbuck) / 0.9);
+  line-height: 1.4;
+}
+
+/* Regrets section - board game style */
+.regrets-section-board {
+  padding: 16px;
+  border: 2px solid hsl(var(--destructive) / 0.4);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, hsl(var(--destructive) / 0.1), hsl(var(--destructive) / 0.05));
+}
+
+.regrets-header-board {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.regrets-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  background: hsl(var(--destructive));
+  border-radius: 12px;
+  color: white;
+}
+
+/* Action buttons - board game style */
+.action-btn-board {
+  position: relative;
+  padding: 12px 20px;
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.action-btn-board::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 2px dashed currentColor;
+  border-radius: 8px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.action-btn-board.primary {
+  background: linear-gradient(145deg, hsl(var(--char-primary)), hsl(var(--char-secondary)));
+  border: 3px solid hsl(var(--char-primary-glow) / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 4px 12px hsl(var(--char-primary) / 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.action-btn-board.primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px hsl(var(--char-primary) / 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+.action-btn-board.secondary {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.action-btn-board.secondary:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
