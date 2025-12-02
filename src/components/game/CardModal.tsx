@@ -435,6 +435,11 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
           <DialogTitle className={`text-2xl font-bold ${colors.accent}`}>
             {supply.name}
           </DialogTitle>
+          {supply.flavorText && (
+            <p className="text-white/60 text-sm italic">
+              "{supply.flavorText}"
+            </p>
+          )}
           <DialogDescription className="text-white/80 text-sm">
             {supply.description}
           </DialogDescription>
