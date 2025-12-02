@@ -2,6 +2,7 @@ import { RegretCard as RegretCardType } from '@/types/game';
 import { Anchor } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getRegretImage } from '@/data/regretImages';
+import { useRegretBackground } from '@/data/regretBackgrounds';
 
 interface RegretCardProps {
   regret?: RegretCardType;
@@ -80,6 +81,7 @@ export const RegretCard = ({
   const sizeClass = sizeClasses[size];
   const [imageError, setImageError] = useState(false);
   const cardBackImage = useCardBackImage();
+  const regretBackground = useRegretBackground(regret?.value ?? 0);
 
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
 
@@ -108,6 +110,31 @@ export const RegretCard = ({
   // Show card front (revealed regret)
   const regretImage = regret ? getRegretImage(regret.id) : undefined;
 
+  // Prioritize value-based background over individual card images
+  if (regretBackground) {
+    return (
+      <div
+        className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-slate-600/50 cursor-pointer hover:scale-105 transition-transform relative ${className}`}
+        style={rotationStyle}
+        onClick={onClick}
+      >
+        <img
+          src={regretBackground}
+          alt={`Regret ${regret?.value}`}
+          className="w-full h-full object-cover"
+        />
+        {/* Front text overlay at bottom */}
+        {regret?.frontText && (
+          <div className="absolute bottom-2 left-0 right-0 px-2 text-center">
+            <p className="text-white text-[7px] sm:text-[8px] font-medium italic leading-tight drop-shadow-lg">
+              {regret.frontText}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`${sizeClass} rounded-lg overflow-hidden shadow-lg border-2 border-destructive/50 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform ${className}`}
@@ -115,9 +142,9 @@ export const RegretCard = ({
       onClick={onClick}
     >
       {regretImage ? (
-        <img 
-          src={regretImage} 
-          alt={regret?.frontText || 'Regret'} 
+        <img
+          src={regretImage}
+          alt={regret?.frontText || 'Regret'}
           className="w-full h-full object-cover"
         />
       ) : (
