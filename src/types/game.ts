@@ -33,6 +33,7 @@ export interface UpgradeCard {
   effects: string[];
   equipSlot: string;
   description: string;
+  flavorText?: string;
 }
 
 export interface DinkCard {
