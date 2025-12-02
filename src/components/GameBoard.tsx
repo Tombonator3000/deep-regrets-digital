@@ -50,6 +50,42 @@ import { EndGameScreen } from './game/EndGameScreen';
 import { GameAction } from '@/types/game';
 import { BoatColor } from './game/GameTokens';
 
+// Hook to load depth-specific card back images
+const useDepthCardBacks = () => {
+  const [cardBacks, setCardBacks] = useState<Record<number, string | null>>({});
+
+  useEffect(() => {
+    // Try to load depth 1 card back
+    import('@/assets/depth-1-card-back.png')
+      .then((module) => {
+        setCardBacks(prev => ({ ...prev, 1: module.default }));
+      })
+      .catch(() => {
+        setCardBacks(prev => ({ ...prev, 1: null }));
+      });
+
+    // Try to load depth 2 card back
+    import('@/assets/depth-2-card-back.png')
+      .then((module) => {
+        setCardBacks(prev => ({ ...prev, 2: module.default }));
+      })
+      .catch(() => {
+        setCardBacks(prev => ({ ...prev, 2: null }));
+      });
+
+    // Try to load depth 3 card back
+    import('@/assets/depth-3-card-back.png')
+      .then((module) => {
+        setCardBacks(prev => ({ ...prev, 3: module.default }));
+      })
+      .catch(() => {
+        setCardBacks(prev => ({ ...prev, 3: null }));
+      });
+  }, []);
+
+  return cardBacks;
+};
+
 interface GameBoardProps {
   gameState: GameState;
   onAction: (action: GameAction) => void;
@@ -70,6 +106,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
   const displaySettings = useDisplaySettings();
   const { setOnPlayDink } = useCardModal();
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const depthCardBacks = useDepthCardBacks();
 
   // Set up the DINK card play callback
   useEffect(() => {
@@ -379,15 +416,26 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
           ) : !isShoalRevealed ? (
             /* Hidden fish state - show mystery card */
             <div className="space-y-4">
-              <div className="flex items-center justify-center py-6">
-                <div className="relative w-32 h-44 rounded-lg bg-gradient-to-br from-cyan-900/50 via-blue-900/60 to-purple-900/50 border-2 border-white/20 flex items-center justify-center shadow-xl">
-                  {/* Card back pattern */}
-                  <div className="absolute inset-2 rounded opacity-30" style={{
-                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.08) 6px, rgba(255,255,255,0.08) 12px)'
-                  }} />
+              <div className="flex items-center justify-center py-6 rounded-lg bg-black/30">
+                <div className="relative w-32 h-44 rounded-lg overflow-hidden border-2 border-white/20 flex items-center justify-center shadow-xl">
+                  {/* Depth-specific card back */}
+                  {selectedShoal && depthCardBacks[selectedShoal.depth] ? (
+                    <img
+                      src={depthCardBacks[selectedShoal.depth]!}
+                      alt={`Depth ${selectedShoal.depth} card back`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/50 via-blue-900/60 to-purple-900/50" />
+                      <div className="absolute inset-2 rounded opacity-30" style={{
+                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.08) 6px, rgba(255,255,255,0.08) 12px)'
+                      }} />
+                    </>
+                  )}
                   <div className="text-center z-10">
-                    <Fish className="h-10 w-10 text-white/50 mx-auto mb-2" />
-                    <span className="text-sm text-white/60">???</span>
+                    <Fish className="h-10 w-10 text-white/50 mx-auto mb-2 drop-shadow-lg" />
+                    <span className="text-sm text-white/60 drop-shadow">???</span>
                   </div>
                 </div>
               </div>
