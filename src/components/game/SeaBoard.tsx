@@ -160,28 +160,28 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
 
   return (
     <div className="briny-deep-board flex h-full min-h-0 flex-col gap-0.5 sm:gap-1 overflow-hidden">
-      {/* Briny Deep Header Image - Smaller on mobile */}
+      {/* Briny Deep Header Banner */}
       <TooltipProvider delayDuration={200}>
         <div className="shrink-0 relative briny-deep-header">
           <img
             src={brinyDeepHeader}
             alt="The Briny Deep"
-            className="w-full h-auto max-h-[80px] sm:max-h-none object-cover object-top rounded-lg"
+            className="w-full h-auto object-contain rounded-lg"
           />
-          {/* Dink Cards overlay - positioned over DINKS label in header */}
-          <div className="absolute top-[15%] right-[8%] sm:right-[10%] flex items-start gap-1">
+          {/* Dink Cards overlay - positioned among the flags on the right */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-[2%] flex items-center gap-1">
             {dinksDeck.length > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-0.5 cursor-pointer">
-                    {/* Show up to 3 stacked dink card backs - rotated to lie flat */}
-                    <div className="relative" style={{ transform: 'rotate(-5deg)' }}>
+                    {/* Show stacked dink card backs */}
+                    <div className="relative" style={{ transform: 'rotate(-3deg)' }}>
                       {dinksDeck.slice(0, Math.min(3, dinksDeck.length)).map((_, index) => (
                         <div
                           key={index}
-                          className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-10 w-7 sm:h-12 sm:w-9 rounded border border-amber-500/60 shadow-md overflow-hidden`}
+                          className={`${index === 0 ? 'relative' : 'absolute top-0 left-0'} h-12 w-8 sm:h-14 sm:w-10 rounded border-2 border-amber-600/80 shadow-lg overflow-hidden`}
                           style={{
-                            transform: `translateX(${index * 4}px) translateY(${index * 2}px)`,
+                            transform: `translateX(${index * 3}px) translateY(${index * 2}px)`,
                             zIndex: 3 - index,
                           }}
                         >
@@ -198,8 +198,8 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
                           )}
                         </div>
                       ))}
-                      {/* Deck count badge overlaid on the stack */}
-                      <Badge className="absolute -bottom-1 -right-1 bg-amber-500/90 text-slate-900 text-[10px] px-1.5 py-0 shadow-md z-10">
+                      {/* Deck count badge */}
+                      <Badge className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-900 text-[10px] px-1.5 py-0 shadow-md z-10 font-bold">
                         {dinksDeck.length}
                       </Badge>
                     </div>
@@ -219,14 +219,14 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
               </Tooltip>
             )}
           </div>
-          {/* Overlay with depth info and plug status */}
-          <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
-            <span className="text-xs text-slate-200/90 bg-slate-950/70 px-2 py-0.5 rounded">
-              Depth: <span className="font-semibold text-primary">{currentPlayer.currentDepth}</span>
+          {/* Depth and status overlay at bottom */}
+          <div className="absolute bottom-0.5 left-1 right-1 flex items-center justify-between">
+            <span className="text-[10px] sm:text-xs text-white/95 bg-slate-900/80 px-1.5 py-0.5 rounded font-medium">
+              Depth: <span className="font-bold text-cyan-300">{currentPlayer.currentDepth}</span>
               {currentPlayer.location === 'port' && ' (In Port)'}
             </span>
             {gameState.sea.plugActive && (
-              <Badge className="bg-destructive/20 text-destructive animate-pulse text-xs px-1.5 py-0">
+              <Badge className="bg-red-900/80 text-red-200 animate-pulse text-[10px] sm:text-xs px-1.5 py-0">
                 <Skull className="mr-1 h-3 w-3" />
                 Plug Active!
               </Badge>
