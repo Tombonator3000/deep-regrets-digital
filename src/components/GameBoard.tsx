@@ -20,22 +20,9 @@ import {
 } from '@/components/ui/tooltip';
 import { FullscreenContext } from '@/context/FullscreenContext';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Anchor,
   Fish,
-  HelpCircle,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal,
-  Settings2,
   Skull,
   Sparkles,
-  UserRound,
   X,
 } from 'lucide-react';
 import brinyDeepHeader from '@/assets/briny-deep-header.png';
@@ -300,62 +287,6 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
                   alt="The Briny Deep"
                   className="w-full h-full object-cover object-center rounded-lg"
                 />
-                {/* Control buttons overlay - positioned on the left */}
-                <div className="absolute top-1/2 -translate-y-1/2 left-[2%] flex items-center gap-0.5 sm:gap-1">
-                  <Button
-                    size="sm"
-                    className="btn-ocean flex items-center gap-0.5 px-1 min-h-[28px] text-[9px] touch-manipulation active:scale-95 sm:gap-1.5 sm:px-2 sm:min-h-[32px] sm:text-xs"
-                    onClick={() => setIsPortOpen(true)}
-                  >
-                    <Anchor className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span className="hidden sm:inline">Havnhandlinger</span>
-                    <span className="sm:hidden">Havn</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                    className="min-h-[28px] min-w-[28px] p-1 text-white/80 hover:text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
-                    onClick={toggleFullscreen}
-                  >
-                    {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                        className="min-h-[28px] min-w-[28px] border-white/30 bg-white/10 p-1 text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
-                      >
-                        <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuItem
-                        className="flex items-center gap-2"
-                        onSelect={() => setIsHelpOpen(true)}
-                      >
-                        <HelpCircle className="h-4 w-4" />
-                        Hjelp & Regler
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="flex items-center gap-2"
-                        onSelect={() => setIsPlayerOpen(true)}
-                      >
-                        <UserRound className="h-4 w-4" />
-                        View Captain Sheet
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="flex items-center gap-2"
-                        onSelect={() => setIsOptionsOpen(true)}
-                      >
-                        <Settings2 className="h-4 w-4" />
-                        Options
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
                 {/* Dink Cards overlay - positioned among the flags on the right */}
                 <div className="absolute top-1/2 -translate-y-1/2 right-[2%] flex items-center gap-1">
                   {dinksDeck.length > 0 && (
@@ -459,6 +390,12 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
             <ActionPanel
               gameState={gameState}
               onAction={onAction}
+              onOpenPort={() => setIsPortOpen(true)}
+              onOpenHelp={() => setIsHelpOpen(true)}
+              onOpenPlayer={() => setIsPlayerOpen(true)}
+              onOpenOptions={() => setIsOptionsOpen(true)}
+              toggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
             />
             {/* Show madness tracker and day tracker on mobile */}
             <div className="md:hidden space-y-1">
