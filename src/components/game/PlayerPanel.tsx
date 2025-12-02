@@ -7,6 +7,10 @@ import { CHARACTERS, CHARACTER_THEMES } from '@/data/characters';
 import { AnimatedCounter } from './ParticleEffects';
 import { useCardModal } from './CardModal';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
+import { getSupplyImage } from '@/data/supplyImages';
+import rodCardBack from '@/assets/rod-card-back.png';
+import reelCardBack from '@/assets/reel-card-back.png';
+import supplyCardBack from '@/assets/supply-card-back.png';
 import {
   Tooltip,
   TooltipContent,
@@ -17,20 +21,23 @@ import {
   Coins,
   Fish,
   MapPin,
-  Package,
 } from 'lucide-react';
 
-// Mini card for equipped rod/reel/supply on captain sheet
-interface EquipmentMiniCardProps {
-  equipment: UpgradeCard;
+// Equipment card displayed as actual card image on captain sheet (like physical game)
+interface EquipmentCardOverlayProps {
+  equipment: UpgradeCard | null;
+  type: 'rod' | 'reel' | 'supply';
   onClick?: () => void;
 }
 
-const EquipmentMiniCard = ({ equipment, onClick }: EquipmentMiniCardProps) => {
-  const typeColors = {
-    rod: 'border-blue-400/60 bg-gradient-to-b from-blue-800/90 to-blue-950/95',
-    reel: 'border-green-400/60 bg-gradient-to-b from-green-800/90 to-green-950/95',
-    supply: 'border-emerald-400/60 bg-gradient-to-b from-emerald-800/90 to-emerald-950/95',
+const EquipmentCardOverlay = ({ equipment, type, onClick }: EquipmentCardOverlayProps) => {
+  // Get the card back image based on type
+  const getCardBackImage = () => {
+    switch (type) {
+      case 'rod': return rodCardBack;
+      case 'reel': return reelCardBack;
+      case 'supply': return supplyCardBack;
+    }
   };
 
   const typeTextColors = {
@@ -39,40 +46,57 @@ const EquipmentMiniCard = ({ equipment, onClick }: EquipmentMiniCardProps) => {
     supply: 'text-emerald-300',
   };
 
+  const cardBackImage = getCardBackImage();
+
+  // Check for specific supply image (full card design)
+  const supplyImage = equipment && type === 'supply' ? getSupplyImage(equipment.id) : undefined;
+  const displayImage = supplyImage || cardBackImage;
+
+  if (equipment) {
+    // When equipment is present, show the card image
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className="equipment-card-overlay has-equipment cursor-pointer"
+            onClick={onClick}
+          >
+            <img
+              src={displayImage}
+              alt={equipment.name}
+              className="equipment-card-image"
+            />
+            <div className="equipment-card-name-overlay">
+              {equipment.name}
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <div className="space-y-1">
+            <div className={`font-semibold ${typeTextColors[type]}`}>{equipment.name}</div>
+            <div className="text-xs text-muted-foreground">{equipment.description}</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {equipment.effects.map((effect) => (
+                <Badge key={effect} variant="secondary" className="text-xs">
+                  {effect}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  // When empty, show a faded card back as placeholder
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={`equipment-mini-card ${typeColors[equipment.type]} cursor-pointer hover:scale-105 transition-transform`}
-          onClick={onClick}
-        >
-          <div className={`equipment-mini-type ${typeTextColors[equipment.type]}`}>
-            {equipment.type.toUpperCase()}
-          </div>
-          <div className="equipment-mini-name">
-            {equipment.name}
-          </div>
-          <div className="equipment-mini-effects">
-            {equipment.effects.slice(0, 2).map((effect, i) => (
-              <span key={i} className="equipment-mini-effect">{effect}</span>
-            ))}
-          </div>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs">
-        <div className="space-y-1">
-          <div className={`font-semibold ${typeTextColors[equipment.type]}`}>{equipment.name}</div>
-          <div className="text-xs text-muted-foreground">{equipment.description}</div>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {equipment.effects.map((effect) => (
-              <Badge key={effect} variant="secondary" className="text-xs">
-                {effect}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
+    <div className="equipment-card-overlay empty-slot">
+      <img
+        src={cardBackImage}
+        alt={`Empty ${type} slot`}
+        className="equipment-card-image empty"
+      />
+    </div>
   );
 };
 
@@ -347,61 +371,28 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
         </div>
       </div>
 
-      {/* ===== BOTTOM: Equipment Card Slots ===== */}
-      <div className="equipment-slots-v2">
-        {/* Supply Slot */}
-        <div className={`equip-card supply-slot ${player.supplies.length > 0 ? 'has-equipment' : ''}`}>
-          {player.supplies.length > 0 ? (
-            <EquipmentMiniCard
-              equipment={player.supplies[0]}
-              onClick={() => handleEnlargeEquipment(player.supplies[0])}
-            />
-          ) : (
-            <>
-              <div className="equip-type">ITEM</div>
-              <div className="equip-name-v2">SUPPLY</div>
-              <div className="equip-content supply-content">
-                <Package className="h-5 w-5 text-white/20" />
-              </div>
-            </>
-          )}
-        </div>
+      {/* ===== BOTTOM: Equipment Cards (displayed as actual cards like physical game) ===== */}
+      <div className="equipment-cards-row">
+        {/* Supply Card */}
+        <EquipmentCardOverlay
+          equipment={player.supplies.length > 0 ? player.supplies[0] : null}
+          type="supply"
+          onClick={player.supplies.length > 0 ? () => handleEnlargeEquipment(player.supplies[0]) : undefined}
+        />
 
-        {/* Rod Slot */}
-        <div className={`equip-card rod-slot ${player.equippedRod ? 'has-equipment' : ''}`}>
-          {player.equippedRod ? (
-            <EquipmentMiniCard
-              equipment={player.equippedRod}
-              onClick={() => handleEnlargeEquipment(player.equippedRod!)}
-            />
-          ) : (
-            <>
-              <div className="equip-type">ITEM</div>
-              <div className="equip-name-v2">ROD</div>
-              <div className="equip-content rod-content">
-                <Package className="h-5 w-5 text-white/20" />
-              </div>
-            </>
-          )}
-        </div>
+        {/* Rod Card */}
+        <EquipmentCardOverlay
+          equipment={player.equippedRod || null}
+          type="rod"
+          onClick={player.equippedRod ? () => handleEnlargeEquipment(player.equippedRod!) : undefined}
+        />
 
-        {/* Reel Slot */}
-        <div className={`equip-card reel-slot ${player.equippedReel ? 'has-equipment' : ''}`}>
-          {player.equippedReel ? (
-            <EquipmentMiniCard
-              equipment={player.equippedReel}
-              onClick={() => handleEnlargeEquipment(player.equippedReel!)}
-            />
-          ) : (
-            <>
-              <div className="equip-type">ITEM</div>
-              <div className="equip-name-v2">REEL</div>
-              <div className="equip-content reel-content">
-                <Package className="h-5 w-5 text-white/20" />
-              </div>
-            </>
-          )}
-        </div>
+        {/* Reel Card */}
+        <EquipmentCardOverlay
+          equipment={player.equippedReel || null}
+          type="reel"
+          onClick={player.equippedReel ? () => handleEnlargeEquipment(player.equippedReel!) : undefined}
+        />
       </div>
     </div>
     </TooltipProvider>
