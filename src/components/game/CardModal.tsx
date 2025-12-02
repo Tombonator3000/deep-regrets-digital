@@ -12,6 +12,7 @@ import { Fish, Sparkles, Package, Skull, Star, Zap, X, Play } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 import { getDinkImage } from '@/data/dinkImages';
+import { getSupplyImage } from '@/data/supplyImages';
 import rodCardBack from '@/assets/rod-card-back.png';
 import reelCardBack from '@/assets/reel-card-back.png';
 import supplyCardBack from '@/assets/supply-card-back.png';
@@ -359,6 +360,34 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
   const isSupply = supply.type === 'supply';
 
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+
+  // Check for specific supply image first (full card design)
+  const supplyImage = isSupply ? getSupplyImage(supply.id) : undefined;
+
+  // If supply has a full card image, render it without overlay
+  if (supplyImage) {
+    return (
+      <div className="relative w-80 rounded-2xl border-4 border-slate-600 shadow-2xl overflow-hidden transition-transform" style={rotationStyle}>
+        {/* Close button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-black/40 hover:bg-black/60"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
+        {/* Full card image */}
+        <img
+          src={supplyImage}
+          alt={supply.name}
+          className="w-full h-auto"
+        />
+      </div>
+    );
+  }
+
   const getBackgroundImage = () => {
     if (isRod) return rodCardBack;
     if (isReel) return reelCardBack;
@@ -401,7 +430,7 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
       </div>
 
       {/* Card body */}
-      <div className={`p-4 space-y-3 ${backgroundImage ? 'bg-slate-900/80 backdrop-blur-sm' : ''}`}>
+      <div className={`relative p-4 space-y-3 ${backgroundImage ? 'bg-slate-900/80 backdrop-blur-sm' : ''}`}>
         <DialogHeader className="space-y-1">
           <DialogTitle className={`text-2xl font-bold ${colors.accent}`}>
             {supply.name}
