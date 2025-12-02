@@ -3851,3 +3851,527 @@ All colors MUST be HSL for consistency.
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
+
+/* ============================================
+   CAPTAIN SHEET V2 - Physical Board Layout
+   Matches the exact layout of the physical board game
+   TOP: Trophy Wall | MIDDLE: Portrait + Dice | BOTTOM: Equipment
+   ============================================ */
+
+.captain-sheet-v2 {
+  --char-primary: 180 55% 45%;
+  --char-primary-glow: 180 65% 55%;
+  --char-secondary: 190 45% 35%;
+  --char-background: 185 30% 11%;
+  --char-border: 180 45% 35%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  min-height: 0;
+  max-height: 100%;
+  font-family: 'Patrick Hand', cursive, sans-serif;
+
+  /* Character-themed background using CSS variables */
+  background:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 20% 30%, hsl(var(--char-primary) / 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, hsl(var(--char-secondary) / 0.1) 0%, transparent 35%),
+    linear-gradient(180deg,
+      hsl(var(--char-primary)) 0%,
+      hsl(var(--char-secondary)) 100%);
+
+  border: 4px solid hsl(var(--char-border));
+  border-radius: 12px;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.3),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+  color: hsl(40 20% 95%);
+  overflow: hidden;
+}
+
+/* Dashed inner border effect */
+.captain-sheet-v2::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px dashed hsl(var(--char-primary-glow) / 0.3);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===== TROPHY WALL (TOP SECTION) ===== */
+.trophy-wall-v2 {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.15) 100%);
+  border-radius: 8px;
+  border: 2px solid hsl(var(--char-primary-glow) / 0.25);
+}
+
+.trophy-group-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.trophy-label-v2 {
+  font-family: 'Bangers', cursive;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: hsl(45 80% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: hsl(45 70% 45% / 0.2);
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid hsl(45 60% 50% / 0.4);
+}
+
+.prize-label-v2 {
+  font-size: 0.55rem;
+  color: hsl(45 90% 75%);
+  background: hsl(45 80% 50% / 0.25);
+}
+
+.trophy-slots-v2 {
+  display: flex;
+  gap: 4px;
+}
+
+/* Trophy card slot - looks like a card placeholder */
+.trophy-card-slot {
+  width: 36px;
+  height: 48px;
+  border: 2px dashed hsl(var(--char-primary-glow) / 0.4);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.trophy-card-slot.prize-slot {
+  width: 38px;
+  height: 50px;
+  border-color: hsl(45 70% 50% / 0.5);
+}
+
+.trophy-card-slot.filled {
+  border-style: solid;
+  border-color: hsl(45 80% 55%);
+  background: radial-gradient(circle at 30% 30%,
+    hsl(45 70% 50% / 0.25) 0%,
+    hsl(45 60% 35% / 0.15) 100%);
+  box-shadow: 0 0 8px hsl(45 80% 50% / 0.3);
+}
+
+.multiplier-badge {
+  font-family: 'Bangers', cursive;
+  font-size: 0.7rem;
+  color: hsl(45 80% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.mounted-fish-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+}
+
+.mounted-fish-card .fish-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.5rem;
+  color: hsl(40 20% 85%);
+  text-align: center;
+  line-height: 1.1;
+  max-width: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mounted-fish-card .fish-points {
+  font-family: 'Bangers', cursive;
+  font-size: 0.85rem;
+  color: hsl(45 90% 75%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.fishbucks-corner {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  background: linear-gradient(145deg, hsl(45 85% 50%), hsl(40 80% 40%));
+  border: 2px solid hsl(35 70% 35%);
+  border-radius: 12px;
+  color: hsl(35 80% 15%);
+  font-family: 'Bangers', cursive;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== MAIN BOARD (MIDDLE SECTION) ===== */
+.main-board-v2 {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Portrait Side (Left) */
+.portrait-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  width: 45%;
+}
+
+.portrait-frame {
+  position: relative;
+  width: 100%;
+  max-width: 160px;
+  aspect-ratio: 4 / 3;
+  border: 3px solid hsl(var(--char-border));
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 15px rgba(0, 0, 0, 0.4),
+    0 3px 10px rgba(0, 0, 0, 0.4);
+  background: hsl(var(--char-background));
+}
+
+.character-portrait-v2 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.05) saturate(1.1);
+}
+
+.turn-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  background: linear-gradient(145deg, hsl(45 90% 55%), hsl(40 85% 45%));
+  border: 2px solid hsl(35 70% 35%);
+  border-radius: 12px;
+  color: hsl(35 80% 15%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  animation: turn-pulse 2s ease-in-out infinite;
+}
+
+.character-name-v2 {
+  font-family: 'Bangers', cursive;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: hsl(40 20% 95%);
+  text-shadow:
+    2px 2px 0 hsl(var(--char-border)),
+    0 0 10px hsl(var(--char-primary-glow) / 0.4);
+  text-transform: uppercase;
+}
+
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.location-badge.at-sea {
+  background: linear-gradient(145deg, hsl(200 70% 45%), hsl(210 60% 35%));
+  border: 2px solid hsl(200 60% 50%);
+  color: white;
+}
+
+.location-badge.at-port {
+  background: linear-gradient(145deg, hsl(45 70% 50%), hsl(40 60% 40%));
+  border: 2px solid hsl(35 60% 45%);
+  color: hsl(35 80% 15%);
+}
+
+.passed-badge-v2 {
+  font-family: 'Bangers', cursive;
+  font-size: 0.65rem;
+  background: rgba(100, 100, 100, 0.3);
+  border-color: rgba(150, 150, 150, 0.4);
+  color: rgba(200, 200, 200, 0.8);
+}
+
+/* Dice Side (Right) */
+.dice-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Score Track */
+.score-track-v2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.1) 100%);
+  border-radius: 6px;
+  border: 1px solid hsl(var(--char-primary-glow) / 0.2);
+}
+
+.score-numbers {
+  display: flex;
+  gap: 2px;
+}
+
+.score-num {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bangers', cursive;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.score-num.reached {
+  color: hsl(45 80% 70%);
+  background: hsl(45 60% 45% / 0.2);
+  border-color: hsl(45 60% 50% / 0.4);
+}
+
+.score-num.current {
+  color: hsl(45 90% 80%);
+  background: hsl(45 70% 50% / 0.35);
+  border-color: hsl(45 80% 55%);
+  box-shadow: 0 0 6px hsl(45 80% 50% / 0.4);
+}
+
+.score-points {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.75rem;
+  color: hsl(45 80% 70%);
+}
+
+.score-points svg {
+  color: hsl(45 70% 60%);
+}
+
+/* Dice Tray */
+.dice-tray-v2 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(180deg,
+    rgba(0, 50, 45, 0.35) 0%,
+    rgba(0, 40, 35, 0.45) 100%);
+  border-radius: 8px;
+  border: 2px solid hsl(var(--char-primary-glow) / 0.2);
+}
+
+.dice-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dice-label-v2 {
+  font-family: 'Bangers', cursive;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: hsl(120 50% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.dice-label-v2.spent-label {
+  color: hsl(0 0% 60%);
+}
+
+.dice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+  align-items: center;
+}
+
+.die-v2 {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  border-radius: 5px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.die-v2.fresh {
+  background: linear-gradient(145deg,
+    hsl(var(--char-primary)),
+    hsl(var(--char-secondary)));
+  border: 2px solid hsl(var(--char-primary-glow) / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.die-v2.spent {
+  background: linear-gradient(145deg, hsl(0 0% 35%), hsl(0 0% 25%));
+  border: 2px solid hsl(0 0% 40% / 0.5);
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0.7;
+}
+
+.die-v2.tackle {
+  background: linear-gradient(145deg, hsl(185 70% 45%), hsl(185 65% 35%));
+  border: 2px solid hsl(185 60% 50% / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.die-v2:hover {
+  transform: translateY(-2px) rotate(3deg);
+}
+
+.no-dice-v2 {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.dice-divider-v2 {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(var(--char-primary-glow) / 0.3) 20%,
+    hsl(var(--char-primary-glow) / 0.3) 80%,
+    transparent 100%);
+  margin: 2px 0;
+}
+
+/* ===== EQUIPMENT SLOTS (BOTTOM SECTION) ===== */
+.equipment-slots-v2 {
+  display: flex;
+  gap: 6px;
+}
+
+.equip-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  min-height: 60px;
+  border-radius: 6px;
+  border: 2px solid;
+  position: relative;
+}
+
+.equip-card::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.supply-slot {
+  background: linear-gradient(145deg, hsl(0 45% 35%), hsl(0 40% 28%));
+  border-color: hsl(0 35% 45%);
+}
+.supply-slot::before {
+  border-color: hsl(0 40% 55%);
+}
+
+.rod-slot {
+  background: linear-gradient(145deg, hsl(220 35% 25%), hsl(220 30% 20%));
+  border-color: hsl(220 30% 35%);
+}
+.rod-slot::before {
+  border-color: hsl(220 35% 45%);
+}
+
+.reel-slot {
+  background: linear-gradient(145deg, hsl(140 30% 25%), hsl(140 25% 20%));
+  border-color: hsl(140 25% 35%);
+}
+.reel-slot::before {
+  border-color: hsl(140 30% 45%);
+}
+
+.equip-type {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.55rem;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.equip-name-v2 {
+  font-family: 'Bangers', cursive;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: hsl(40 20% 90%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.equip-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.equipped-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.6rem;
+  color: hsl(45 70% 70%);
+  text-align: center;
+  line-height: 1.2;
+}
