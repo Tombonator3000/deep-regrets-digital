@@ -264,71 +264,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
       <NauticalFrame showNet className="relative z-10 mx-auto h-full w-full max-w-[1600px]" variant="corners-only">
-        <div className="grid h-full w-full grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-1 sm:px-2 sm:py-1 pt-0.5 sm:pt-1 lg:pt-1">
-        {/* Compact Header */}
-        <div className="relative flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-1">
-          <WoodCornerAccent position="top-left" size="sm" />
-          <WoodCornerAccent position="top-right" size="sm" />
-          <div className="flex items-center gap-1 sm:gap-4">
-            <h1 className="text-sm font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
-          </div>
-          <div className="flex items-center gap-0.5 sm:gap-2">
-            <Button
-              size="sm"
-              className="btn-ocean flex items-center gap-0.5 px-1.5 min-h-[36px] text-[10px] touch-manipulation active:scale-95 sm:gap-2 sm:px-3 sm:min-h-[44px] sm:text-sm"
-              onClick={() => setIsPortOpen(true)}
-            >
-              <Anchor className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Havnhandlinger</span>
-              <span className="sm:hidden">Havn</span>
-            </Button>
-            <Button
-              size="sm"
-              type="button"
-              variant="ghost"
-              className="min-h-[36px] min-w-[36px] p-1.5 text-white/80 hover:text-white touch-manipulation active:scale-95 sm:min-h-[44px] sm:min-w-[44px] sm:p-2 sm:h-auto sm:w-auto sm:px-3"
-              onClick={toggleFullscreen}
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                  className="min-h-[36px] min-w-[36px] border-white/30 bg-white/5 p-1.5 text-white hover:bg-white/10 touch-manipulation active:scale-95 sm:min-h-[44px] sm:min-w-[44px] sm:p-2 sm:h-auto sm:w-auto sm:px-3"
-                >
-                  <MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onSelect={() => setIsHelpOpen(true)}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  Hjelp & Regler
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onSelect={() => setIsPlayerOpen(true)}
-                >
-                  <UserRound className="h-4 w-4" />
-                  View Captain Sheet
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onSelect={() => setIsOptionsOpen(true)}
-                >
-                  <Settings2 className="h-4 w-4" />
-                  Options
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
+        <div className="grid h-full w-full grid-rows-[1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-1 sm:px-2 sm:py-1 pt-0.5 sm:pt-1 lg:pt-1">
         {/* Responsive Board Game Layout - NO SCROLLING */}
         <div className="grid h-full min-h-0 gap-0.5 sm:gap-1 grid-cols-1 grid-rows-[1fr,auto] md:grid-cols-[minmax(200px,240px),1fr] md:grid-rows-1 lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
@@ -364,6 +300,62 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
                   alt="The Briny Deep"
                   className="w-full h-full object-cover object-center rounded-lg"
                 />
+                {/* Control buttons overlay - positioned on the left */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-[2%] flex items-center gap-0.5 sm:gap-1">
+                  <Button
+                    size="sm"
+                    className="btn-ocean flex items-center gap-0.5 px-1 min-h-[28px] text-[9px] touch-manipulation active:scale-95 sm:gap-1.5 sm:px-2 sm:min-h-[32px] sm:text-xs"
+                    onClick={() => setIsPortOpen(true)}
+                  >
+                    <Anchor className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden sm:inline">Havnhandlinger</span>
+                    <span className="sm:hidden">Havn</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                    className="min-h-[28px] min-w-[28px] p-1 text-white/80 hover:text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
+                    onClick={toggleFullscreen}
+                  >
+                    {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                        className="min-h-[28px] min-w-[28px] border-white/30 bg-white/10 p-1 text-white hover:bg-white/20 touch-manipulation active:scale-95 sm:min-h-[32px] sm:min-w-[32px] sm:p-1.5"
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onSelect={() => setIsHelpOpen(true)}
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        Hjelp & Regler
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onSelect={() => setIsPlayerOpen(true)}
+                      >
+                        <UserRound className="h-4 w-4" />
+                        View Captain Sheet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onSelect={() => setIsOptionsOpen(true)}
+                      >
+                        <Settings2 className="h-4 w-4" />
+                        Options
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 {/* Dink Cards overlay - positioned among the flags on the right */}
                 <div className="absolute top-1/2 -translate-y-1/2 right-[2%] flex items-center gap-1">
                   {dinksDeck.length > 0 && (
