@@ -1,15 +1,125 @@
-import { useState, useMemo } from 'react';
-import { Player, RegretCard as RegretCardType } from '@/types/game';
+import { useState, useMemo, useCallback } from 'react';
+import { Player, RegretCard as RegretCardType, UpgradeCard, FishCard } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import { CHARACTERS, CHARACTER_THEMES } from '@/data/characters';
 import { AnimatedCounter } from './ParticleEffects';
+import { useCardModal } from './CardModal';
+import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Coins,
   Fish,
   MapPin,
+  Package,
 } from 'lucide-react';
+
+// Mini card for equipped rod/reel/supply on captain sheet
+interface EquipmentMiniCardProps {
+  equipment: UpgradeCard;
+  onClick?: () => void;
+}
+
+const EquipmentMiniCard = ({ equipment, onClick }: EquipmentMiniCardProps) => {
+  const typeColors = {
+    rod: 'border-blue-400/60 bg-gradient-to-b from-blue-800/90 to-blue-950/95',
+    reel: 'border-green-400/60 bg-gradient-to-b from-green-800/90 to-green-950/95',
+    supply: 'border-emerald-400/60 bg-gradient-to-b from-emerald-800/90 to-emerald-950/95',
+  };
+
+  const typeTextColors = {
+    rod: 'text-blue-300',
+    reel: 'text-green-300',
+    supply: 'text-emerald-300',
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={`equipment-mini-card ${typeColors[equipment.type]} cursor-pointer hover:scale-105 transition-transform`}
+          onClick={onClick}
+        >
+          <div className={`equipment-mini-type ${typeTextColors[equipment.type]}`}>
+            {equipment.type.toUpperCase()}
+          </div>
+          <div className="equipment-mini-name">
+            {equipment.name}
+          </div>
+          <div className="equipment-mini-effects">
+            {equipment.effects.slice(0, 2).map((effect, i) => (
+              <span key={i} className="equipment-mini-effect">{effect}</span>
+            ))}
+          </div>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <div className="space-y-1">
+          <div className={`font-semibold ${typeTextColors[equipment.type]}`}>{equipment.name}</div>
+          <div className="text-xs text-muted-foreground">{equipment.description}</div>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {equipment.effects.map((effect) => (
+              <Badge key={effect} variant="secondary" className="text-xs">
+                {effect}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+// Mini card for mounted fish on trophy wall
+interface MountedFishMiniCardProps {
+  fish: FishCard;
+  multiplier: number;
+  onClick?: () => void;
+}
+
+const MountedFishMiniCard = ({ fish, multiplier, onClick }: MountedFishMiniCardProps) => {
+  const fishImage = getFishImage(fish.id) || getDefaultFishImage(fish.depth);
+  const qualityClass = fish.quality === 'foul'
+    ? 'border-purple-400/60'
+    : 'border-cyan-400/60';
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={`mounted-fish-mini-card ${qualityClass} cursor-pointer hover:scale-110 transition-transform`}
+          onClick={onClick}
+        >
+          {fishImage ? (
+            <div className="mounted-fish-image">
+              <img src={fishImage} alt={fish.name} />
+            </div>
+          ) : (
+            <Fish className="h-4 w-4 text-cyan-300" />
+          )}
+          <span className="mounted-fish-name">{fish.name}</span>
+          <span className="mounted-fish-points">{fish.value * multiplier}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <div className="space-y-1">
+          <div className="font-semibold text-primary">{fish.name}</div>
+          <div className="text-xs text-muted-foreground">{fish.description}</div>
+          <div className="flex gap-2 text-xs">
+            <Badge variant="secondary" className="text-fishbuck">Base: ${fish.value}</Badge>
+            <Badge variant="outline">×{multiplier} = {fish.value * multiplier} pts</Badge>
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 interface PlayerPanelProps {
   player: Player;
@@ -19,6 +129,7 @@ interface PlayerPanelProps {
 
 export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelProps) => {
   const character = CHARACTERS.find(c => c.id === player.character);
+  const { openCard } = useCardModal();
 
   // Get character-specific theme colors
   const theme = useMemo(() => {
@@ -40,7 +151,17 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
     0
   );
 
+  // Callbacks for enlarging cards
+  const handleEnlargeFish = useCallback((fish: FishCard) => {
+    openCard(fish, 'fish');
+  }, [openCard]);
+
+  const handleEnlargeEquipment = useCallback((equipment: UpgradeCard) => {
+    openCard(equipment, 'supply');
+  }, [openCard]);
+
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="captain-sheet-v2" style={themeStyle}>
       {/* ===== TOP: Trophy Wall Section ===== */}
       <div className="trophy-wall-v2">
@@ -56,10 +177,11 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
                   className={`trophy-card-slot ${mountedFish ? 'filled' : ''}`}
                 >
                   {mountedFish ? (
-                    <div className="mounted-fish-card">
-                      <span className="fish-name">{mountedFish.fish.name}</span>
-                      <span className="fish-points">{mountedFish.fish.value * 2}</span>
-                    </div>
+                    <MountedFishMiniCard
+                      fish={mountedFish.fish}
+                      multiplier={2}
+                      onClick={() => handleEnlargeFish(mountedFish.fish)}
+                    />
                   ) : (
                     <span className="multiplier-badge">×2</span>
                   )}
@@ -81,10 +203,11 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
                   className={`trophy-card-slot prize-slot ${mountedFish ? 'filled' : ''}`}
                 >
                   {mountedFish ? (
-                    <div className="mounted-fish-card">
-                      <span className="fish-name">{mountedFish.fish.name}</span>
-                      <span className="fish-points">{mountedFish.fish.value * 3}</span>
-                    </div>
+                    <MountedFishMiniCard
+                      fish={mountedFish.fish}
+                      multiplier={3}
+                      onClick={() => handleEnlargeFish(mountedFish.fish)}
+                    />
                   ) : (
                     <span className="multiplier-badge">×3</span>
                   )}
@@ -106,10 +229,11 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
                   className={`trophy-card-slot ${mountedFish ? 'filled' : ''}`}
                 >
                   {mountedFish ? (
-                    <div className="mounted-fish-card">
-                      <span className="fish-name">{mountedFish.fish.name}</span>
-                      <span className="fish-points">{mountedFish.fish.value * 2}</span>
-                    </div>
+                    <MountedFishMiniCard
+                      fish={mountedFish.fish}
+                      multiplier={2}
+                      onClick={() => handleEnlargeFish(mountedFish.fish)}
+                    />
                   ) : (
                     <span className="multiplier-badge">×2</span>
                   )}
@@ -225,30 +349,61 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
 
       {/* ===== BOTTOM: Equipment Card Slots ===== */}
       <div className="equipment-slots-v2">
-        <div className="equip-card supply-slot">
-          <div className="equip-type">ITEM</div>
-          <div className="equip-name-v2">SUPPLY</div>
-          <div className="equip-content supply-content"></div>
+        {/* Supply Slot */}
+        <div className={`equip-card supply-slot ${player.supplies.length > 0 ? 'has-equipment' : ''}`}>
+          {player.supplies.length > 0 ? (
+            <EquipmentMiniCard
+              equipment={player.supplies[0]}
+              onClick={() => handleEnlargeEquipment(player.supplies[0])}
+            />
+          ) : (
+            <>
+              <div className="equip-type">ITEM</div>
+              <div className="equip-name-v2">SUPPLY</div>
+              <div className="equip-content supply-content">
+                <Package className="h-5 w-5 text-white/20" />
+              </div>
+            </>
+          )}
         </div>
-        <div className="equip-card rod-slot">
-          <div className="equip-type">ITEM</div>
-          <div className="equip-name-v2">ROD</div>
-          <div className="equip-content rod-content">
-            {player.equippedRod && (
-              <span className="equipped-name">{player.equippedRod.name}</span>
-            )}
-          </div>
+
+        {/* Rod Slot */}
+        <div className={`equip-card rod-slot ${player.equippedRod ? 'has-equipment' : ''}`}>
+          {player.equippedRod ? (
+            <EquipmentMiniCard
+              equipment={player.equippedRod}
+              onClick={() => handleEnlargeEquipment(player.equippedRod!)}
+            />
+          ) : (
+            <>
+              <div className="equip-type">ITEM</div>
+              <div className="equip-name-v2">ROD</div>
+              <div className="equip-content rod-content">
+                <Package className="h-5 w-5 text-white/20" />
+              </div>
+            </>
+          )}
         </div>
-        <div className="equip-card reel-slot">
-          <div className="equip-type">ITEM</div>
-          <div className="equip-name-v2">REEL</div>
-          <div className="equip-content reel-content">
-            {player.equippedReel && (
-              <span className="equipped-name">{player.equippedReel.name}</span>
-            )}
-          </div>
+
+        {/* Reel Slot */}
+        <div className={`equip-card reel-slot ${player.equippedReel ? 'has-equipment' : ''}`}>
+          {player.equippedReel ? (
+            <EquipmentMiniCard
+              equipment={player.equippedReel}
+              onClick={() => handleEnlargeEquipment(player.equippedReel!)}
+            />
+          ) : (
+            <>
+              <div className="equip-type">ITEM</div>
+              <div className="equip-name-v2">REEL</div>
+              <div className="equip-content reel-content">
+                <Package className="h-5 w-5 text-white/20" />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
