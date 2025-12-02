@@ -4293,6 +4293,65 @@ All colors MUST be HSL for consistency.
 }
 
 /* ===== EQUIPMENT SLOTS (BOTTOM SECTION) ===== */
+/* ===== EQUIPMENT CARDS ROW (Physical card style) ===== */
+.equipment-cards-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 4px 8px 8px;
+}
+
+.equipment-card-overlay {
+  position: relative;
+  width: 80px;
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.equipment-card-overlay.has-equipment {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.equipment-card-overlay.has-equipment:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.25);
+}
+
+.equipment-card-overlay.empty-slot {
+  opacity: 0.25;
+  filter: grayscale(0.5);
+}
+
+.equipment-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.equipment-card-image.empty {
+  opacity: 0.6;
+}
+
+.equipment-card-name-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.4), transparent);
+  padding: 16px 4px 4px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.6rem;
+  letter-spacing: 0.5px;
+  color: hsl(40 20% 95%);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  line-height: 1.1;
+}
+
+/* Legacy equipment slots (kept for backwards compatibility) */
 .equipment-slots-v2 {
   display: flex;
   gap: 6px;
@@ -4386,7 +4445,7 @@ All colors MUST be HSL for consistency.
   display: none;
 }
 
-/* ===== EQUIPMENT MINI CARD ===== */
+/* ===== EQUIPMENT MINI CARD (Legacy) ===== */
 .equipment-mini-card {
   width: 100%;
   height: 100%;
