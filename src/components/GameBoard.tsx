@@ -264,9 +264,9 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
       
       {/* Main Game Layout - Board Game Style - NO SCROLLING */}
       <NauticalFrame showNet className="relative z-10 mx-auto h-full w-full max-w-[1600px]" variant="corners-only">
-        <div className="grid h-full w-full grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 pt-1 sm:pt-2 lg:pt-2">
+        <div className="grid h-full w-full grid-rows-[auto,1fr] gap-0.5 px-0.5 py-0.5 min-h-0 overflow-hidden sm:gap-1 sm:px-2 sm:py-1 pt-0.5 sm:pt-1 lg:pt-1">
         {/* Compact Header */}
-        <div className="relative flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2">
+        <div className="relative flex flex-wrap items-center justify-between gap-0.5 rounded-lg border border-white/10 bg-background/70 px-1.5 py-0.5 backdrop-blur sm:gap-2 sm:rounded-xl sm:px-3 sm:py-1">
           <WoodCornerAccent position="top-left" size="sm" />
           <WoodCornerAccent position="top-right" size="sm" />
           <div className="flex items-center gap-1 sm:gap-4">
@@ -330,9 +330,9 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
         </div>
 
         {/* Responsive Board Game Layout - NO SCROLLING */}
-        <div className="grid h-full min-h-0 gap-0.5 sm:gap-2 grid-cols-1 grid-rows-[1fr,auto] md:grid-cols-[minmax(200px,240px),1fr] md:grid-rows-1 lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
+        <div className="grid h-full min-h-0 gap-0.5 sm:gap-1 grid-cols-1 grid-rows-[1fr,auto] md:grid-cols-[minmax(200px,240px),1fr] md:grid-rows-1 lg:grid-cols-[minmax(220px,260px),1fr,minmax(220px,280px)] xl:grid-cols-[minmax(240px,280px),1fr,minmax(240px,300px)] overflow-hidden">
           {/* Left Column - Angler Board (Player Board) - Hidden on mobile, shows in Actions panel */}
-          <div className="relative hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-2 md:flex">
+          <div className="relative hidden min-h-0 flex-col gap-1 overflow-hidden sm:gap-1 md:flex">
             <WoodCornerAccent position="top-left" size="sm" />
             <WoodCornerAccent position="bottom-left" size="sm" />
             <AnglerBoard
@@ -358,7 +358,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
 
             {/* Briny Deep Header Banner - Above the sea board */}
             <TooltipProvider delayDuration={200}>
-              <div className="shrink-0 relative briny-deep-header mx-0.5 mt-0.5 sm:mx-1 sm:mt-1" style={{ maxHeight: '80px' }}>
+              <div className="shrink-0 relative briny-deep-header mx-0.5 mt-0.5 sm:mx-1 sm:mt-0.5" style={{ maxHeight: '65px' }}>
                 <img
                   src={brinyDeepHeader}
                   alt="The Briny Deep"
@@ -431,7 +431,7 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
               </div>
             </TooltipProvider>
 
-            <div className="flex-1 min-h-0 overflow-hidden p-0.5 sm:p-2">
+            <div className="flex-1 min-h-0 overflow-hidden p-0.5 sm:p-1">
               <SeaBoard
                 gameState={gameState}
                 selectedShoal={selectedShoal}
