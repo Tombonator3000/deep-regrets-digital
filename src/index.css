@@ -3101,3 +3101,753 @@ All colors MUST be HSL for consistency.
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
+
+/* ============================================
+   CAPTAIN SHEET - Physical Board Game Style
+   ============================================ */
+
+.captain-sheet {
+  --char-primary: 180 55% 45%;
+  --char-primary-glow: 180 65% 55%;
+  --char-secondary: 190 45% 35%;
+  --char-background: 185 30% 11%;
+  --char-border: 180 45% 35%;
+
+  position: relative;
+  padding: 12px;
+  font-family: 'Patrick Hand', cursive, sans-serif;
+  background:
+    /* Aged paper texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"),
+    /* Water stain effects */
+    radial-gradient(ellipse at 20% 30%, rgba(100, 180, 180, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(100, 160, 140, 0.06) 0%, transparent 35%),
+    /* Base teal board color matching physical game */
+    linear-gradient(180deg,
+      hsl(175 35% 42%) 0%,
+      hsl(175 35% 38%) 50%,
+      hsl(175 35% 35%) 100%);
+  border: 4px solid hsl(175 30% 25%);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.05),
+    0 6px 25px rgba(0, 0, 0, 0.5);
+  color: hsl(40 20% 90%);
+  overflow: hidden;
+}
+
+/* Hand-drawn border effect */
+.captain-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed hsl(175 25% 55% / 0.4);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---- Trophy Wall Section ---- */
+.trophy-wall-section {
+  position: relative;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.1) 100%);
+  border-radius: 10px;
+  border: 2px solid hsl(175 30% 50% / 0.3);
+}
+
+.trophy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.trophy-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.trophy-label {
+  font-family: 'Bangers', cursive;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  color: hsl(45 80% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: hsl(45 70% 45% / 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid hsl(45 60% 50% / 0.4);
+}
+
+.prize-label {
+  font-size: 0.65rem;
+  color: hsl(45 90% 75%);
+  background: hsl(45 80% 50% / 0.25);
+}
+
+.trophy-slots-pair,
+.trophy-slots-triple {
+  display: flex;
+  gap: 6px;
+}
+
+.trophy-circle {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px dashed hsl(175 35% 55% / 0.5);
+  background: radial-gradient(circle at 30% 30%,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.25) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.trophy-circle.filled {
+  border-style: solid;
+  border-color: hsl(45 80% 55%);
+  background: radial-gradient(circle at 30% 30%,
+    hsl(45 70% 50% / 0.3) 0%,
+    hsl(45 60% 35% / 0.2) 100%);
+  box-shadow:
+    0 0 10px hsl(45 80% 50% / 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.trophy-circle .multiplier-label {
+  font-family: 'Bangers', cursive;
+  font-size: 0.75rem;
+  color: hsl(45 80% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.trophy-circle.filled .multiplier-label {
+  display: none;
+}
+
+.trophy-circle .fish-value {
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  color: hsl(45 90% 75%);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.prize-circle {
+  width: 42px;
+  height: 42px;
+  border-color: hsl(45 70% 50% / 0.6);
+}
+
+.prize-circle .multiplier-label {
+  color: hsl(45 90% 75%);
+}
+
+.fishbucks-display {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(145deg, hsl(45 85% 50%), hsl(40 80% 40%));
+  border: 2px solid hsl(35 70% 35%);
+  border-radius: 15px;
+  color: hsl(35 80% 15%);
+  font-family: 'Bangers', cursive;
+  font-size: 0.95rem;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* ---- Portrait Section ---- */
+.portrait-section {
+  position: relative;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.portrait-container {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 4 / 3;
+  border: 4px solid hsl(175 30% 25%);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.5),
+    0 0 0 2px hsl(175 40% 45% / 0.3);
+  background: hsl(175 30% 20%);
+}
+
+.character-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.05) saturate(1.1);
+}
+
+.turn-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  background: linear-gradient(145deg, hsl(45 90% 55%), hsl(40 85% 45%));
+  border: 2px solid hsl(35 70% 35%);
+  border-radius: 15px;
+  color: hsl(35 80% 15%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: turn-pulse 2s ease-in-out infinite;
+}
+
+.character-name {
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  letter-spacing: 3px;
+  color: hsl(40 20% 95%);
+  text-shadow:
+    2px 2px 0 hsl(175 30% 25%),
+    0 0 15px hsl(175 50% 40% / 0.5);
+  text-transform: uppercase;
+}
+
+.location-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  border-radius: 12px;
+}
+
+.location-indicator.at-sea {
+  background: linear-gradient(145deg, hsl(200 60% 45% / 0.4), hsl(200 60% 35% / 0.3));
+  border: 2px solid hsl(200 50% 55% / 0.5);
+  color: hsl(200 70% 80%);
+}
+
+.location-indicator.at-port {
+  background: linear-gradient(145deg, hsl(45 60% 45% / 0.4), hsl(45 50% 35% / 0.3));
+  border: 2px solid hsl(45 50% 55% / 0.5);
+  color: hsl(45 70% 80%);
+}
+
+.passed-badge {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.8rem;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---- Score Track Section ---- */
+.score-track-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.15) 100%);
+  border-radius: 8px;
+  border: 2px solid hsl(175 30% 50% / 0.3);
+}
+
+.score-track {
+  display: flex;
+  gap: 4px;
+}
+
+.score-number {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bangers', cursive;
+  font-size: 0.75rem;
+  color: hsl(175 30% 70%);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid hsl(175 30% 50% / 0.3);
+}
+
+.score-number.reached {
+  color: hsl(45 80% 70%);
+  background: hsl(45 60% 45% / 0.2);
+  border-color: hsl(45 60% 50% / 0.4);
+}
+
+.score-number.current {
+  color: hsl(45 90% 80%);
+  background: hsl(45 80% 50% / 0.3);
+  border-color: hsl(45 80% 60%);
+  box-shadow: 0 0 8px hsl(45 80% 50% / 0.4);
+}
+
+.score-total {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  color: hsl(45 80% 70%);
+}
+
+/* ---- Dice Tray Section ---- */
+.dice-tray-section {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg,
+    rgba(0, 50, 45, 0.4) 0%,
+    rgba(0, 40, 35, 0.5) 100%);
+  border-radius: 10px;
+  border: 2px solid hsl(175 30% 50% / 0.3);
+  overflow: hidden;
+}
+
+.dice-area {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dice-label {
+  font-family: 'Bangers', cursive;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: hsl(175 40% 70%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.fresh-dice-area .dice-label {
+  color: hsl(120 50% 70%);
+}
+
+.spent-dice-area .dice-label {
+  color: hsl(0 0% 60%);
+}
+
+.dice-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+}
+
+.dice-divider {
+  width: 3px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      hsl(175 40% 55% / 0.5) 0px,
+      hsl(175 40% 55% / 0.5) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+}
+
+.die {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-family: 'Bangers', cursive;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.4),
+    inset 0 2px 3px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.die:hover {
+  transform: translateY(-2px) rotate(3deg);
+}
+
+.die.fresh {
+  background: linear-gradient(145deg, hsl(var(--char-primary)), hsl(var(--char-secondary)));
+  border: 2px solid hsl(var(--char-primary-glow) / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.die.spent {
+  background: linear-gradient(145deg, hsl(220 15% 30%), hsl(220 15% 22%));
+  border: 2px solid hsl(220 10% 35%);
+  color: hsl(220 10% 55%);
+  opacity: 0.7;
+}
+
+.die.tackle {
+  background: linear-gradient(145deg, hsl(185 70% 45%), hsl(185 65% 35%));
+  border: 2px solid hsl(185 60% 55%);
+  color: white;
+}
+
+.no-dice {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  color: hsl(175 20% 50%);
+  opacity: 0.6;
+}
+
+/* ---- Equipment Icons ---- */
+.equipment-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 8px;
+  padding: 8px;
+}
+
+.equipment-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.equipment-icon .equip-label {
+  font-family: 'Bangers', cursive;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: hsl(175 30% 65%);
+}
+
+.equipment-icon .equip-image {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+}
+
+.equipment-icon .equip-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.7rem;
+  color: hsl(45 70% 70%);
+  max-width: 80px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Regrets Display ---- */
+.regrets-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.regrets-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(145deg,
+    hsl(0 50% 40% / 0.3),
+    hsl(0 40% 30% / 0.2));
+  border: 2px solid hsl(0 40% 50% / 0.4);
+  border-radius: 20px;
+}
+
+.regrets-header svg {
+  width: 16px;
+  height: 16px;
+}
+
+.regrets-header svg:first-child {
+  color: hsl(0 70% 60%);
+}
+
+.regrets-count {
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  color: hsl(0 70% 70%);
+}
+
+.madness-icon {
+  color: hsl(280 60% 65%);
+  margin-left: 8px;
+}
+
+.madness-level {
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  color: hsl(280 60% 75%);
+}
+
+/* ---- Item Cards Section ---- */
+.item-cards-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.item-card {
+  flex: 1;
+  position: relative;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 3px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.item-card::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* Supply card - dark red/maroon */
+.supply-card {
+  background: linear-gradient(180deg,
+    hsl(0 45% 30%) 0%,
+    hsl(0 40% 22%) 100%);
+  border-color: hsl(0 35% 25%);
+}
+
+/* Rod card - dark blue */
+.rod-card {
+  background: linear-gradient(180deg,
+    hsl(210 50% 30%) 0%,
+    hsl(210 45% 22%) 100%);
+  border-color: hsl(210 40% 25%);
+}
+
+/* Reel card - dark green */
+.reel-card {
+  background: linear-gradient(180deg,
+    hsl(150 40% 28%) 0%,
+    hsl(150 35% 20%) 100%);
+  border-color: hsl(150 30% 22%);
+}
+
+.item-type {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.item-name {
+  font-family: 'Bangers', cursive;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.item-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  pointer-events: none;
+  background-size: 20px 20px;
+}
+
+.supply-pattern {
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 2L12 8H18L13 12L15 18L10 14L5 18L7 12L2 8H8L10 2Z' fill='%23fff' fill-opacity='0.3'/%3E%3C/svg%3E");
+}
+
+.rod-pattern {
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='10' x2='20' y2='10' stroke='%23fff' stroke-width='1' stroke-opacity='0.3'/%3E%3Cline x1='10' y1='0' x2='10' y2='20' stroke='%23fff' stroke-width='1' stroke-opacity='0.3'/%3E%3C/svg%3E");
+}
+
+.reel-pattern {
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='4' fill='none' stroke='%23fff' stroke-width='1' stroke-opacity='0.3'/%3E%3C/svg%3E");
+}
+
+.equipped-item {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.7rem;
+  color: hsl(45 70% 70%);
+  text-align: center;
+  margin-top: auto;
+}
+
+/* ---- Captain Info Button ---- */
+.captain-info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  background: linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+  border: 2px solid hsl(175 30% 50% / 0.3);
+  border-radius: 8px;
+  color: hsl(175 40% 70%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.captain-info-btn:hover {
+  background: linear-gradient(145deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
+  border-color: hsl(175 40% 55%);
+  color: hsl(175 50% 80%);
+}
+
+/* ---- Character Info Expanded ---- */
+.character-info-expanded {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.15));
+  border: 2px solid hsl(175 30% 50% / 0.3);
+  border-radius: 10px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.char-title {
+  display: block;
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: hsl(var(--char-primary-glow));
+  margin-bottom: 8px;
+}
+
+.char-description {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 10px;
+}
+
+.starting-bonus {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  background: hsl(45 60% 45% / 0.15);
+  border: 1px solid hsl(45 50% 50% / 0.3);
+  border-radius: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  color: hsl(45 70% 75%);
+}
+
+.starting-bonus svg {
+  color: hsl(45 80% 60%);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ---- Regrets Hand Section ---- */
+.regrets-hand-section {
+  padding: 8px;
+  margin-bottom: 8px;
+  background: linear-gradient(145deg,
+    hsl(0 40% 25% / 0.2),
+    hsl(0 35% 20% / 0.15));
+  border: 2px solid hsl(0 35% 40% / 0.3);
+  border-radius: 10px;
+}
+
+/* ---- Action Buttons ---- */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.action-btn.primary {
+  background: linear-gradient(145deg, hsl(var(--char-primary)), hsl(var(--char-secondary)));
+  border: 3px solid hsl(var(--char-primary-glow) / 0.6);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 4px 12px hsl(var(--char-primary) / 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 18px hsl(var(--char-primary) / 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25);
+}
+
+.action-btn.secondary {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.action-btn.secondary:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}

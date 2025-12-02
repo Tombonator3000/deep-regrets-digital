@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Player, RegretCard as RegretCardType } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { TACKLE_DICE_LOOKUP } from '@/data/tackleDice';
 import { CHARACTER_PORTRAITS } from '@/data/characterPortraits';
 import { CHARACTERS, CHARACTER_THEMES } from '@/data/characters';
@@ -18,9 +17,6 @@ import {
   MapPin,
   Skull,
   Brain,
-  Dice6,
-  Trophy,
-  Wrench,
 } from 'lucide-react';
 import {
   Dialog,
@@ -41,7 +37,6 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
   const [selectedRegret, setSelectedRegret] = useState<RegretCardType | null>(null);
 
   const character = CHARACTERS.find(c => c.id === player.character);
-  const mountingSlots = Array.from({ length: player.maxMountSlots }, (_, i) => i);
 
   // Get character-specific theme colors
   const theme = useMemo(() => {
@@ -79,284 +74,288 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
     0
   );
 
+  // Create trophy slots array matching physical board: x2, x2, x3, x3, x3, x2, x2
+  const trophySlotConfig = [
+    { multiplier: 2, type: 'trophy' },
+    { multiplier: 2, type: 'trophy' },
+    { multiplier: 3, type: 'prize' },
+    { multiplier: 3, type: 'prize' },
+    { multiplier: 3, type: 'prize' },
+    { multiplier: 2, type: 'trophy' },
+    { multiplier: 2, type: 'trophy' },
+  ];
+
   return (
-    <div className="captain-info-panel space-y-4" style={themeStyle}>
-      {/* Captain Header - Board Game Style */}
-      <div className="board-game-frame relative overflow-hidden">
-        {/* Wood/paper texture overlay is handled by CSS */}
-
-        <div className="relative p-4 z-[1]">
-          <div className="flex gap-4">
-            {/* Portrait - Larger and more prominent */}
-            <div className="portrait-frame-board relative">
-              <img
-                src={CHARACTER_PORTRAITS[player.character]}
-                alt={player.name}
-                className="h-full w-full object-cover"
-              />
-              {isCurrentPlayer && !player.hasPassed && (
-                <div className="turn-badge-board">
-                  TURN
-                </div>
-              )}
-            </div>
-
-            {/* Name and Title - Board Game Typography */}
-            <div className="flex-1 min-w-0">
-              <h2 className="captain-name-board truncate">
-                {player.name}
-              </h2>
-              {character && (
-                <span className="captain-title-badge mt-1 inline-block">
-                  {character.title}
-                </span>
-              )}
-              {/* Fishbucks - Coin styling */}
-              <div className="mt-3">
-                <div className="fishbuck-coin">
-                  <Coins className="h-5 w-5" />
-                  <AnimatedCounter value={player.fishbucks} prefix="$" className="text-inherit" />
-                </div>
-              </div>
-            </div>
-
-            {/* Location Badge - Board Game Style */}
-            <div className="flex flex-col items-end gap-2">
-              <div className={`location-badge-board ${
-                player.location === 'sea' ? 'at-sea' : 'at-port'
-              }`}>
-                <MapPin className="h-4 w-4" />
-                <span>
-                  {player.location === 'sea' ? `Sea D${player.currentDepth}` : 'Port'}
-                </span>
-              </div>
-              {player.hasPassed && (
-                <Badge variant="outline" className="border-slate-500/40 text-slate-400 font-['Patrick_Hand']">
-                  Passed
-                </Badge>
-              )}
+    <div className="captain-sheet" style={themeStyle}>
+      {/* Trophy Wall - Top Section */}
+      <div className="trophy-wall-section">
+        <div className="trophy-row">
+          {/* Left Trophy slots (x2) */}
+          <div className="trophy-group">
+            <div className="trophy-label">TROPHY</div>
+            <div className="trophy-slots-pair">
+              {[0, 1].map((slotIndex) => {
+                const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
+                return (
+                  <div
+                    key={slotIndex}
+                    className={`trophy-circle ${mountedFish ? 'filled' : ''}`}
+                  >
+                    <span className="multiplier-label">×2</span>
+                    {mountedFish && (
+                      <span className="fish-value">{mountedFish.fish.value * 2}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Character Info Toggle - Board Game Style */}
-          {character && (
-            <button
-              onClick={() => setShowCharacterInfo(!showCharacterInfo)}
-              className="captain-info-toggle mt-4"
+          {/* Center Prize Catch slots (x3) */}
+          <div className="trophy-group prize-catch-group">
+            <div className="trophy-label prize-label">PRIZE CATCH</div>
+            <div className="trophy-slots-triple">
+              {[2, 3, 4].map((slotIndex) => {
+                const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
+                return (
+                  <div
+                    key={slotIndex}
+                    className={`trophy-circle prize-circle ${mountedFish ? 'filled' : ''}`}
+                  >
+                    <span className="multiplier-label">×3</span>
+                    {mountedFish && (
+                      <span className="fish-value">{mountedFish.fish.value * 3}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Trophy slots (x2) */}
+          <div className="trophy-group">
+            <div className="trophy-label">TROPHY</div>
+            <div className="trophy-slots-pair">
+              {[5, 6].map((slotIndex) => {
+                const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
+                return (
+                  <div
+                    key={slotIndex}
+                    className={`trophy-circle ${mountedFish ? 'filled' : ''}`}
+                  >
+                    <span className="multiplier-label">×2</span>
+                    {mountedFish && (
+                      <span className="fish-value">{mountedFish.fish.value * 2}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Fishbucks in corner */}
+        <div className="fishbucks-display">
+          <Coins className="h-4 w-4" />
+          <AnimatedCounter value={player.fishbucks} prefix="$" className="text-inherit" />
+        </div>
+      </div>
+
+      {/* Character Portrait Section */}
+      <div className="portrait-section">
+        <div className="portrait-container">
+          <img
+            src={CHARACTER_PORTRAITS[player.character]}
+            alt={player.name}
+            className="character-portrait"
+          />
+          {isCurrentPlayer && !player.hasPassed && (
+            <div className="turn-indicator">YOUR TURN</div>
+          )}
+        </div>
+        <div className="character-name">{player.name}</div>
+
+        {/* Location Badge */}
+        <div className={`location-indicator ${player.location === 'sea' ? 'at-sea' : 'at-port'}`}>
+          <MapPin className="h-3 w-3" />
+          {player.location === 'sea' ? `D${player.currentDepth}` : 'Port'}
+        </div>
+
+        {player.hasPassed && (
+          <Badge variant="outline" className="passed-badge">
+            Passed
+          </Badge>
+        )}
+      </div>
+
+      {/* Trophy Score Track */}
+      <div className="score-track-section">
+        <div className="score-track">
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+            <div
+              key={num}
+              className={`score-number ${trophyScore >= num * 10 ? 'reached' : ''} ${
+                Math.floor(trophyScore / 10) === num ? 'current' : ''
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <Anchor className="h-4 w-4" />
-                Captain Info
-              </span>
-              {showCharacterInfo ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
-          )}
-
-          {showCharacterInfo && character && (
-            <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-              <p className="text-sm text-white/80 leading-relaxed font-['Patrick_Hand'] text-base">
-                {character.description}
-              </p>
-              <div className="starting-bonus-board">
-                <div className="bonus-label">
-                  <Sparkles className="h-4 w-4" />
-                  <span>Starting Bonus</span>
-                </div>
-                <p className="bonus-text">
-                  {character.startingBonus}
-                </p>
-              </div>
+              {num}
             </div>
-          )}
+          ))}
         </div>
-      </div>
-
-      {/* Stats Grid - Board Game Style */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="stat-box-board stat-regrets">
-          <Skull className="h-5 w-5 mb-1" />
-          <span className="stat-value-board">{player.regrets.length}</span>
-          <span className="stat-label-board">Regrets</span>
-        </div>
-        <div className="stat-box-board stat-madness">
-          <Brain className="h-5 w-5 mb-1" />
-          <span className="stat-value-board">{player.madnessLevel}</span>
-          <span className="stat-label-board">Madness</span>
-        </div>
-        <div className="stat-box-board stat-trophy">
-          <Trophy className="h-5 w-5 mb-1" />
-          <span className="stat-value-board">{trophyScore}</span>
-          <span className="stat-label-board">Trophy Score</span>
-        </div>
-      </div>
-
-      {/* Dice Tray - Board Game Style */}
-      <div className="dice-tray-board">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="board-section-header flex items-center gap-2">
-            <Dice6 className="h-4 w-4" />
-            Dice Tray
-          </h3>
-          <span className="text-xs text-muted-foreground font-['Patrick_Hand']">
-            {player.freshDice.length + player.spentDice.length}/{player.maxDice}
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {/* Fresh Dice */}
-          <div>
-            <div className="text-xs mb-2 font-['Patrick_Hand'] text-[hsl(var(--char-primary-glow))] uppercase tracking-wide">Fresh Dice</div>
-            <div className="flex flex-wrap gap-2">
-              {player.freshDice.length > 0 ? (
-                player.freshDice.map((value, index) => (
-                  <div
-                    key={`fresh-${index}`}
-                    className="die-board die-fresh"
-                  >
-                    {value}
-                  </div>
-                ))
-              ) : (
-                <span className="text-sm text-muted-foreground italic font-['Patrick_Hand']">No fresh dice</span>
-              )}
-            </div>
-          </div>
-
-          {/* Spent Dice */}
-          {player.spentDice.length > 0 && (
-            <div>
-              <div className="text-xs text-muted-foreground mb-2 font-['Patrick_Hand'] uppercase tracking-wide">Spent Dice</div>
-              <div className="flex flex-wrap gap-2">
-                {player.spentDice.map((value, index) => (
-                  <div
-                    key={`spent-${index}`}
-                    className="die-board die-spent"
-                  >
-                    {value}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tackle Dice */}
-          {player.tackleDice.length > 0 && (
-            <div>
-              <div className="text-xs text-cyan-400/80 mb-2 font-['Patrick_Hand'] uppercase tracking-wide">Tackle Dice</div>
-              <div className="flex flex-wrap gap-2">
-                {player.tackleDice.map((dieId, index) => {
-                  const die = TACKLE_DICE_LOOKUP[dieId];
-                  return (
-                    <div
-                      key={`tackle-${index}`}
-                      className="die-board die-fresh"
-                      style={{ background: 'linear-gradient(145deg, hsl(185 70% 40%), hsl(185 65% 30%))' }}
-                      title={die?.name || dieId}
-                    >
-                      T
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Equipment - Board Game Style */}
-      <div className="board-game-frame p-4">
-        <h3 className="board-section-header flex items-center gap-2 mb-3">
-          <Wrench className="h-4 w-4" />
-          Equipment
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="equipment-card-board">
-            <div className="equipment-label-board">Rod</div>
-            <div className="equipment-name-board">
-              {player.equippedRod?.name || <span className="text-muted-foreground italic font-['Patrick_Hand']">None</span>}
-            </div>
-          </div>
-          <div className="equipment-card-board">
-            <div className="equipment-label-board">Reel</div>
-            <div className="equipment-name-board">
-              {player.equippedReel?.name || <span className="text-muted-foreground italic font-['Patrick_Hand']">None</span>}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Trophy Wall - Board Game Style */}
-      <div className="board-game-frame p-4">
-        <h3 className="board-section-header flex items-center gap-2 mb-3" style={{ color: 'hsl(var(--fishbuck))' }}>
+        <div className="score-total">
           <Fish className="h-4 w-4" />
-          Trophy Wall
-          {trophyScore > 0 && (
-            <span className="ml-auto text-sm font-['Bangers'] tracking-wide">
-              {trophyScore} pts
-            </span>
-          )}
-        </h3>
-        <div className="grid grid-cols-3 gap-2">
-          {mountingSlots.map((slotIndex) => {
-            const mountedFish = player.mountedFish.find((m) => m.slot === slotIndex);
-            const multiplier = getSlotMultiplier(slotIndex);
+          <span>{trophyScore} pts</span>
+        </div>
+      </div>
 
-            return (
-              <div
-                key={slotIndex}
-                className={`trophy-slot-board relative flex min-h-[70px] flex-col items-center justify-center p-2 text-center ${
-                  mountedFish ? 'filled' : ''
-                }`}
-              >
-                <div className={`multiplier-badge-board ${
-                  multiplier >= 3 ? 'x3' :
-                  multiplier >= 2 ? 'x2' :
-                  'x1'
-                }`}>
-                  ×{multiplier}
+      {/* Dice Tray Section */}
+      <div className="dice-tray-section">
+        <div className="dice-area fresh-dice-area">
+          <div className="dice-label">FRESH</div>
+          <div className="dice-container">
+            {player.freshDice.length > 0 ? (
+              player.freshDice.map((value, index) => (
+                <div key={`fresh-${index}`} className="die fresh">
+                  {value}
                 </div>
+              ))
+            ) : (
+              <span className="no-dice">-</span>
+            )}
+            {/* Tackle Dice shown with fresh dice */}
+            {player.tackleDice.map((dieId, index) => {
+              const die = TACKLE_DICE_LOOKUP[dieId];
+              return (
+                <div
+                  key={`tackle-${index}`}
+                  className="die tackle"
+                  title={die?.name || dieId}
+                >
+                  T
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-                {mountedFish ? (
-                  <>
-                    <span className="text-xs font-['Bangers'] text-white line-clamp-2 mb-1 tracking-wide">{mountedFish.fish.name}</span>
-                    <span className="text-sm font-['Bangers'] text-fishbuck">
-                      {mountedFish.fish.value} × {multiplier} = {mountedFish.fish.value * multiplier}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xs text-muted-foreground font-['Patrick_Hand']">Empty</span>
-                )}
-              </div>
-            );
-          })}
+        <div className="dice-divider"></div>
+
+        <div className="dice-area spent-dice-area">
+          <div className="dice-label">SPENT</div>
+          <div className="dice-container">
+            {player.spentDice.length > 0 ? (
+              player.spentDice.map((value, index) => (
+                <div key={`spent-${index}`} className="die spent">
+                  {value}
+                </div>
+              ))
+            ) : (
+              <span className="no-dice">-</span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Regrets - Board Game Style */}
-      <div className="regrets-section-board">
-        <div className="regrets-header-board">
-          <Skull className="h-4 w-4 text-destructive" />
-          <span className="board-section-header" style={{ color: 'hsl(var(--destructive))' }}>Regrets</span>
-          <span className="regrets-count-badge">
-            {player.regrets.length}
-          </span>
-          {player.regrets.length > 0 && (
-            <span className="ml-auto text-xs text-muted-foreground font-['Patrick_Hand']">
-              (klikk for å lese)
-            </span>
+      {/* Equipment Icons */}
+      <div className="equipment-icons">
+        <div className="equipment-icon rod-icon">
+          <span className="equip-label">ROD</span>
+          <div className="equip-image">🎣</div>
+          {player.equippedRod && (
+            <span className="equip-name">{player.equippedRod.name}</span>
           )}
         </div>
-        <RegretHand
-          regrets={player.regrets}
-          isOwner={isCurrentPlayer}
-          size="sm"
-          onCardClick={(regret) => setSelectedRegret(regret)}
-        />
+        <div className="equipment-icon reel-icon">
+          <span className="equip-label">REEL</span>
+          <div className="equip-image">🪝</div>
+          {player.equippedReel && (
+            <span className="equip-name">{player.equippedReel.name}</span>
+          )}
+        </div>
       </div>
+
+      {/* Regrets Display */}
+      <div className="regrets-display">
+        <div className="regrets-header">
+          <Skull className="h-4 w-4" />
+          <span className="regrets-count">{player.regrets.length}</span>
+          <Brain className="h-4 w-4 madness-icon" />
+          <span className="madness-level">{player.madnessLevel}</span>
+        </div>
+      </div>
+
+      {/* Item Cards Section */}
+      <div className="item-cards-section">
+        <div className="item-card supply-card">
+          <div className="item-type">ITEM</div>
+          <div className="item-name">SUPPLY</div>
+          <div className="item-pattern supply-pattern"></div>
+        </div>
+        <div className="item-card rod-card">
+          <div className="item-type">ITEM</div>
+          <div className="item-name">ROD</div>
+          <div className="item-pattern rod-pattern"></div>
+          {player.equippedRod && (
+            <div className="equipped-item">{player.equippedRod.name}</div>
+          )}
+        </div>
+        <div className="item-card reel-card">
+          <div className="item-type">ITEM</div>
+          <div className="item-name">REEL</div>
+          <div className="item-pattern reel-pattern"></div>
+          {player.equippedReel && (
+            <div className="equipped-item">{player.equippedReel.name}</div>
+          )}
+        </div>
+      </div>
+
+      {/* Character Info Toggle */}
+      {character && (
+        <button
+          onClick={() => setShowCharacterInfo(!showCharacterInfo)}
+          className="captain-info-btn"
+        >
+          <Anchor className="h-4 w-4" />
+          <span>Info</span>
+          {showCharacterInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+      )}
+
+      {showCharacterInfo && character && (
+        <div className="character-info-expanded">
+          <span className="char-title">{character.title}</span>
+          <p className="char-description">{character.description}</p>
+          <div className="starting-bonus">
+            <Sparkles className="h-4 w-4" />
+            <span>{character.startingBonus}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Regrets Hand (clickable) */}
+      {player.regrets.length > 0 && (
+        <div className="regrets-hand-section">
+          <RegretHand
+            regrets={player.regrets}
+            isOwner={isCurrentPlayer}
+            size="sm"
+            onCardClick={(regret) => setSelectedRegret(regret)}
+          />
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {isCurrentPlayer && !player.hasPassed && (
+        <div className="action-buttons">
+          <button className="action-btn primary" onClick={handleToggleLocation}>
+            <MapPin className="h-4 w-4" />
+            Go to {player.location === 'sea' ? 'Port' : 'Sea'}
+          </button>
+          <button className="action-btn secondary" onClick={handlePass}>
+            Pass Turn
+          </button>
+        </div>
+      )}
 
       {/* Regret Detail Modal */}
       <Dialog open={selectedRegret !== null} onOpenChange={(open) => !open && setSelectedRegret(null)}>
@@ -377,32 +376,10 @@ export const PlayerPanel = ({ player, isCurrentPlayer, onAction }: PlayerPanelPr
               <DialogDescription className="text-sm text-muted-foreground">
                 Denne regret gir deg <span className="text-destructive font-bold">-{selectedRegret.value}</span> poeng ved spillets slutt.
               </DialogDescription>
-              <div className="text-xs text-muted-foreground">
-                Regrets påvirker ditt Madness-nivå og kan gi ulike effekter under spillet.
-              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Action Buttons - Board Game Style */}
-      {isCurrentPlayer && !player.hasPassed && (
-        <div className="flex gap-3 pt-2">
-          <button
-            className="action-btn-board primary flex-1 flex items-center justify-center gap-2"
-            onClick={handleToggleLocation}
-          >
-            <MapPin className="h-4 w-4" />
-            Go to {player.location === 'sea' ? 'Port' : 'Sea'}
-          </button>
-          <button
-            className="action-btn-board secondary flex-1"
-            onClick={handlePass}
-          >
-            Pass Turn
-          </button>
-        </div>
-      )}
     </div>
   );
 };
