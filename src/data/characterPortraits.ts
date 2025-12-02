@@ -1,13 +1,13 @@
-import ahabPortrait from '@/assets/portraits/ahab.png';
-import nemoPortrait from '@/assets/portraits/nemo.png';
-import marinaPortrait from '@/assets/portraits/marina.png';
-import finnPortrait from '@/assets/portraits/finn.png';
-import stormPortrait from '@/assets/portraits/storm.png';
+import hugoPortrait from '@/assets/portraits/hugo.png';
+import albaPortrait from '@/assets/portraits/alba.png';
+import bertPortrait from '@/assets/portraits/bert.png';
+import islaPortrait from '@/assets/portraits/isla.png';
+import fredPortrait from '@/assets/portraits/fred.png';
 
 export const CHARACTER_PORTRAITS: Record<string, string> = {
-  ahab: ahabPortrait,
-  nemo: nemoPortrait,
-  marina: marinaPortrait,
-  finn: finnPortrait,
-  storm: stormPortrait,
+  hugo: hugoPortrait,
+  alba: albaPortrait,
+  bert: bertPortrait,
+  isla: islaPortrait,
+  fred: fredPortrait,
 };

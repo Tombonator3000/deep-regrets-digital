@@ -602,23 +602,23 @@ Spilleren med høyest totale poengsum vinner! Ved uavgjort vinner den med lavest
     characters: {
       title: 'Karakterer',
       keywords: ['karakter', 'character', 'captain', 'kaptein', 'bonus', 'evne'],
-      content: `**Captain Ahab:**
+      content: `**Hugo:**
 - +2 Fishbucks ved start
 - Bedre startstang
 
-**Captain Nemo:**
+**Alba:**
 - Bedre starthjul
 - Ignorerer første Regret
 
-**Marina Deepcurrent:**
+**Bert:**
 - Starter på Dybde II
 - +1 ekstra Dink-kort
 
-**Finn Saltwater:**
+**Isla:**
 - +3 Fishbucks ved start
 - Kan rerulle 1-ere
 
-**Storm Blackwater:**
+**Fred:**
 - +1 maks terning
 - +1 ekstra monteringsslot
 
@@ -1236,23 +1236,23 @@ The player with the highest total score wins! In case of a tie, the one with the
     characters: {
       title: 'Characters',
       keywords: ['character', 'captain', 'bonus', 'ability'],
-      content: `**Captain Ahab:**
+      content: `**Hugo:**
 - +2 Fishbucks at start
 - Better starting rod
 
-**Captain Nemo:**
+**Alba:**
 - Better starting reel
 - Ignores first Regret
 
-**Marina Deepcurrent:**
+**Bert:**
 - Starts at Depth II
 - +1 extra Dink card
 
-**Finn Saltwater:**
+**Isla:**
 - +3 Fishbucks at start
 - Can reroll 1s
 
-**Storm Blackwater:**
+**Fred:**
 - +1 max die
 - +1 extra mounting slot
 

@@ -168,8 +168,8 @@ export const applyCharacterBonuses = (
   const updated: Player = { ...player };
 
   switch (characterId) {
-    case 'ahab': {
-      // The Obsessed: +2 Fishbucks and upgrade to better rod (Carbon Fiber Rod)
+    case 'hugo': {
+      // The Veteran: +2 Fishbucks and upgrade to better rod (Carbon Fiber Rod)
       updated.fishbucks += 2;
       const betterRod = RODS[1]; // Carbon Fiber Rod (index 1)
       if (betterRod) {
@@ -177,8 +177,8 @@ export const applyCharacterBonuses = (
       }
       break;
     }
-    case 'nemo': {
-      // The Engineer: Upgrade to better reel (Deep Sea Reel) and ignore first Regret
+    case 'alba': {
+      // The Beastmaster: Upgrade to better reel (Deep Sea Reel) and ignore first Regret
       const betterReel = REELS[1]; // Deep Sea Reel (index 1)
       if (betterReel) {
         updated.equippedReel = betterReel;
@@ -186,8 +186,8 @@ export const applyCharacterBonuses = (
       updated.regretShields += 1;
       break;
     }
-    case 'marina': {
-      // The Mystic: Start at Depth II and draw an extra Dink
+    case 'bert': {
+      // The Hunter: Start at Depth II and draw an extra Dink
       updated.currentDepth = 2;
       if (context.port) {
         const { card, deck } = drawCard(context.port.dinksDeck);
@@ -198,14 +198,14 @@ export const applyCharacterBonuses = (
       }
       break;
     }
-    case 'finn': {
-      // The Lucky: +3 Fishbucks and reroll 1s
+    case 'isla': {
+      // The Determined: +3 Fishbucks and reroll 1s
       updated.fishbucks += 3;
       updated.rerollOnes = true;
       break;
     }
-    case 'storm': {
-      // The Daredevil: +1 max dice and extra mount slot
+    case 'fred': {
+      // The Sailor: +1 max dice and extra mount slot
       updated.maxDice += 1;
       updated.baseMaxDice += 1;
       updated.maxMountSlots += 1;
@@ -1803,7 +1803,7 @@ const recalculateMadness = (player: Player, context: MadnessContext = {}) => {
   // Get max dice from the madness tier per rulebook p.18-19
   // Note: Max dice DECREASES with more regrets (5 -> 3) per rulebook
   const tierMaxDice = getMaxDiceFromMadness(currentRegrets);
-  // Apply character bonus (Storm gets +1 base max dice)
+  // Apply character bonus (Fred gets +1 base max dice)
   const characterBonus = (player.baseMaxDice ?? 3) - 3;
   player.maxDice = tierMaxDice + characterBonus;
 
@@ -1852,7 +1852,7 @@ const advancePhase = (gameState: GameState) => {
       const diceToRoll = Math.min(totalDiceCount, player.maxDice);
       let newDice = rollDice(diceToRoll);
 
-      // Apply reroll 1s ability if player has it (Finn - The Lucky)
+      // Apply reroll 1s ability if player has it (Isla - The Determined)
       if (player.rerollOnes) {
         newDice = newDice.map(value => (value === 1 ? rollDice(1)[0] : value));
       }

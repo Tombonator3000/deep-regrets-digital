@@ -33,28 +33,28 @@ describe('character starting bonuses', () => {
       characterState.players.map(player => [player.character, player])
     );
 
-    const ahab = playerByCharacter['ahab'];
-    expect(ahab.fishbucks).toBe(5);
-    expect(ahab.equippedRod?.type).toBe('rod');
+    const hugo = playerByCharacter['hugo'];
+    expect(hugo.fishbucks).toBe(5);
+    expect(hugo.equippedRod?.type).toBe('rod');
 
-    const nemo = playerByCharacter['nemo'];
-    expect(nemo.equippedReel?.type).toBe('reel');
-    expect(nemo.regretShields).toBeGreaterThanOrEqual(1);
+    const alba = playerByCharacter['alba'];
+    expect(alba.equippedReel?.type).toBe('reel');
+    expect(alba.regretShields).toBeGreaterThanOrEqual(1);
 
-    const marina = playerByCharacter['marina'];
-    expect(marina.currentDepth).toBe(2);
-    expect(marina.dinks.length).toBe(1);
+    const bert = playerByCharacter['bert'];
+    expect(bert.currentDepth).toBe(2);
+    expect(bert.dinks.length).toBe(1);
 
-    const finn = playerByCharacter['finn'];
-    expect(finn.fishbucks).toBe(6);
-    expect(finn.rerollOnes).toBe(true);
+    const isla = playerByCharacter['isla'];
+    expect(isla.fishbucks).toBe(6);
+    expect(isla.rerollOnes).toBe(true);
 
-    const storm = playerByCharacter['storm'];
-    // Storm: +1 base max dice bonus on top of tier 0 max dice (4 per rulebook p.20-21)
-    expect(storm.maxDice).toBe(5);
-    expect(storm.maxMountSlots).toBe(4);
+    const fred = playerByCharacter['fred'];
+    // Fred: +1 base max dice bonus on top of tier 0 max dice (4 per rulebook p.20-21)
+    expect(fred.maxDice).toBe(5);
+    expect(fred.maxMountSlots).toBe(4);
 
-    expect(characterState.port.dinksDeck.length).toBe(DINK_CARDS.length - marina.dinks.length);
+    expect(characterState.port.dinksDeck.length).toBe(DINK_CARDS.length - bert.dinks.length);
   });
 });
 
