@@ -1,7 +1,7 @@
 import { Player, GameState, FishCard } from '@/types/game';
 import { Badge } from '@/components/ui/badge';
 import { getSlotMultiplier } from '@/utils/mounting';
-import { Anchor, Fish, Skull, Coins, Brain, Dice6 } from 'lucide-react';
+import { Anchor, Fish, Skull, Coins, Brain, Dice6, Bug, Eye, EyeOff } from 'lucide-react';
 import { PlayerHand, CardDragData } from './PlayerHand';
 import { LifebuoyToken, FishCoinToken, BoatToken } from './GameTokens';
 import { AnimatedCounter } from './ParticleEffects';
@@ -59,6 +59,10 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
     }
   };
 
+  // Check Can of Worms status
+  const hasCanOfWorms = player.canOfWormsFaceUp ?? false;
+  const canOfWormsUsed = false; // Tracked per day
+
   // Compact mode for mobile
   if (compact) {
     return (
@@ -66,12 +70,19 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
         <div className="flex items-center justify-between gap-1 mb-1.5">
           <div className="flex items-center gap-1.5">
             <Anchor className="h-3.5 w-3.5 text-primary" />
-            <button
-              onClick={() => onViewCaptainSheet ? onViewCaptainSheet() : setShowCharacterCard(true)}
-              className="text-xs font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors"
-            >
-              {player.name}
-            </button>
+            <div className="flex flex-col">
+              <button
+                onClick={() => onViewCaptainSheet ? onViewCaptainSheet() : setShowCharacterCard(true)}
+                className="text-xs font-bold text-primary-glow hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+              >
+                {player.name}
+              </button>
+              <div className={`flex items-center gap-1 text-[9px] ${hasCanOfWorms && !canOfWormsUsed ? 'text-green-400' : 'text-slate-500'}`}>
+                <Bug className={`h-2.5 w-2.5 ${hasCanOfWorms && !canOfWormsUsed ? 'animate-pulse' : ''}`} />
+                <span>Worms</span>
+                {canOfWormsUsed ? <EyeOff className="h-2.5 w-2.5" /> : hasCanOfWorms && <Eye className="h-2.5 w-2.5" />}
+              </div>
+            </div>
           </div>
           {isCurrentPlayer && (
             <Badge className="bg-primary/20 text-primary-glow text-[10px] px-1 py-0">
@@ -120,6 +131,11 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
               {player.name}
             </button>
             <p className="text-xs text-muted-foreground">{player.character}</p>
+            <div className={`flex items-center gap-1 text-[10px] mt-0.5 ${hasCanOfWorms && !canOfWormsUsed ? 'text-green-400' : 'text-slate-500'}`}>
+              <Bug className={`h-3 w-3 ${hasCanOfWorms && !canOfWormsUsed ? 'animate-pulse' : ''}`} />
+              <span>Worms</span>
+              {canOfWormsUsed ? <EyeOff className="h-3 w-3" /> : hasCanOfWorms && <Eye className="h-3 w-3" />}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-1">

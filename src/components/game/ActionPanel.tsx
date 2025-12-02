@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import { LastToPassWarning } from './LastToPassWarning';
 import { DeclarationChoice } from './DeclarationChoice';
-import { CanOfWormsStatus } from './CanOfWormsPeek';
 import { LifePreserverGift } from './LifePreserverGift';
 import { LifePreserverUse } from './LifePreserverUse';
 import { PassingReward } from './PassingReward';
@@ -111,10 +110,6 @@ export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
   const playerWithPendingReward = gameState.pendingPassingReward
     ? gameState.players.find(p => p.id === gameState.pendingPassingReward?.playerId)
     : null;
-
-  // Check Can of Worms status - uses canOfWormsFaceUp boolean
-  const hasCanOfWorms = currentPlayer.canOfWormsFaceUp ?? false;
-  const canOfWormsUsed = false; // Can of Worms can only be used once per day when face-up
 
   const handleNextPhase = useCallback(() => {
     onAction({
@@ -200,19 +195,6 @@ export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
                 <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 py-0">{gameState.day}</Badge>
               </div>
               <p className="text-[10px] sm:text-xs text-foreground/70 truncate">{guidance.description}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Compact Player Status - Hidden on mobile as it's in AnglerBoard compact */}
-        <Card className="card-game p-1.5 sm:p-2 shrink-0 hidden sm:block">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-primary-glow">{currentPlayer.name}</span>
-            <div className="flex items-center gap-2">
-              <CanOfWormsStatus isAvailable={hasCanOfWorms} isUsed={canOfWormsUsed} />
-              <Badge className={`text-[10px] ${currentPlayer.location === 'sea' ? 'bg-blue-600' : 'bg-amber-600'}`}>
-                {currentPlayer.location === 'sea' ? `Sea D${currentPlayer.currentDepth}` : 'Port'}
-              </Badge>
             </div>
           </div>
         </Card>
