@@ -206,20 +206,6 @@ const GameBoardInner = ({ gameState, onAction, onRestartGame, onBackToStart }: G
           <WoodCornerAccent position="top-right" size="sm" />
           <div className="flex items-center gap-1 sm:gap-4">
             <h1 className="text-sm font-bold text-primary-glow sm:text-xl">DEEP REGRETS</h1>
-            <Badge
-              className={`rounded-full px-1.5 py-0 text-[10px] sm:px-3 sm:py-0.5 sm:text-xs ${
-                currentPlayer.isAI
-                  ? 'border-purple-400/40 bg-purple-600/20 text-purple-300'
-                  : 'border-primary/40 bg-primary/10 text-primary'
-              }`}
-            >
-              {currentPlayer.isAI && (
-                <span className="mr-0.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400 sm:mr-1.5 sm:h-2 sm:w-2" />
-              )}
-              <span className="hidden xs:inline">{currentPlayer.name}'s Turn</span>
-              <span className="xs:hidden">{currentPlayer.name}</span>
-              {currentPlayer.isAI && ' (AI)'}
-            </Badge>
           </div>
           <div className="flex items-center gap-0.5 sm:gap-2">
             <Button
