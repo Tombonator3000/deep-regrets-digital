@@ -114,6 +114,15 @@ export const SUPPLIES: UpgradeCard[] = [
     effects: ['start_depth_2'],
     equipSlot: 'supply',
     description: 'Start each day at Depth II.'
+  },
+  {
+    id: 'SUPPLY-005',
+    name: 'Lifeboat',
+    type: 'supply',
+    cost: 5,
+    effects: ['port_from_sea'],
+    equipSlot: 'supply',
+    description: 'Make Port from Sea. Sometimes you just have to abandon ship.'
   }
 ];
 
