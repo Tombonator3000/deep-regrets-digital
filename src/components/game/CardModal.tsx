@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 import { getDinkImage } from '@/data/dinkImages';
 import rodCardBack from '@/assets/rod-card-back.png';
+import reelCardBack from '@/assets/reel-card-back.png';
 import supplyCardBack from '@/assets/supply-card-back.png';
 
 type CardType = 'fish' | 'dink' | 'supply';
@@ -354,11 +355,13 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
   };
   const colors = typeColors[supply.type] || typeColors.supply;
   const isRod = supply.type === 'rod';
+  const isReel = supply.type === 'reel';
   const isSupply = supply.type === 'supply';
 
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
   const getBackgroundImage = () => {
     if (isRod) return rodCardBack;
+    if (isReel) return reelCardBack;
     if (isSupply) return supplyCardBack;
     return null;
   };
