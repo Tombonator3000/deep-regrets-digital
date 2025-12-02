@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { getFishImage, getDefaultFishImage } from '@/data/fishImages';
 import { getDinkImage } from '@/data/dinkImages';
 import rodCardBack from '@/assets/rod-card-back.png';
+import supplyCardBack from '@/assets/supply-card-back.png';
 
 type CardType = 'fish' | 'dink' | 'supply';
 type AnyCard = FishCard | DinkCard | UpgradeCard;
@@ -353,15 +354,22 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
   };
   const colors = typeColors[supply.type] || typeColors.supply;
   const isRod = supply.type === 'rod';
+  const isSupply = supply.type === 'supply';
 
   const rotationStyle: React.CSSProperties = rotation !== 0 ? { transform: `rotate(${rotation}deg)` } : {};
+  const getBackgroundImage = () => {
+    if (isRod) return rodCardBack;
+    if (isSupply) return supplyCardBack;
+    return null;
+  };
+  const backgroundImage = getBackgroundImage();
   const cardStyle: React.CSSProperties = {
     ...rotationStyle,
-    ...(isRod ? { backgroundImage: `url(${rodCardBack})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+    ...(backgroundImage ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
   };
 
   return (
-    <div className={`relative w-80 rounded-2xl border-4 ${colors.border} ${!isRod ? `bg-gradient-to-br ${colors.bg}` : ''} shadow-2xl overflow-hidden transition-transform`} style={cardStyle}>
+    <div className={`relative w-80 rounded-2xl border-4 ${colors.border} ${!backgroundImage ? `bg-gradient-to-br ${colors.bg}` : ''} shadow-2xl overflow-hidden transition-transform`} style={cardStyle}>
       {/* Close button */}
       <Button
         variant="ghost"
@@ -373,9 +381,9 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
       </Button>
 
       {/* Card header */}
-      <div className={`relative p-4 pb-2 ${isRod ? 'bg-slate-900/60' : ''}`}>
+      <div className={`relative p-4 pb-2 ${backgroundImage ? 'bg-slate-900/60' : ''}`}>
         <div className="flex items-center justify-between">
-          <Badge className={`${isRod ? 'bg-blue-500/30 text-blue-200' : 'bg-emerald-500/30 text-emerald-200'} uppercase text-xs`}>
+          <Badge className={`${isRod ? 'bg-blue-500/30 text-blue-200' : isSupply ? 'bg-emerald-500/30 text-emerald-200' : 'bg-indigo-500/30 text-indigo-200'} uppercase text-xs`}>
             {supply.type}
           </Badge>
           <Badge variant="outline" className="border-white/30 text-white">
@@ -385,12 +393,12 @@ const EnlargedSupplyCard = ({ supply, onClose, rotation = 0 }: { supply: Upgrade
       </div>
 
       {/* Illustration area */}
-      <div className={`relative h-40 flex items-center justify-center ${isRod ? 'bg-transparent' : 'bg-black/20'}`}>
-        {!isRod && <Package className={`h-24 w-24 ${colors.accent} drop-shadow-lg`} />}
+      <div className={`relative h-40 flex items-center justify-center ${backgroundImage ? 'bg-transparent' : 'bg-black/20'}`}>
+        {!backgroundImage && <Package className={`h-24 w-24 ${colors.accent} drop-shadow-lg`} />}
       </div>
 
       {/* Card body */}
-      <div className={`p-4 space-y-3 ${isRod ? 'bg-slate-900/80 backdrop-blur-sm' : ''}`}>
+      <div className={`p-4 space-y-3 ${backgroundImage ? 'bg-slate-900/80 backdrop-blur-sm' : ''}`}>
         <DialogHeader className="space-y-1">
           <DialogTitle className={`text-2xl font-bold ${colors.accent}`}>
             {supply.name}
