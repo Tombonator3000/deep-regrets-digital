@@ -67,6 +67,7 @@ const MiniCard = ({
   rotation = 0,
 }: MiniCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     setIsDragging(true);
@@ -86,12 +87,14 @@ const MiniCard = ({
 
   const card = (
     <div
-      className={`group relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer shadow-lg select-none ${className} ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}`}
+      className={`group relative flex h-16 w-12 flex-col items-center justify-center rounded-lg border-2 p-1 text-center transition-all duration-200 cursor-pointer shadow-lg select-none hover:z-50 hover:scale-[2] hover:-translate-y-6 hover:shadow-2xl hover:shadow-primary/30 ${className} ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}`}
       style={rotationStyle}
       onClick={onClick}
       draggable={draggable}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Drag handle indicator */}
       {draggable && (

@@ -324,6 +324,22 @@ export const SeaBoard = ({ gameState, selectedShoal, playerColors, onShoalSelect
               <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950/80 rounded-lg" />
             )}
 
+          {/* Parallax depth particles */}
+          <div className="parallax-layer parallax-layer-bg pointer-events-none">
+            {/* Depth 1 particles - bright cyan, fast movement */}
+            <div className="depth-particle depth-particle-d1" style={{ top: '8%', left: '15%', width: '6px', height: '6px', animationDelay: '0s' }} />
+            <div className="depth-particle depth-particle-d1" style={{ top: '12%', right: '20%', width: '4px', height: '4px', animationDelay: '2s' }} />
+            <div className="depth-particle depth-particle-d1" style={{ top: '18%', left: '40%', width: '5px', height: '5px', animationDelay: '4s' }} />
+            {/* Depth 2 particles - blue, medium movement */}
+            <div className="depth-particle depth-particle-d2" style={{ top: '40%', left: '10%', width: '8px', height: '8px', animationDelay: '1s' }} />
+            <div className="depth-particle depth-particle-d2" style={{ top: '48%', right: '15%', width: '5px', height: '5px', animationDelay: '3s' }} />
+            <div className="depth-particle depth-particle-d2" style={{ top: '55%', left: '60%', width: '6px', height: '6px', animationDelay: '5s' }} />
+            {/* Depth 3 particles - purple, slow movement */}
+            <div className="depth-particle depth-particle-d3" style={{ top: '72%', left: '8%', width: '10px', height: '10px', animationDelay: '0.5s' }} />
+            <div className="depth-particle depth-particle-d3" style={{ top: '78%', right: '12%', width: '7px', height: '7px', animationDelay: '2.5s' }} />
+            <div className="depth-particle depth-particle-d3" style={{ top: '85%', left: '45%', width: '8px', height: '8px', animationDelay: '4.5s' }} />
+          </div>
+
           {/* 3x3 Grid of Cards positioned over background */}
           <div className="absolute inset-0 grid grid-rows-3 gap-0 p-[3%]" style={{ paddingTop: '2%', paddingBottom: '2%' }}>
             {[1, 2, 3].map((depth) => {

@@ -21,8 +21,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Anchor,
+  ArrowRight,
   Fish,
   HelpCircle,
+  Moon,
   RefreshCw,
   Sunrise,
   Waves
@@ -276,15 +278,40 @@ export const ActionPanel = ({ gameState, onAction }: ActionPanelProps) => {
           )}
 
           {gameState.phase === 'action' && isPlayerTurn && (
-            <Button size="sm" onClick={handlePass} variant="outline" className="w-full min-h-[40px] sm:min-h-[44px] border-primary/30 text-[10px] sm:text-xs touch-manipulation active:scale-95">
-              Pass (End Day)
+            <Button
+              size="sm"
+              onClick={handlePass}
+              variant="outline"
+              className="w-full min-h-[40px] sm:min-h-[44px] btn-phase btn-phase-end border-purple-500/30 text-[10px] sm:text-xs touch-manipulation active:scale-95"
+            >
+              <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+              <span>Avslutt Dagen</span>
             </Button>
           )}
 
           {(gameState.phase === 'start' || gameState.phase === 'refresh') && (
             <div className="relative">
-              <Button size="sm" onClick={handleNextPhase} className="w-full min-h-[40px] sm:min-h-[44px] btn-ocean text-[10px] sm:text-xs touch-manipulation active:scale-95 overflow-hidden">
-                <span className="relative z-10">Next Phase →</span>
+              <Button
+                size="sm"
+                onClick={handleNextPhase}
+                className={`w-full min-h-[40px] sm:min-h-[44px] btn-phase text-[10px] sm:text-xs touch-manipulation active:scale-95 overflow-hidden ${
+                  gameState.phase === 'start' ? 'btn-phase-fishing' : 'btn-ocean'
+                }`}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-1.5">
+                  {gameState.phase === 'start' ? (
+                    <>
+                      <Sunrise className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Start Dagen</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Forfrisk Terninger</span>
+                    </>
+                  )}
+                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                </span>
                 {/* Auto-advance progress bar */}
                 {autoAdvanceProgress > 0 && (
                   <div

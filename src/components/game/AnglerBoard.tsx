@@ -169,9 +169,9 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
                   mountedFish
                     ? 'border-fishbuck/50 bg-fishbuck/10'
                     : isDropTarget
-                    ? 'border-primary border-solid bg-primary/20'
+                    ? 'drop-target'
                     : canDrop
-                    ? 'border-dashed border-white/30 bg-black/30'
+                    ? 'border-dashed border-white/30 bg-black/30 hover:border-primary/40'
                     : 'border-dashed border-white/20 bg-black/30'
                 }`}
                 onDragOver={(e) => handleDragOver(e, slotIndex)}
@@ -200,17 +200,21 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
         </div>
       </div>
 
-      {/* Compact Dice & Stats */}
+      {/* Compact Dice & Stats - Enhanced 3D Dice */}
       <div className="shrink-0 grid grid-cols-2 gap-1 mb-2">
-        <div className="rounded border border-primary/30 bg-primary/5 p-1">
-          <div className="flex items-center gap-1 text-[10px] text-primary mb-1">
+        <div className="rounded border border-primary/30 bg-primary/5 p-1.5">
+          <div className="flex items-center gap-1 text-[10px] text-primary mb-1.5">
             <Dice6 className="h-3 w-3" />
             Fresh
           </div>
-          <div className="flex flex-wrap gap-0.5">
+          <div className="flex flex-wrap gap-1">
             {player.freshDice.length > 0 ? (
               player.freshDice.map((value, index) => (
-                <div key={`fresh-${index}`} className="flex h-5 w-5 items-center justify-center rounded bg-primary/20 text-[10px] font-bold text-primary-glow">
+                <div
+                  key={`fresh-${index}`}
+                  className="dice-3d dice-fresh h-7 w-7 text-xs"
+                  title={`Die value: ${value}`}
+                >
                   {value}
                 </div>
               ))
@@ -219,15 +223,19 @@ export const AnglerBoard = ({ player, isCurrentPlayer, gameState, onMountFish, o
             )}
           </div>
         </div>
-        <div className="rounded border border-white/10 bg-black/30 p-1">
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+        <div className="rounded border border-white/10 bg-black/30 p-1.5">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1.5">
             <Dice6 className="h-3 w-3 opacity-50" />
             Spent
           </div>
-          <div className="flex flex-wrap gap-0.5">
+          <div className="flex flex-wrap gap-1">
             {player.spentDice.length > 0 ? (
               player.spentDice.map((value, index) => (
-                <div key={`spent-${index}`} className="flex h-5 w-5 items-center justify-center rounded bg-white/5 text-[10px] font-bold text-muted-foreground opacity-50">
+                <div
+                  key={`spent-${index}`}
+                  className="dice-3d dice-spent h-7 w-7 text-xs"
+                  title={`Spent die: ${value}`}
+                >
                   {value}
                 </div>
               ))
