@@ -62,7 +62,40 @@ This project is built with:
 
 ## How can I deploy this project?
 
+This project supports **dual hosting** - you can deploy it both via Lovable and GitHub Pages.
+
+### Deploy via Lovable
+
 Simply open [Lovable](https://lovable.dev/projects/48af93e3-33a6-418b-b8ce-172095dc4d1a) and click on Share -> Publish.
+
+### Deploy via GitHub Pages
+
+The project is automatically deployed to GitHub Pages when changes are pushed to the `main` branch.
+
+**Live URL**: `https://tombonator3000.github.io/deep-regrets-digital/`
+
+#### How it works:
+
+1. The GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically builds and deploys on push to `main`
+2. The build uses the `GITHUB_PAGES` environment variable to set the correct base path
+3. You can also manually trigger deployment from the Actions tab on GitHub
+
+#### First-time setup:
+
+To enable GitHub Pages for this repository:
+
+1. Go to your repository on GitHub
+2. Click on **Settings** > **Pages**
+3. Under "Build and deployment":
+   - Source: Select **GitHub Actions**
+4. The site will be available at `https://tombonator3000.github.io/deep-regrets-digital/`
+
+### Benefits of dual hosting:
+
+✅ **Independence from Lovable** - Not dependent on a single platform
+✅ **Backup** - If Lovable has downtime, GitHub Pages still works
+✅ **Redundancy** - Multiple deployment options
+✅ **Flexibility** - Choose which platform to use
 
 ## Can I connect a custom domain to my Lovable project?
 
