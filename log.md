@@ -4,6 +4,35 @@ Dette dokumentet logger alle endringer gjort av AI-agenter på prosjektet.
 
 ---
 
+## 2026-01-01 - Fikset React Router basename for GitHub Pages
+
+**Branch**: claude/fix-deployment-404-QaujA
+
+### Problem
+GitHub Pages deployment var vellykket, men siden viste fortsatt 404-feil på `https://tombonator3000.github.io/deep-regrets-digital/`.
+
+### Årsak
+`BrowserRouter` i `src/App.tsx` manglet `basename` prop. Selv om Vite bygde prosjektet med base path `/deep-regrets-digital/`, visste ikke React Router om denne path. Dette førte til at alle routes ble forsøkt matchet mot root `/` i stedet for `/deep-regrets-digital/`.
+
+### Løsning
+Lagt til `basename={import.meta.env.BASE_URL}` på `BrowserRouter` komponent. `import.meta.env.BASE_URL` settes automatisk av Vite basert på `base` konfigurasjon i `vite.config.ts`:
+- For Lovable: `BASE_URL = "/"` (standard)
+- For GitHub Pages: `BASE_URL = "/deep-regrets-digital/"` (når `GITHUB_PAGES=true`)
+
+Dette sikrer at React Router korrekt håndterer routing uavhengig av deployment-plattform.
+
+### Filer endret
+- `src/App.tsx` - Lagt til basename prop på BrowserRouter
+- `log.md` - Dokumentert løsningen
+
+### Testing
+Etter merge og automatisk deployment:
+1. Besøk `https://tombonator3000.github.io/deep-regrets-digital/`
+2. Verifiser at siden laster uten 404-feil
+3. Test at routing fungerer korrekt
+
+---
+
 ## 2026-01-01 - Komplett GitHub Pages deployment setup
 
 **Branch**: claude/complete-dual-hosting-setup-19cZO
