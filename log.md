@@ -4,6 +4,40 @@ Dette dokumentet logger alle endringer gjort av AI-agenter på prosjektet.
 
 ---
 
+## 2026-01-01 - Fikset GitHub Pages deployment (404-feil)
+
+**Branch**: claude/dual-hosting-setup-dLrKX
+
+### Problem
+GitHub Pages viste 404-feil på `https://tombonator3000.github.io/deep-regrets-digital/` til tross for at konfigurasjonen var på plass.
+
+### Årsak
+GitHub Pages var ikke aktivert i repository settings. Dette er et manuelt steg som må gjøres første gang.
+
+### Løsning
+- Undersøkt deployment-konfigurasjon og verifisert at alle filer var korrekte
+- Identifisert at GitHub Pages må aktiveres manuelt i Settings > Pages
+- Opprettet trigger-commit for å starte automatisk deployment
+- Dokumentert setup-prosessen i log.md
+
+### Instruksjoner for aktivering
+1. Gå til repository Settings > Pages
+2. Under "Build and deployment" → Source: Velg "GitHub Actions"
+3. Workflow vil automatisk deploye ved neste push til main
+
+### Filer undersøkt
+- `.github/workflows/deploy.yml` - Verifisert korrekt konfigurasjon
+- `vite.config.ts` - Bekreftet base path setup
+- `public/.nojekyll` - Bekreftet at filen eksisterer
+- `README.md` - Verifisert dokumentasjon
+
+### Status
+✅ Konfigurasjon korrekt
+⏳ Venter på manuell aktivering av GitHub Pages
+📝 Dokumentasjon oppdatert
+
+---
+
 ## 2025-12-31 - Satt opp dual hosting (Lovable + GitHub Pages)
 
 **Branch**: claude/continue-game-dev-7f9jJ
