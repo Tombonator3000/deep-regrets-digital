@@ -4,6 +4,47 @@ Dette dokumentet logger alle endringer gjort av AI-agenter på prosjektet.
 
 ---
 
+## 2026-01-31 - PWA-støtte for offline modus og installerbarhet
+
+**Branch**: claude/offline-pwa-support-aFZb0
+
+### Endringer
+- Implementert full PWA (Progressive Web App) støtte
+- Spillet kan nå installeres som en app på mobil og desktop
+- Fungerer offline etter første lasting
+- Automatisk caching av alle game assets via service worker
+- Tematiske SVG-ikoner for app-ikonet (eldritch fisk-tema)
+
+### Tekniske detaljer
+- **vite-plugin-pwa**: Lagt til for generering av service worker og manifest
+- **Workbox**: Brukes for intelligent caching-strategi
+  - Precaching av alle build-filer (HTML, CSS, JS, bilder)
+  - Runtime caching av Google Fonts
+- **Manifest**: Definerer app-navn, farger, ikoner og display-modus
+- **SVG-ikoner**: 192x192 og 512x512 med eldritch fiske-tema
+
+### Filer endret
+- `vite.config.ts` - Konfigurert PWA plugin med manifest og workbox
+- `index.html` - Lagt til PWA meta-tags (theme-color, apple-touch-icon, etc.)
+- `package.json` - Lagt til vite-plugin-pwa dependency
+- `public/pwa-192x192.svg` - Nytt app-ikon (192x192)
+- `public/pwa-512x512.svg` - Nytt app-ikon (512x512)
+
+### PWA-funksjoner
+- **Installerbar**: Brukere kan legge til spillet på hjemskjermen
+- **Offline-støtte**: Spillet fungerer uten internettforbindelse
+- **Auto-oppdatering**: Service worker oppdaterer automatisk ved nye versjoner
+- **Responsivt**: Optimalisert for både mobil og desktop
+
+### Testing
+Build genererer:
+- `sw.js` - Service worker
+- `workbox-*.js` - Workbox runtime
+- `manifest.webmanifest` - PWA manifest
+- 116 precached entries (6.4 MB total cache)
+
+---
+
 ## 2026-01-01 - Fikset React Router basename for GitHub Pages
 
 **Branch**: claude/fix-deployment-404-QaujA

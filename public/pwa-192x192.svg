@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d"/>
+      <stop offset="50%" style="stop-color:#0c1222"/>
+      <stop offset="100%" style="stop-color:#000510"/>
+    </linearGradient>
+    <linearGradient id="fishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4fd1c5"/>
+      <stop offset="100%" style="stop-color:#2c7a7b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="url(#oceanGrad)"/>
+
+  <!-- Eldritch tentacle waves -->
+  <path d="M0 130 Q30 110 60 130 T120 130 T180 130 L192 192 L0 192 Z" fill="#0a1628" opacity="0.6"/>
+  <path d="M0 145 Q25 125 50 145 T100 145 T150 145 T192 145 L192 192 L0 192 Z" fill="#0a1628" opacity="0.8"/>
+
+  <!-- Stylized fish silhouette -->
+  <g transform="translate(96, 85)">
+    <!-- Fish body -->
+    <ellipse cx="0" cy="0" rx="45" ry="25" fill="url(#fishGrad)"/>
+    <!-- Fish tail -->
+    <polygon points="40,0 60,-20 60,20" fill="url(#fishGrad)"/>
+    <!-- Fish eye - eldritch style -->
+    <circle cx="-20" cy="-5" r="10" fill="#0c1222"/>
+    <circle cx="-20" cy="-5" r="6" fill="#e53e3e"/>
+    <circle cx="-18" cy="-7" r="2" fill="#fff"/>
+    <!-- Fish fin -->
+    <polygon points="0,-25 10,-40 20,-25" fill="#2c7a7b"/>
+  </g>
+
+  <!-- Deep text -->
+  <text x="96" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#4fd1c5">DEEP</text>
+</svg>
